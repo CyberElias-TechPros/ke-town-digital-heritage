@@ -1,0 +1,501 @@
+
+<style>
+:root { --ke-deep: #1a3a2e; --ke-gold: #c8882a; --ke-water: #1e5c7a; --ke-sand: #e8d5a0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+
+.tab-bar { display: flex; gap: 4px; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 20px; padding: 0 0 0; overflow-x: auto; }
+.tab { padding: 8px 14px; font-size: 13px; cursor: pointer; border-radius: 6px 6px 0 0; color: var(--color-text-secondary); border: none; background: none; white-space: nowrap; }
+.tab.active { color: var(--color-text-primary); font-weight: 500; border-bottom: 2px solid var(--color-text-primary); margin-bottom: -0.5px; }
+.tab:hover:not(.active) { background: var(--color-background-secondary); }
+
+.panel { display: none; }
+.panel.active { display: block; }
+
+.hero-bar { background: var(--color-background-secondary); border-radius: 10px; padding: 18px 20px; margin-bottom: 16px; border: 0.5px solid var(--color-border-tertiary); }
+.hero-bar h2 { font-size: 18px; font-weight: 500; margin-bottom: 4px; }
+.hero-bar p { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
+
+.tag { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 500; margin: 2px; }
+.tag-teal { background: #E1F5EE; color: #0F6E56; }
+.tag-amber { background: #FAEEDA; color: #854F0B; }
+.tag-blue { background: #E6F1FB; color: #185FA5; }
+.tag-coral { background: #FAECE7; color: #993C1D; }
+.tag-purple { background: #EEEDFE; color: #534AB7; }
+
+.fact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.fact-card { background: var(--color-background-secondary); border-radius: 8px; padding: 12px 14px; border: 0.5px solid var(--color-border-tertiary); }
+.fact-card .num { font-size: 20px; font-weight: 500; margin-bottom: 2px; }
+.fact-card .lbl { font-size: 11px; color: var(--color-text-secondary); }
+
+.section-title { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 0 10px; }
+
+.page-list { display: flex; flex-direction: column; gap: 8px; }
+.page-item { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: 10px; padding: 14px 16px; cursor: pointer; transition: background 0.15s; }
+.page-item:hover { background: var(--color-background-secondary); }
+.page-item .page-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.page-item .page-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.page-item .page-name { font-size: 14px; font-weight: 500; }
+.page-item .page-desc { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+.page-item .features { margin-top: 8px; }
+
+.feature-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+.feature-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+.feature-text { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+
+.arch-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.arch-card { border: 0.5px solid var(--color-border-tertiary); border-radius: 8px; padding: 12px 14px; }
+.arch-card h4 { font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+.arch-card ul { padding-left: 14px; }
+.arch-card ul li { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 3px; }
+
+.palette-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.swatch { width: 48px; height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 500; }
+
+.phase-item { display: flex; gap: 14px; padding: 12px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.phase-item:last-child { border-bottom: none; }
+.phase-num { width: 28px; height: 28px; border-radius: 50%; background: var(--color-background-secondary); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; flex-shrink: 0; margin-top: 2px; }
+.phase-content h4 { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+.phase-content p { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+
+.kv-row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.kv-row:last-child { border-bottom: none; }
+.kv-k { font-size: 13px; color: var(--color-text-secondary); }
+.kv-v { font-size: 13px; font-weight: 500; text-align: right; max-width: 60%; }
+</style>
+
+<div style="padding: 0 0 20px;">
+
+<div class="hero-bar">
+  <h2>KE Town — Web App Blueprint</h2>
+  <p>A comprehensive digital home for the Kalabari community of Ke Town, Degema LGA, Rivers State. Preserving culture, connecting diaspora, and showcasing heritage to the world.</p>
+  <div style="margin-top: 10px;">
+    <span class="tag tag-teal">Cultural Heritage</span>
+    <span class="tag tag-amber">Community Hub</span>
+    <span class="tag tag-blue">Tourism</span>
+    <span class="tag tag-coral">Diaspora Connect</span>
+    <span class="tag tag-purple">History Archive</span>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab active" onclick="showTab('research')">Research</button>
+  <button class="tab" onclick="showTab('pages')">Pages & Features</button>
+  <button class="tab" onclick="showTab('design')">Design System</button>
+  <button class="tab" onclick="showTab('tech')">Tech Stack</button>
+  <button class="tab" onclick="showTab('roadmap')">Roadmap</button>
+</div>
+
+<div id="research" class="panel active">
+  <div class="fact-grid">
+    <div class="fact-card"><div class="num" style="color:#0F6E56">33</div><div class="lbl">Kalabari towns in Rivers State</div></div>
+    <div class="fact-card"><div class="num" style="color:#854F0B">3</div><div class="lbl">LGAs in Kalabari Kingdom</div></div>
+    <div class="fact-card"><div class="num" style="color:#185FA5">138K+</div><div class="lbl">Degema LGA population</div></div>
+    <div class="fact-card"><div class="num" style="color:#993C1D">1,011</div><div class="lbl">km² Degema LGA area</div></div>
+  </div>
+
+  <div class="section-title">About Ke Town</div>
+  <div style="font-size: 13px; color: var(--color-text-secondary); line-height: 1.7; margin-bottom: 12px; background: var(--color-background-secondary); border-radius: 8px; padding: 14px 16px; border: 0.5px solid var(--color-border-tertiary);">
+    Ke Town is a coastal Kalabari community situated in Degema Local Government Area of Rivers State, Nigeria. It sits among the mangrove swamps and waterways of the Niger Delta, and is one of 33 Kalabari towns that form the Kalabari Kingdom — an independent traditional state of the Ijaw ethnic group. Ke Town holds the <strong>Kemsaipruye-Igbo group of houses</strong>, one of the historic war canoe house lineages of the Kalabari people. It has an active Facebook community page focused on culture, tradition, and entertainment.
+  </div>
+
+  <div class="section-title">Kalabari Cultural Assets (for the website)</div>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
+    <div class="arch-card">
+      <h4>Festivals & Ceremonies</h4>
+      <ul>
+        <li>Owu-Aru-Sun Alali (masquerade festival)</li>
+        <li>Kalabari New Year Festival</li>
+        <li>Ekine masquerade season</li>
+        <li>Canoe Regattas</li>
+        <li>Agiri & Igugule festivals (Degema LGA)</li>
+      </ul>
+    </div>
+    <div class="arch-card">
+      <h4>Social Structure</h4>
+      <ul>
+        <li>War Canoe Houses (Wari system)</li>
+        <li>Kemsaipruye-Igbo group of houses</li>
+        <li>Ekine Sekiapu Society</li>
+        <li>Council of Chiefs</li>
+        <li>Amachree royal dynasty</li>
+      </ul>
+    </div>
+    <div class="arch-card">
+      <h4>Cuisine & Lifestyle</h4>
+      <ul>
+        <li>Onunu (yam + plantain + palm oil)</li>
+        <li>Fisherman's Soup</li>
+        <li>Akamiri & Gbolokai (local gin)</li>
+        <li>Fishing, boat-making, trading</li>
+        <li>Oil palm agriculture</li>
+      </ul>
+    </div>
+    <div class="arch-card">
+      <h4>Attire & Arts</h4>
+      <ul>
+        <li>George & lace wrappers (women)</li>
+        <li>Bowler hat + wrapper (men)</li>
+        <li>Beaded necklaces</li>
+        <li>Ekine headdresses (antelope, leopard)</li>
+        <li>Drums, flutes, praise songs</li>
+      </ul>
+    </div>
+    <div class="arch-card">
+      <h4>Spirituality & Religion</h4>
+      <ul>
+        <li>Awoamenakaso (river goddess)</li>
+        <li>Water spirit beliefs (Owu)</li>
+        <li>Syncretic Christianity + tradition</li>
+        <li>Ancestral shrines (Inkpu)</li>
+        <li>Igba Alabo (purification rites)</li>
+      </ul>
+    </div>
+    <div class="arch-card">
+      <h4>Marriage Traditions</h4>
+      <ul>
+        <li>Iya (highest, most elaborate)</li>
+        <li>Igwa & Waribiobesime forms</li>
+        <li>Bibife (buying of mouth) ceremony</li>
+        <li>Idi Imiete (bride's gift-giving)</li>
+        <li>George fabric as bridal wealth</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section-title">Geography & Environment</div>
+  <div class="arch-card" style="margin-bottom: 8px;">
+    <ul style="padding-left: 14px;">
+      <li style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px;">Mangrove swamp + tropical rainforest zone — less than 20m above sea level</li>
+      <li style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px;">Annual rainfall ~1,862mm; avg temp 25–28°C; humidity ~89%</li>
+      <li style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px;">New Calabar River system, Boler Creek, Kra-kra Creek waterways</li>
+      <li style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px;">Oil & gas exploration present; significant environmental degradation from spills</li>
+      <li style="font-size: 12px; color: var(--color-text-secondary);">~270 fish species; crabs, oysters, shrimps, periwinkles in local waters</li>
+    </ul>
+  </div>
+</div>
+
+<div id="pages" class="panel">
+  <div class="section-title">Site Architecture — 8 Core Pages</div>
+  <div class="page-list">
+
+    <div class="page-item">
+      <div class="page-head">
+        <div class="page-icon" style="background:#E1F5EE;">🏠</div>
+        <div class="page-name">Home</div>
+        <div style="margin-left:auto"><span class="tag tag-teal">Priority 1</span></div>
+      </div>
+      <div class="page-desc">The grand entrance — cinematic hero section with the waterways of Ke Town, animated welcome in Kalabari language, news ticker, quick links to key sections.</div>
+      <div class="features">
+        <div class="feature-row"><div class="feature-dot" style="background:#1D9E75"></div><div class="feature-text">Full-width hero with aerial/waterway photography of Ke Town</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#1D9E75"></div><div class="feature-text">Kalabari greeting: "Kengemina Kalabari — A ro sin te oo!" (Welcome)</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#1D9E75"></div><div class="feature-text">Community announcements & news feed</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#1D9E75"></div><div class="feature-text">Upcoming festivals & events countdown</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#1D9E75"></div><div class="feature-text">Quick cards: History, Culture, Gallery, Connect</div></div>
+      </div>
+    </div>
+
+    <div class="page-item">
+      <div class="page-head">
+        <div class="page-icon" style="background:#FAEEDA;">📜</div>
+        <div class="page-name">History & Origins</div>
+        <div style="margin-left:auto"><span class="tag tag-amber">Priority 1</span></div>
+      </div>
+      <div class="page-desc">The deep story of Ke Town within the Kalabari Kingdom — from Ijaw origins and Amachree dynasty, to the Kemsaipruye-Igbo house lineage, to the present day.</div>
+      <div class="features">
+        <div class="feature-row"><div class="feature-dot" style="background:#BA7517"></div><div class="feature-text">Interactive timeline: Kalabari Kingdom → Ke Town milestones</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#BA7517"></div><div class="feature-text">The War Canoe House (Wari) system explained</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#BA7517"></div><div class="feature-text">Kemsaipruye-Igbo group of houses — genealogy and heritage</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#BA7517"></div><div class="feature-text">Notable sons and daughters of Ke Town</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#BA7517"></div><div class="feature-text">Oral traditions archive — transcribed stories & audio</div></div>
+      </div>
+    </div>
+
+    <div class="page-item">
+      <div class="page-head">
+        <div class="page-icon" style="background:#EEEDFE;">🎭</div>
+        <div class="page-name">Culture & Traditions</div>
+        <div style="margin-left:auto"><span class="tag tag-purple">Priority 1</span></div>
+      </div>
+      <div class="page-desc">The living heart of Kalabari culture as practiced in Ke Town — masquerades, festivals, attire, cuisine, language, and spiritual life.</div>
+      <div class="features">
+        <div class="feature-row"><div class="feature-dot" style="background:#534AB7"></div><div class="feature-text">Ekine masquerade guide: types, meanings, Owu water spirits</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#534AB7"></div><div class="feature-text">Owu-Aru-Sun festival deep dive (history, schedule, significance)</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#534AB7"></div><div class="feature-text">Traditional attire lookbook: George fabric, bowler hats, beadwork</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#534AB7"></div><div class="feature-text">Food & cuisine: Onunu, Fisherman's Soup, Akamiri gin</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#534AB7"></div><div class="feature-text">Marriage ceremonies: Iya, Bibife, Idi Imiete — step-by-step guide</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#534AB7"></div><div class="feature-text">Basic Kalabari language phrasebook (audio enabled)</div></div>
+      </div>
+    </div>
+
+    <div class="page-item">
+      <div class="page-head">
+        <div class="page-icon" style="background:#E6F1FB;">📸</div>
+        <div class="page-name">Gallery & Media</div>
+        <div style="margin-left:auto"><span class="tag tag-blue">Priority 2</span></div>
+      </div>
+      <div class="page-desc">A visual archive of Ke Town — historical photos, festival imagery, aerial views, community moments, and video stories.</div>
+      <div class="features">
+        <div class="feature-row"><div class="feature-dot" style="background:#378ADD"></div><div class="feature-text">Photo gallery: historical, cultural, contemporary, environmental</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#378ADD"></div><div class="feature-text">Video stories: interviews with elders, festival recordings</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#378ADD"></div><div class="feature-text">Community submission portal (anyone can contribute)</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#378ADD"></div><div class="feature-text">360° waterway/mangrove virtual tour (future phase)</div></div>
+      </div>
+    </div>
+
+    <div class="page-item">
+      <div class="page-head">
+        <div class="page-icon" style="background:#FAECE7;">🌊</div>
+        <div class="page-name">Visit Ke Town</div>
+        <div style="margin-left:auto"><span class="tag tag-coral">Priority 2</span></div>
+      </div>
+      <div class="page-desc">A tourism and visitor guide — how to reach Ke Town, what to see, where to stay, best times to visit, and cultural etiquette for guests.</div>
+      <div class="features">
+        <div class="feature-row"><div class="feature-dot" style="background:#993C1D"></div><div class="feature-text">Interactive map of Ke Town and nearby communities</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#993C1D"></div><div class="feature-text">How to get there from Port Harcourt (27km east)</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#993C1D"></div><div class="feature-text">Festival calendar — best times to visit</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#993C1D"></div><div class="feature-text">Canoe tour bookings, fishing experiences</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#993C1D"></div><div class="feature-text">Cultural etiquette guide for visitors</div></div>
+      </div>
+    </div>
+
+    <div class="page-item">
+      <div class="page-head">
+        <div class="page-icon" style="background:#EAF3DE;">🌍</div>
+        <div class="page-name">Diaspora Connect</div>
+        <div style="margin-left:auto"><span class="tag tag-teal">Priority 2</span></div>
+      </div>
+      <div class="page-desc">A hub for Ke Town sons and daughters in Port Harcourt, Lagos, the UK, USA and beyond — community directory, news, remittance guidance, and homecoming planning.</div>
+      <div class="features">
+        <div class="feature-row"><div class="feature-dot" style="background:#1D9E75"></div><div class="feature-text">Community directory (opt-in listing of members worldwide)</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#1D9E75"></div><div class="feature-text">Homecoming events & Annual General Meeting updates</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#1D9E75"></div><div class="feature-text">Development projects: donation portal + impact tracker</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#1D9E75"></div><div class="feature-text">Youth mentorship board — match elders with young people</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#1D9E75"></div><div class="feature-text">Jobs & opportunities bulletin board</div></div>
+      </div>
+    </div>
+
+    <div class="page-item">
+      <div class="page-head">
+        <div class="page-icon" style="background:#FBEAF0;">⚠️</div>
+        <div class="page-name">Environment & Advocacy</div>
+        <div style="margin-left:auto"><span class="tag tag-coral">Priority 3</span></div>
+      </div>
+      <div class="page-desc">Documenting the impact of oil pollution, advocating for environmental justice, and celebrating the return to traditional fishing and ecological stewardship.</div>
+      <div class="features">
+        <div class="feature-row"><div class="feature-dot" style="background:#D4537E"></div><div class="feature-text">Environmental impact reports & oil spill tracker</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#D4537E"></div><div class="feature-text">"Beyond Oil" campaign — traditional fishing revival</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#D4537E"></div><div class="feature-text">Community advocacy letters & petition hub</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#D4537E"></div><div class="feature-text">Links to NDDC, HYPREP, and other remediation resources</div></div>
+      </div>
+    </div>
+
+    <div class="page-item">
+      <div class="page-head">
+        <div class="page-icon" style="background:#F1EFE8;">✉️</div>
+        <div class="page-name">Contact & Community Board</div>
+        <div style="margin-left:auto"><span class="tag tag-teal">Priority 1</span></div>
+      </div>
+      <div class="page-desc">Community announcements, leadership contacts, submit your story, feedback form, and links to the Facebook page and WhatsApp community.</div>
+      <div class="features">
+        <div class="feature-row"><div class="feature-dot" style="background:#5F5E5A"></div><div class="feature-text">Contact the community leadership & admin team</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#5F5E5A"></div><div class="feature-text">Submit a story, photo, or event announcement</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#5F5E5A"></div><div class="feature-text">Link to Facebook page (498+ followers) & WhatsApp</div></div>
+        <div class="feature-row"><div class="feature-dot" style="background:#5F5E5A"></div><div class="feature-text">Newsletter signup</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="design" class="panel">
+  <div class="section-title">Aesthetic Direction</div>
+  <div class="hero-bar" style="margin-bottom: 16px;">
+    <div style="font-size: 13px; color: var(--color-text-secondary); line-height: 1.6;">
+      <strong>Direction: "River Delta Prestige"</strong> — Deep forest greens and riverine blues evoking the mangrove waterways, warmed by Kalabari gold (the color of George fabric and beaded jewelry). Editorial and dignified — this is a proud, literate community with a rich history. The feel should be equal parts <em>cultural museum</em> and <em>vibrant village square</em>.
+    </div>
+  </div>
+
+  <div class="section-title">Color Palette</div>
+  <div class="palette-row">
+    <div class="swatch" style="background:#1a3a2e; color:#e8d5a0; font-size:9px">Deep Forest</div>
+    <div class="swatch" style="background:#c8882a; color:#fff;">Gold</div>
+    <div class="swatch" style="background:#1e5c7a; color:#e1f5ee;">Water</div>
+    <div class="swatch" style="background:#e8d5a0; color:#1a3a2e;">Sand</div>
+    <div class="swatch" style="background:#3a1a0a; color:#e8d5a0;">Earth</div>
+    <div class="swatch" style="background:#f5f0e8; color:#1a3a2e;">Ivory</div>
+  </div>
+
+  <div class="section-title">Typography</div>
+  <div class="arch-card" style="margin-bottom: 8px;">
+    <ul>
+      <li style="font-size:12px;color:var(--color-text-secondary);margin-bottom:6px;"><strong>Display / Headings:</strong> Cormorant Garamond or Playfair Display — serif, authoritative, colonial-era dignity that Kalabari culture earned through centuries of trade with Europeans</li>
+      <li style="font-size:12px;color:var(--color-text-secondary);margin-bottom:6px;"><strong>Body text:</strong> Source Serif Pro — warm, readable, editorial feel</li>
+      <li style="font-size:12px;color:var(--color-text-secondary);"><strong>UI / labels:</strong> DM Sans — clean, modern, legible at small sizes</li>
+    </ul>
+  </div>
+
+  <div class="section-title">Key Design Elements</div>
+  <div class="arch-row">
+    <div class="arch-card">
+      <h4>Visual Motifs</h4>
+      <ul>
+        <li>Water/wave patterns as section dividers</li>
+        <li>Mangrove silhouettes as decorative accents</li>
+        <li>George fabric texture in hero areas</li>
+        <li>Canoe illustrations as navigation icons</li>
+        <li>Ekine mask geometry as graphic elements</li>
+      </ul>
+    </div>
+    <div class="arch-card">
+      <h4>Interaction Design</h4>
+      <ul>
+        <li>Smooth scroll with parallax on hero</li>
+        <li>Timeline: horizontal scroll on history page</li>
+        <li>Gallery: masonry grid with lightbox</li>
+        <li>Language phrasebook: tap to hear audio</li>
+        <li>Events: countdown timer to next festival</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section-title">Mobile-First Considerations</div>
+  <div class="arch-card">
+    <ul>
+      <li style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">Most users in Rivers State will access via mobile on 4G/LTE — optimize aggressively for mobile loading speed</li>
+      <li style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">Offline-capable PWA so content is accessible in low-connectivity areas</li>
+      <li style="font-size:12px;color:var(--color-text-secondary);">WhatsApp share buttons on every major content piece</li>
+    </ul>
+  </div>
+</div>
+
+<div id="tech" class="panel">
+  <div class="section-title">Recommended Stack</div>
+  <div class="arch-row" style="margin-bottom: 12px;">
+    <div class="arch-card">
+      <h4>Frontend Framework</h4>
+      <ul>
+        <li><strong>Next.js 14</strong> (App Router)</li>
+        <li>Static site generation for fast loads</li>
+        <li>React Server Components</li>
+        <li>TailwindCSS for styling</li>
+        <li>Framer Motion for animations</li>
+      </ul>
+    </div>
+    <div class="arch-card">
+      <h4>Content Management</h4>
+      <ul>
+        <li><strong>Sanity.io</strong> (free tier)</li>
+        <li>Non-technical admins can update</li>
+        <li>Structured content for events, gallery</li>
+        <li>Rich text for history & culture articles</li>
+        <li>Media asset management built-in</li>
+      </ul>
+    </div>
+    <div class="arch-card">
+      <h4>Hosting & Storage</h4>
+      <ul>
+        <li><strong>Vercel</strong> — free tier, CDN global</li>
+        <li>Cloudinary for image optimization</li>
+        <li>Automatic HTTPS, custom domain</li>
+        <li>Edge caching for fast Nigeria load</li>
+        <li>Cost: ~$0–$20/month to start</li>
+      </ul>
+    </div>
+    <div class="arch-card">
+      <h4>Extra Services</h4>
+      <ul>
+        <li>Google Maps API (Visit page)</li>
+        <li>Paystack (donation portal, Nigeria)</li>
+        <li>Firebase Auth (community login)</li>
+        <li>WhatsApp Business API (notifications)</li>
+        <li>Cloudflare (DDoS, performance)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section-title">Suggested Domain</div>
+  <div class="arch-card" style="margin-bottom: 12px;">
+    <ul>
+      <li style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;"><strong>Primary:</strong> ketown.com.ng — Nigerian domain, community trust</li>
+      <li style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;"><strong>Alternative:</strong> ketownkalabari.org — diaspora-friendly, non-profit feel</li>
+      <li style="font-size:12px;color:var(--color-text-secondary);">Cost: .com.ng ≈ ₦5,000–8,000/yr via NiRA registrars</li>
+    </ul>
+  </div>
+
+  <div class="section-title">Key Technical Features</div>
+  <div class="arch-card">
+    <ul>
+      <li style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;"><strong>PWA:</strong> Install to home screen, offline reading of culture pages</li>
+      <li style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;"><strong>Bilingual:</strong> English + Kalabari language toggle (phrasebook, greetings)</li>
+      <li style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;"><strong>Audio:</strong> Language phrasebook with audio clips of elders speaking</li>
+      <li style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;"><strong>Search:</strong> Full-text search across history, culture, and community pages</li>
+      <li style="font-size:12px;color:var(--color-text-secondary)"><strong>SEO:</strong> Structured data markup for community / place pages — helps with Google Discovery</li>
+    </ul>
+  </div>
+</div>
+
+<div id="roadmap" class="panel">
+  <div class="section-title">Build Phases</div>
+  <div class="phase-item">
+    <div class="phase-num">1</div>
+    <div class="phase-content">
+      <h4>Phase 1 — Foundation (4–6 weeks)</h4>
+      <p>Home page, History page, Culture & Traditions page, Contact page. Basic design system, domain setup, CMS integration, mobile-responsive. Goal: get the community online with a dignified presence.</p>
+    </div>
+  </div>
+  <div class="phase-item">
+    <div class="phase-num">2</div>
+    <div class="phase-content">
+      <h4>Phase 2 — Engagement (6–8 weeks)</h4>
+      <p>Gallery & Media page with community submissions, Visit Ke Town page with interactive map, Events calendar with festival countdowns, Newsletter signup, WhatsApp integration. Goal: make it dynamic and interactive.</p>
+    </div>
+  </div>
+  <div class="phase-item">
+    <div class="phase-num">3</div>
+    <div class="phase-content">
+      <h4>Phase 3 — Community Platform (8–12 weeks)</h4>
+      <p>Diaspora Connect hub with directory + donation portal, Environment & Advocacy page, Kalabari language phrasebook with audio, Community user accounts, Youth mentorship matching. Goal: become an indispensable resource.</p>
+    </div>
+  </div>
+  <div class="phase-item">
+    <div class="phase-num">4</div>
+    <div class="phase-content">
+      <h4>Phase 4 — Scale (ongoing)</h4>
+      <p>PWA offline capability, 360° virtual waterway tour, Digital archive of oral histories, Podcast/YouTube integration, Mobile app wrapper, Tourism booking system, Kalabari e-marketplace (George fabric, crafts). Goal: regional and diaspora destination.</p>
+    </div>
+  </div>
+
+  <div class="section-title">Content Gathering Checklist</div>
+  <div class="arch-card">
+    <ul>
+      <li style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">Interview community elders for oral histories and house lineage stories</li>
+      <li style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">Collect historical photos (colonial era, early independence, festivals)</li>
+      <li style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">Record audio of Kalabari greetings, songs, and proverbs</li>
+      <li style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">Document the Kemsaipruye-Igbo house genealogy with family input</li>
+      <li style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">Photograph traditional attire, masquerade costumes, food preparation</li>
+      <li style="font-size:12px;color:var(--color-text-secondary);">Coordinate with Kalabari Renaissance Foundation for festival content</li>
+    </ul>
+  </div>
+
+  <div class="section-title">Estimated Costs (Phase 1–2)</div>
+  <div style="border: 0.5px solid var(--color-border-tertiary); border-radius: 8px; padding: 8px 14px;">
+    <div class="kv-row"><div class="kv-k">Domain (.com.ng, 1yr)</div><div class="kv-v">₦6,000 (~$4)</div></div>
+    <div class="kv-row"><div class="kv-k">Vercel hosting (free tier)</div><div class="kv-v">$0/month</div></div>
+    <div class="kv-row"><div class="kv-k">Sanity CMS (free tier)</div><div class="kv-v">$0/month</div></div>
+    <div class="kv-row"><div class="kv-k">Cloudinary (free tier)</div><div class="kv-v">$0/month</div></div>
+    <div class="kv-row"><div class="kv-k">Development time (freelancer)</div><div class="kv-v">₦200K–500K est.</div></div>
+    <div class="kv-row" style="border-bottom:none;padding-top:12px;"><div class="kv-k" style="font-weight:500;">Phase 1 total (DIY tools)</div><div class="kv-v" style="color:var(--color-text-success);">~$4 + dev time</div></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
