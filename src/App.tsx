@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index.tsx";
 import History from "./pages/History.tsx";
 import Culture from "./pages/Culture.tsx";
@@ -12,6 +13,9 @@ import Visit from "./pages/Visit.tsx";
 import Diaspora from "./pages/Diaspora.tsx";
 import Environment from "./pages/Environment.tsx";
 import Contact from "./pages/Contact.tsx";
+import Login from "./pages/Login.tsx";
+import Register from "./pages/Register.tsx";
+import Admin from "./pages/Admin.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -30,22 +34,27 @@ const ScrollToTop = () => {
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <ScrollToTop />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/culture" element={<Culture />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/visit" element={<Visit />} />
-          <Route path="/diaspora" element={<Diaspora />} />
-          <Route path="/environment" element={<Environment />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <ScrollToTop />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/culture" element={<Culture />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/visit" element={<Visit />} />
+            <Route path="/diaspora" element={<Diaspora />} />
+            <Route path="/environment" element={<Environment />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };

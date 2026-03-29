@@ -1,13 +1,14 @@
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Calendar, BookOpen, Camera, Users, MapPin, Clock } from "lucide-react";
+import { ArrowRight, Calendar, BookOpen, Camera, Users, MapPin, Clock, Loader2 } from "lucide-react";
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
 import AnimatedCard from "@/components/AnimatedCard";
 import heroImg from "@/assets/hero-waterway.jpg";
 import cultureImg from "@/assets/culture-masquerade.jpg";
 import historyImg from "@/assets/history-canoe.jpg";
+import { api } from "@/lib/api";
 
 const quickCards = [
   { icon: BookOpen, title: "History & Origins", desc: "Discover the ancient roots of the Kalabari Kingdom", path: "/history", color: "bg-ke-gold/10 text-ke-gold" },
@@ -23,23 +24,63 @@ const stats = [
   { num: "1,011", label: "km² LGA Area" },
 ];
 
-const upcomingEvents = [
-  { name: "Owu-Aru-Sun Festival", date: "Coming Soon", type: "Festival" },
-  { name: "Kalabari New Year", date: "Annual", type: "Cultural" },
-  { name: "Ekine Masquerade Season", date: "Seasonal", type: "Tradition" },
-];
+interface NewsItem {
+  _id: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  createdAt: string;
+}
 
-const announcements = [
-  { title: "Community Development Meeting", date: "Upcoming", excerpt: "All sons and daughters of Ke Town are invited to discuss ongoing development projects." },
-  { title: "Cultural Heritage Documentation", date: "Ongoing", excerpt: "Help us preserve Kalabari heritage by sharing stories, photos, and recordings." },
-  { title: "Youth Mentorship Program Launch", date: "New", excerpt: "Connecting the next generation with elders and experienced professionals." },
-];
+interface EventItem {
+  _id: string;
+  title: string;
+  date: string;
+  type: string;
+}
 
 const Index = () => {
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [isLoadingNews, setIsLoadingNews] = useState(true);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const data = await api.getNews();
+        setNews(data.slice(0, 3));
+      } catch (error) {
+        console.error("Failed to fetch news:", error);
+      } finally {
+        setIsLoadingNews(false);
+      }
+    };
+
+    const fetchEvents = async () => {
+      try {
+        const data = await api.getEvents();
+        setEvents(data.slice(0, 3));
+      } catch (error) {
+        console.error("Failed to fetch events:", error);
+      } finally {
+        setIsLoadingEvents(false);
+      }
+    };
+
+    fetchNews();
+    fetchEvents();
+  }, []);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  };
 
   return (
     <Layout>
@@ -205,7 +246,7 @@ const Index = () => {
       <section className="section-padding bg-background">
         <div className="container-narrow">
           <div className="grid lg:grid-cols-2 gap-12">
-            {/* Announcements */}
+            {/* News */}
             <div>
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-10 h-10 rounded-lg bg-ke-gold/10 flex items-center justify-center">
@@ -214,17 +255,28 @@ const Index = () => {
                 <h3 className="font-display text-2xl font-bold text-foreground">Community News</h3>
               </div>
               <div className="space-y-4">
-                {announcements.map((item, i) => (
-                  <AnimatedCard key={i} delay={i * 0.1}>
-                    <div className="p-5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="tag-ke bg-secondary/10 text-secondary">{item.date}</span>
+                {isLoadingNews ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-secondary" />
+                  </div>
+                ) : news.length > 0 ? (
+                  news.map((item, i) => (
+                    <AnimatedCard key={item._id} delay={i * 0.1}>
+                      <div className="p-5">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="tag-ke bg-secondary/10 text-secondary">{item.category}</span>
+                          <span className="text-xs text-muted-foreground font-ui">{formatDate(item.createdAt)}</span>
+                        </div>
+                        <h4 className="font-display text-lg font-semibold text-foreground mb-1">{item.title}</h4>
+                        <p className="text-sm text-muted-foreground font-body">{item.excerpt}</p>
                       </div>
-                      <h4 className="font-display text-lg font-semibold text-foreground mb-1">{item.title}</h4>
-                      <p className="text-sm text-muted-foreground font-body">{item.excerpt}</p>
-                    </div>
-                  </AnimatedCard>
-                ))}
+                    </AnimatedCard>
+                  ))
+                ) : (
+                  <div className="p-5 text-center text-muted-foreground font-body">
+                    No news available at the moment.
+                  </div>
+                )}
               </div>
             </div>
 
@@ -237,22 +289,32 @@ const Index = () => {
                 <h3 className="font-display text-2xl font-bold text-foreground">Upcoming Events</h3>
               </div>
               <div className="space-y-4">
-                {upcomingEvents.map((event, i) => (
-                  <AnimatedCard key={i} delay={i * 0.1}>
-                    <div className="p-5 flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-lg bg-accent/10 flex flex-col items-center justify-center flex-shrink-0">
-                        <Clock size={18} className="text-accent" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-display text-base font-semibold text-foreground">{event.name}</h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="tag-ke bg-accent/10 text-accent">{event.type}</span>
-                          <span className="text-xs text-muted-foreground font-ui">{event.date}</span>
+                {isLoadingEvents ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-accent" />
+                  </div>
+                ) : events.length > 0 ? (
+                  events.map((event, i) => (
+                    <AnimatedCard key={event._id} delay={i * 0.1}>
+                      <div className="p-5 flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-lg bg-accent/10 flex flex-col items-center justify-center flex-shrink-0">
+                          <Clock size={18} className="text-accent" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-display text-base font-semibold text-foreground">{event.title}</h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="tag-ke bg-accent/10 text-accent">{event.type}</span>
+                            <span className="text-xs text-muted-foreground font-ui">{formatDate(event.date)}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </AnimatedCard>
-                ))}
+                    </AnimatedCard>
+                  ))
+                ) : (
+                  <div className="p-5 text-center text-muted-foreground font-body">
+                    No upcoming events at the moment.
+                  </div>
+                )}
               </div>
 
               {/* Culture preview */}

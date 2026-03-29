@@ -23,6 +23,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ketown', 
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Routes
+app.use('/api/auth', require('./routes/auth'));
 app.use('/api/events', require('./routes/events'));
 app.use('/api/news', require('./routes/news'));
 app.use('/api/gallery', require('./routes/gallery'));
@@ -31,6 +32,10 @@ app.use('/api/projects', require('./routes/projects'));
 app.use('/api/contact', require('./routes/contact'));
 app.use('/api/newsletter', require('./routes/newsletter'));
 app.use('/api/environment', require('./routes/environment'));
+app.use('/api/upload', require('./routes/upload'));
+app.use('/api/search', require('./routes/search'));
+app.use('/api/donations', require('./routes/donations'));
+app.use('/api/admin', require('./routes/admin'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'KE Town API' }));
 

@@ -1,0 +1,657 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.tab-bar{display:flex;gap:2px;border-bottom:0.5px solid var(--color-border-tertiary);margin-bottom:20px;overflow-x:auto;padding-bottom:0}
+.tab{padding:8px 12px;font-size:12px;cursor:pointer;border:none;background:none;color:var(--color-text-secondary);white-space:nowrap;border-radius:6px 6px 0 0}
+.tab.active{color:var(--color-text-primary);font-weight:500;border-bottom:2px solid var(--color-text-primary);margin-bottom:-0.5px}
+.tab:hover:not(.active){background:var(--color-background-secondary)}
+.panel{display:none}.panel.active{display:block}
+.callout{border-left:3px solid;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:14px;font-size:13px;line-height:1.6}
+.callout.gold{border-color:#c8882a;background:#FAEEDA}
+.callout.teal{border-color:#0F6E56;background:#E1F5EE}
+.callout.blue{border-color:#185FA5;background:#E6F1FB}
+.callout.red{border-color:#993C1D;background:#FAECE7}
+.callout.purple{border-color:#534AB7;background:#EEEDFE}
+.callout.gray{border-color:#5F5E5A;background:var(--color-background-secondary)}
+.callout strong{display:block;font-weight:500;margin-bottom:4px;font-size:12px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.7}
+.section-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-text-secondary);margin:20px 0 10px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.card{border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:12px 14px;background:var(--color-background-primary)}
+.card h4{font-size:13px;font-weight:500;margin-bottom:6px}
+.card ul{padding-left:14px}
+.card li{font-size:12px;color:var(--color-text-secondary);margin-bottom:3px;line-height:1.5}
+.stat-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.stat{background:var(--color-background-secondary);border-radius:8px;padding:10px 14px;flex:1;min-width:110px}
+.stat .n{font-size:18px;font-weight:500;margin-bottom:2px}
+.stat .l{font-size:11px;color:var(--color-text-secondary)}
+.timeline{position:relative;padding-left:20px}
+.timeline::before{content:'';position:absolute;left:7px;top:6px;bottom:6px;width:1px;background:var(--color-border-tertiary)}
+.tl-item{position:relative;margin-bottom:16px}
+.tl-dot{position:absolute;left:-16px;top:4px;width:9px;height:9px;border-radius:50%;border:1.5px solid var(--color-border-secondary);background:var(--color-background-primary)}
+.tl-item.highlight .tl-dot{background:#c8882a;border-color:#c8882a}
+.tl-year{font-size:11px;font-weight:500;color:var(--color-text-secondary);margin-bottom:2px}
+.tl-text{font-size:13px;line-height:1.5;color:var(--color-text-primary)}
+.tl-sub{font-size:12px;color:var(--color-text-secondary);margin-top:2px;line-height:1.4}
+.source-pill{display:inline-block;padding:2px 8px;background:var(--color-background-secondary);border-radius:99px;font-size:10px;color:var(--color-text-secondary);margin:2px}
+</style>
+
+<div style="padding:0 0 20px">
+
+<div class="callout gold" style="margin-bottom:20px">
+  <strong>Research scope</strong>
+  Ultra deep dive — oral traditions, academic scholarship, colonial records, contemporary sources, and indigenous community histories. Compiled from 15+ sources including academic journals, Wikipedia, Grokipedia, Naija247news, The Newswriter (Chief Young Georgewill, 2015), AIUCC Ijaw history archives, Britannica, and Rivers State political documents. Covers pre-history through 2026.
+</div>
+
+<div class="tab-bar">
+  <button class="tab active" onclick="showTab('origin')">Origins</button>
+  <button class="tab" onclick="showTab('position')">Ke's Unique Position</button>
+  <button class="tab" onclick="showTab('history')">Full Timeline</button>
+  <button class="tab" onclick="showTab('governance')">Governance</button>
+  <button class="tab" onclick="showTab('culture')">Culture</button>
+  <button class="tab" onclick="showTab('economy')">Economy & Land</button>
+  <button class="tab" onclick="showTab('today')">Modern Day</button>
+</div>
+
+<!-- ORIGINS -->
+<div id="origin" class="panel active">
+  <div class="callout teal">
+    <strong>The Most Significant Finding</strong>
+    According to Chief Young Obene Clarke Georgewill (2015) and corroborated by multiple Kalabari oral historians, Ke is one of only TWO original indigenous communities in the entire Kalabari territory — the other being Angulama in the North. Every other major Kalabari city (Buguma, Abonnema, Bakana) was founded by immigrants. Ke and Angulama were already there, speaking what became the Kalabari language.
+  </div>
+
+  <div class="section-label">Who Are the Kalabari — the Wider Context</div>
+  <div class="grid-2">
+    <div class="card">
+      <h4>Ethnic Origins</h4>
+      <ul>
+        <li>Sub-group of the Ijaw (Izon) people — Eastern Ijaw branch</li>
+        <li>Descended from Perebo Kalabari, son of Mein Owei</li>
+        <li>Originally called <em>Awome</em> before adopting Kalabari name</li>
+        <li>Migration from central Niger Delta — possibly before AD 1000</li>
+        <li>Settled along New Calabar River in mangrove islands</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Name "Kalabari" — Origins Debate</h4>
+      <ul>
+        <li>Portuguese named their landing site "Calabar" → became Kalabari</li>
+        <li>Old Efik Calabar (Cross River) ≠ Kalabari — a common confusion</li>
+        <li>Kalabari means "Elem Kalabari" = New Shipping Port in the language</li>
+        <li>Neighbors called Kalabari "Englishmen" for their civilized trade conduct</li>
+        <li>Estimated population (2023): ~579,000 in Nigeria; ~53,000 diaspora in Ghana</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section-label">Ke's Ancient Status in Kalabari Territory</div>
+  <div class="callout purple">
+    <strong>Ke as Original Language Keeper</strong>
+    The Kalabari language now spoken across 35+ communities was originally the language of Angulama (North) and Ke (South). When immigrants arrived from Benin kingdom and elsewhere in the 16th century speaking Edo and other languages, they were compelled to adopt the language of the pre-existing communities — Angulama and Ke. This makes Ke one of the linguistic and cultural foundations of the entire Kalabari nation.
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h4>Ke's Settlement Timeline</h4>
+      <ul>
+        <li>Ke was already settled when major migrations arrived (16th century)</li>
+        <li>Positioned "in the South" of the Kalabari territory</li>
+        <li>Kalaekuleama is one of the internal communities of Ke Kingdom</li>
+        <li>Formally incorporated into Kalabari Kingdom ~1765 under Amachree I</li>
+        <li>Integration was through <em>cultural and religious affiliations</em> — NOT conquest</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Two Ancient Communities Compared</h4>
+      <ul>
+        <li><strong>Angulama</strong> — most ancient, in the North; owned the Ekine-Sekiapu originally</li>
+        <li><strong>Ke</strong> — second most ancient, in the South; co-owner of Ekine-Sekiapu</li>
+        <li>Both were there before Buguma, Abonnema, Bakana existed</li>
+        <li>Angulama reduced by wars with Agbaniye Ejike of Bille</li>
+        <li>Unlike Angulama, Ke's name does not end in "-ma" or "-na" — pre-immigration naming convention</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout blue">
+    <strong>The Ekine-Sekiapu Revelation</strong>
+    According to Chief Georgewill's 2015 oral history document, the prestigious Ekine-Sekiapu masquerade society — the most important cultural institution in all of Kalabari land — was originally owned by Angulama and Ke. It later spread to other communities across the Kingdom. This means Ke is one of the cultural wellsprings of Kalabari civilization itself.
+  </div>
+
+  <div class="section-label">Sources for this section</div>
+  <span class="source-pill">Chief Young Georgewill (2015), The Newswriter</span>
+  <span class="source-pill">AIUCC Ijaw People History Archive</span>
+  <span class="source-pill">Alagoa, E.J. (1972) — cited in Journal of Humanities Innovation Studies</span>
+  <span class="source-pill">Kalabari tribe — Wikipedia</span>
+</div>
+
+<!-- KE'S UNIQUE POSITION -->
+<div id="position" class="panel">
+  <div class="callout gold">
+    <strong>Why Ke is Different from Other Kalabari Towns</strong>
+    While Buguma, Abonnema, and Bakana are celebrated as major Kalabari cities, they all arrived relatively recently (1881–1884 migration from Elem Kalabari/Old Shipping). Ke was there centuries before them, as one of the original inhabitants who gave the immigrants their language, their masquerade tradition, and their cultural framework.
+  </div>
+
+  <div class="section-label">Ke vs. the "Big Three" Kalabari Cities</div>
+  <div style="border:0.5px solid var(--color-border-tertiary);border-radius:8px;overflow:hidden;margin-bottom:14px">
+    <table style="width:100%;font-size:12px;border-collapse:collapse">
+      <thead>
+        <tr style="background:var(--color-background-secondary)">
+          <th style="padding:8px 12px;text-align:left;font-weight:500">Community</th>
+          <th style="padding:8px 12px;text-align:left;font-weight:500">Founded</th>
+          <th style="padding:8px 12px;text-align:left;font-weight:500">Origin</th>
+          <th style="padding:8px 12px;text-align:left;font-weight:500">Language Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-top:0.5px solid var(--color-border-tertiary);background:#E1F5EE">
+          <td style="padding:8px 12px;font-weight:500;color:#0F6E56">Ke</td>
+          <td style="padding:8px 12px;color:var(--color-text-secondary)">Pre-colonial (ancient)</td>
+          <td style="padding:8px 12px;color:var(--color-text-secondary)">Indigenous — always there</td>
+          <td style="padding:8px 12px;color:var(--color-text-secondary)">Original Kalabari speaker</td>
+        </tr>
+        <tr style="border-top:0.5px solid var(--color-border-tertiary)">
+          <td style="padding:8px 12px;font-weight:500">Angulama</td>
+          <td style="padding:8px 12px;color:var(--color-text-secondary)">Pre-colonial (most ancient)</td>
+          <td style="padding:8px 12px;color:var(--color-text-secondary)">Indigenous — always there</td>
+          <td style="padding:8px 12px;color:var(--color-text-secondary)">Original Kalabari speaker</td>
+        </tr>
+        <tr style="border-top:0.5px solid var(--color-border-tertiary)">
+          <td style="padding:8px 12px">Buguma</td>
+          <td style="padding:8px 12px;color:var(--color-text-secondary)">1884</td>
+          <td style="padding:8px 12px;color:var(--color-text-secondary)">Migrated from Elem Kalabari</td>
+          <td style="padding:8px 12px;color:var(--color-text-secondary)">Adopted Ke/Angulama language</td>
+        </tr>
+        <tr style="border-top:0.5px solid var(--color-border-tertiary)">
+          <td style="padding:8px 12px">Abonnema</td>
+          <td style="padding:8px 12px;color:var(--color-text-secondary)">1881–1882</td>
+          <td style="padding:8px 12px;color:var(--color-text-secondary)">Migrated from Elem Kalabari</td>
+          <td style="padding:8px 12px;color:var(--color-text-secondary)">Adopted Ke/Angulama language</td>
+        </tr>
+        <tr style="border-top:0.5px solid var(--color-border-tertiary)">
+          <td style="padding:8px 12px">Bakana</td>
+          <td style="padding:8px 12px;color:var(--color-text-secondary)">1881</td>
+          <td style="padding:8px 12px;color:var(--color-text-secondary)">Migrated from Elem Kalabari</td>
+          <td style="padding:8px 12px;color:var(--color-text-secondary)">Adopted Ke/Angulama language</td>
+        </tr>
+        <tr style="border-top:0.5px solid var(--color-border-tertiary)">
+          <td style="padding:8px 12px">Elem Kalabari</td>
+          <td style="padding:8px 12px;color:var(--color-text-secondary)">15th–17th century</td>
+          <td style="padding:8px 12px;color:var(--color-text-secondary)">Original migration site from central delta</td>
+          <td style="padding:8px 12px;color:var(--color-text-secondary)">Capital; abandoned 1884</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-label">Ke's Constitutional Position in the Kingdom</div>
+  <div class="callout teal">
+    <strong>Integration by Affiliation, Not Conquest</strong>
+    Academic historian Alagoa (1972), cited in the Journal of Humanities Innovation Studies, states that King Amachree I extended his authority to "Ifoko and Ke through cultural and religious affiliations" — a fundamentally different relationship than the communities that were brought in by conquest (Elem Bakana, Bukuma, Obonoma, Udekema/Degema). This means Ke entered the Kingdom as a respected cultural peer, not a subjugated community.
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h4>Cultural Contributions of Ke to Kalabari</h4>
+      <ul>
+        <li>The Kalabari language itself — original spoken form</li>
+        <li>Co-founding of the Ekine-Sekiapu society</li>
+        <li>Kemsaipruye-Igbo group of houses — a war canoe house lineage</li>
+        <li>Deep-rooted fishing and maritime traditions</li>
+        <li>Water deity veneration traditions predating Amachree dynasty</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Ke's Geographic Strategic Value</h4>
+      <ul>
+        <li>Located "in the South" — closest Kalabari town to the Atlantic outlet</li>
+        <li>Sits on Degema LGA — administrative hub of southern Kalabari</li>
+        <li>Access to Boler Creek, New Calabar River, Kra-kra Creek</li>
+        <li>~27km from Port Harcourt by water</li>
+        <li>Strategic position between Degema town and the open creeks</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- FULL TIMELINE -->
+<div id="history" class="panel">
+  <div class="section-label">Chronological History of Ke and Kalabari Kingdom</div>
+  <div class="timeline">
+
+    <div class="tl-item highlight">
+      <div class="tl-dot"></div>
+      <div class="tl-year">Pre-AD 1000 (estimated)</div>
+      <div class="tl-text">Ke and Angulama established as indigenous Kalabari-speaking communities</div>
+      <div class="tl-sub">The two communities occupy the territory that will become the Kalabari Kingdom. They speak what will become the unified Kalabari language.</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">15th–16th century</div>
+      <div class="tl-text">Major immigrant communities arrive from Benin Kingdom and other regions</div>
+      <div class="tl-sub">Buguma/Abonnema/Bakana forebears arrive at Elem Kalabari (Old Shipping) speaking Edo language. They eventually adopt the language of the existing Ke and Angulama communities.</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">Before 1699</div>
+      <div class="tl-text">King Owerri Daba establishes the Duke Monmouth and Duke Africa trading houses</div>
+      <div class="tl-sub">Kalabari enters the Atlantic slave trade. James Barbot records presents to Duke Monmouth of Kalabari in 1699. Elem Kalabari becomes a major entrepôt for Igbo-sourced slaves.</div>
+    </div>
+
+    <div class="tl-item highlight">
+      <div class="tl-dot"></div>
+      <div class="tl-year">1669–1757 (reign)</div>
+      <div class="tl-text">King Amachree I founds the Amachree dynasty — the empire-builder</div>
+      <div class="tl-sub">Amachree I, originally Dabaye Amakiri, came from Emakalakala in Ogbia. He formally integrates Ke into the Kingdom circa 1765 through cultural and religious affiliations — establishing Ke as a willing partner, not a conquered community.</div>
+    </div>
+
+    <div class="tl-item highlight">
+      <div class="tl-dot"></div>
+      <div class="tl-year">~1765</div>
+      <div class="tl-text">Ke formally integrated into the Kalabari Kingdom</div>
+      <div class="tl-sub">Per Alagoa (1972): Amachree I extended jurisdiction to "Ifoko and Ke through cultural and religious affiliations." Meanwhile Tombia was brought in by diplomacy and protection; Elem Bakana, Bukuma, Obonoma and Degema through conquest.</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">19th century (early)</div>
+      <div class="tl-text">Kalabari pivots from slave trade to palm oil — the "Legitimate Commerce" era</div>
+      <div class="tl-sub">Degema (near Ke) becomes a major exporter of palm oil and kernels, served by the Degema-Abonnema port. Ke's fishing economy remains active throughout this transition.</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">1863</div>
+      <div class="tl-text">Kalabari-Nembe war; Okrika and Bonny threats escalate</div>
+      <div class="tl-sub">Nembe decisively defeats Kalabari. By 1865, Okrika begins ambushing trading canoes. British consul mediates repeatedly. Ke's location in Degema LGA kept it somewhat insulated from the Asari-Toru conflicts further north.</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">1869</div>
+      <div class="tl-text">Ja-Ja of Bonny establishes Opobo state — becomes Kalabari ally</div>
+      <div class="tl-sub">Shifts trade balance in the region. Kalabari and Opobo form an alliance against Bonny.</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">1873</div>
+      <div class="tl-text">Perpetual peace treaty signed between Kalabari and Bonny</div>
+      <div class="tl-sub">Neither treaty was observed. Internal Kalabari rivalry between Amachree and Awo-Barboy factions intensifies.</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">1881–1884</div>
+      <div class="tl-text">The Great Dispersal — Bakana, Abonnema, Buguma founded</div>
+      <div class="tl-sub">Awo-Barboy and Will Braide groups move to Bakana (1881). Abonnema founded (1882). King Abbi Amachree IV leads remaining houses to found Buguma/Asari (1884). Ke remains in place — it was never part of this migration.</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">1883–1884</div>
+      <div class="tl-text">British protectorate established; formal colonialism begins</div>
+      <div class="tl-sub">British consul pressures Kalabari. Colonial courts, police, and administrative systems replace traditional canoe-house governance. Degema becomes a District headquarters with police barracks, high court, and hospital.</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">1893</div>
+      <div class="tl-text">Kalabari Native Court and Council inaugurated at Degema</div>
+      <div class="tl-sub">Ke falls under the Degema administration. The Degema-Abonnema port is the main commercial hub. British trading companies (Thomas & Harrison, E.G. Williams) established at Degema.</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">1900–1947</div>
+      <div class="tl-text">Degema Division administration; boundary with Nembe/Brass settled</div>
+      <div class="tl-sub">D.O. Simpson determines Kalabari-Nembe boundary at the Santa Barbara River. 1947 re-alignment places Degema and Brass in Rivers Province — Ke remains within Degema Division throughout all administrative changes.</div>
+    </div>
+
+    <div class="tl-item highlight">
+      <div class="tl-dot"></div>
+      <div class="tl-year">1956–1958</div>
+      <div class="tl-text">Oil era begins — transforms the Niger Delta</div>
+      <div class="tl-sub">Commercial oil discovered at Oloibiri (1956). Port Harcourt exports first crude (1958). Shell, SPDC begin operations across Kalabari communities. NNPC OML-18 includes Bukuma wells near Ke's territory in Degema LGA.</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">1967</div>
+      <div class="tl-text">Rivers State created — Ke becomes part of the new state</div>
+      <div class="tl-sub">Rivers State formed on 27 May from the former Eastern Region. Degema Division becomes Degema LGA. Ke's administrative identity is now formally within Degema LGA, Rivers State, Nigeria.</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">1976</div>
+      <div class="tl-text">Local government reforms create Kalabari-dominated LGAs</div>
+      <div class="tl-sub">301 LGAs created nationwide. Asari-Toru (headquarters: Buguma), Degema, and Akuku-Toru created for Kalabari communities, enhancing local autonomy.</div>
+    </div>
+
+    <div class="tl-item highlight">
+      <div class="tl-dot"></div>
+      <div class="tl-year">2003</div>
+      <div class="tl-text">King Amachree XI (Prof. Theophilus Princewill CFR) passes</div>
+      <div class="tl-sub">King is buried November 2003. The Kalabari Kingdom enters a long regency period under Dr. C.I.T. Numbere. A new Amanyanabo has not been crowned since — the longest interregnum in modern Kalabari history.</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">2025 (July)</div>
+      <div class="tl-text">Ke in land dispute with Bille community</div>
+      <div class="tl-sub">Asari Dokubo (Amanyanabo of Elem Kalabari) references an active court case: "Bille is in court with Ke." Long-running territorial boundary disputes between Ke and Bille over creeks and fishing grounds continue to simmer.</div>
+    </div>
+
+    <div class="tl-item highlight">
+      <div class="tl-dot"></div>
+      <div class="tl-year">December 31, 2024</div>
+      <div class="tl-text">Asari Dokubo installed as Amanyanabo of Elem Kalabari (The Source)</div>
+      <div class="tl-sub">Alhaji Mujahid Abubakar Dokubo-Asari installed by Governor Fubara as Dabaye Amakiri I. Marks a return to the ancestral seat at Elem Kalabari after 140 years of abandonment. Represents a major symbolic revival for the entire Kalabari nation including Ke.</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">2025–2026</div>
+      <div class="tl-text">Oil spill crisis hits Degema LGA communities; Ke remains on front lines</div>
+      <div class="tl-sub">NNPC OML-18 Bukuma well 8 fire caused by illegal bunkering devastates multiple communities in Degema LGA including Buguma and Bukuma. Kalabari Regent Numbere calls it a "disaster zone." Ke and neighbouring communities face ongoing environmental threats.</div>
+    </div>
+  </div>
+</div>
+
+<!-- GOVERNANCE -->
+<div id="governance" class="panel">
+  <div class="section-label">The Amanyanabo System</div>
+  <div class="callout blue">
+    <strong>The King of Kalabari: "Owner of the Land"</strong>
+    Amanyanabo literally means "owner of the land." The Kalabari king is simultaneously head of state, chief judge, custodian of tradition, and diplomatic representative. Authority is balanced between the king and the Council of Owuogbo (chiefs of each War Canoe House). This hybrid system — part monarchy, part republic — prevents absolute rule.
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h4>The Amachree Dynasty Rulers</h4>
+      <ul>
+        <li>Amachree I (Dabaye Amakiri) — 1669–1757 — founder, empire-builder</li>
+        <li>Amachree II — expansion era</li>
+        <li>Karibo Amachree III — died 1863, succession crisis</li>
+        <li>Abbi Amachree IV — led the Great Dispersal (Buguma founding)</li>
+        <li>Princewill Amachree — first under British protectorate</li>
+        <li>Amachree X Obaye Abiye Suku — 1990s</li>
+        <li>Amachree XI Prof. Theophilus Princewill CFR — d.2003</li>
+        <li>Regent: Dr. C.I.T. Numbere — 2003–present</li>
+        <li>Elem Kalabari (The Source): Dabaye Amakiri I (Asari Dokubo) — 2024–</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>The War Canoe House (Wari) System</h4>
+      <ul>
+        <li>Each house = political unit + commercial corporation + military unit</li>
+        <li>Head of house elected (not purely hereditary) — merit matters</li>
+        <li>Membership included: family, slaves, adopted members, trading partners</li>
+        <li>Wealth measured by number of people in your house</li>
+        <li>Every major house owned a war canoe (Omu-Aru) + paddlers + pilots</li>
+        <li>Houses represented in the Council of Owuogbo alongside the king</li>
+        <li>No chief-ship without Ekine society membership</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>The Ekine-Sekiapu Society</h4>
+      <ul>
+        <li>Originally owned by Ke and Angulama — the two ancient communities</li>
+        <li>Ekine = "the dancing people"; Sekiapu = "dancers"</li>
+        <li>Functions: law enforcement, justice, cultural ceremonies, masquerades</li>
+        <li>Served as court and police before formal governance structures</li>
+        <li>No chieftaincy title without Ekine membership</li>
+        <li>Admission into Ekine is the highest honor given to a stranger</li>
+        <li>Led by the Opu Edi (head of Ekine)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Ke Kingdom's Internal Structure</h4>
+      <ul>
+        <li>Ke Kingdom is a collective of sub-communities</li>
+        <li>Kalaekuleama — confirmed as one of its constituent communities</li>
+        <li>Kemsaipruye-Igbo — the main group of war canoe houses in Ke</li>
+        <li>Ke has a traditional ruler (Amanyanabo/chief) recognized by Rivers State</li>
+        <li>Community governed through house council + traditional ruler</li>
+        <li>Active land boundary cases with Bille community (2025)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section-label">Chieftaincy Process in Kalabari (applies to Ke)</div>
+  <div class="callout gray">
+    <strong>How a Chief is Made</strong>
+    Chieftaincy in Kalabari land is neither automatic nor symbolic. Verified as recently as February 2026 (Asari Dokubo's son's installation): a candidate must be presented before chiefs of every house with which he has paternal affiliation. Each house examines his lineage, character, reputation, and conduct. The process can span weeks to months. Even a king must submit to ancestral protocol — Asari Dokubo himself was presented to the Abi Royal Family ahead of his coronation.
+  </div>
+</div>
+
+<!-- CULTURE -->
+<div id="culture" class="panel">
+  <div class="section-label">Kalabari Cultural System (Ke is its Ancient Wellspring)</div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h4>Masquerades & Water Spirits</h4>
+      <ul>
+        <li><strong>Owu</strong> — water spirits; principal beings of the spirit world</li>
+        <li><strong>Awoamenakaso (Akaso)</strong> — mother of all Kalabari deities; opposed war; said to be "sister" of Britannia</li>
+        <li>Ekine masquerade season — dry season, ~3 plays annually over 15–20 years</li>
+        <li><strong>Owu-Aru-Sun Alali</strong> — grand festival after all masquerades performed; major event in Buguma (1908, 1927, 1973, 1991, 2013)</li>
+        <li><strong>Alagba</strong> — first masquerade played before Owu-Aru-Sun; must precede others</li>
+        <li>Owu ritually returned to the sea after the festival</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Religion & Spirituality</h4>
+      <ul>
+        <li>Original religion: animist water-spirit veneration + ancestor worship</li>
+        <li>Shrines to water spirits and ancestors (Inkpu)</li>
+        <li>Igba Alabo — purification rites</li>
+        <li>Today: ~90% Christian (Anglican, Catholic, Pentecostal)</li>
+        <li>Christianity and tradition coexist: Ekine masquerades are maintained by Christians</li>
+        <li>New Year prayers at river shrines still practiced</li>
+        <li>"The Kalabari Monarch also said that the Alagba masquerade does not in any way conflict with the Christian faith" — King Amachree XI</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Traditional Marriage System</h4>
+      <ul>
+        <li><strong>Iya</strong> — highest and most expensive form; introduced by King Amachree I</li>
+        <li><strong>Igwa</strong> — intermediate form</li>
+        <li><strong>Waribiobesime</strong> — third form</li>
+        <li><strong>Ari Ibara emi</strong> — cheapest legal form ("she is with me")</li>
+        <li><strong>Bibife</strong> — "buying the mouth" ceremony; bride cannot eat until mouth is bought</li>
+        <li><strong>Idi Imiete</strong> — bride's gift-giving ceremony</li>
+        <li>George fabric is central to bridal wealth presentations</li>
+        <li>Kalabari marriage is among the least expensive in South-South Nigeria</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Attire & Aesthetics</h4>
+      <ul>
+        <li><strong>Women:</strong> George/lace wrappers with matching blouse + shawl; large head-tie or cap; coral/glass beads in layers</li>
+        <li><strong>Men:</strong> wrapper + shirt + bowler hat + walking stick (symbols of dignity and pride)</li>
+        <li>George fabric = Indian-origin cotton with gold brocade; central to identity</li>
+        <li>Beaded necklaces, bracelets, and earrings — multiple layers for ceremonies</li>
+        <li>Ekine headdresses: antelope, leopard motifs; intricate wood + pigment</li>
+        <li>"Polo" = compound/family setting (name coined by European settlers)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Traditional Cuisine</h4>
+      <ul>
+        <li><strong>Onunu</strong> — pounded yam + ripe plantain + palm oil; the signature dish</li>
+        <li><strong>Tominafulo</strong> — fresh fish, prawns, periwinkle, oyster, local ingredients</li>
+        <li><strong>Odo'fulo (Native Soup)</strong> — fresh seafood + local herbs</li>
+        <li><strong>Fisherman's Soup</strong> — quintessential coastal dish</li>
+        <li><strong>Akamiri</strong> — locally brewed gin; used in ceremonies</li>
+        <li><strong>Gbolokai</strong> — another local gin variant</li>
+        <li>270+ fish species in local waters; crabs, oysters, shrimps, periwinkles</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Funerary Customs</h4>
+      <ul>
+        <li><strong>Dinkoru</strong> — wake-night of songs, drumming, dancing, libations</li>
+        <li>Body dressed in special garments; coffin decorated with traditional symbols</li>
+        <li><strong>Dinkrama</strong> — final ceremony 7–8 days after burial; reinforces clan ties</li>
+        <li>Multiple-day ceremonies; elaborateness increases with status</li>
+        <li>Soul sent to ancestors through ritual after burial</li>
+        <li>Kalabari funerals are major community events attracting hundreds</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout teal">
+    <strong>Kalabari Language in Ke</strong>
+    Kalabari is an Eastern Ijaw language. Ke and Angulama are its oldest speaking communities. A Kalabari greeting: "Ibote" (hello); they say "Ibote, Ibosa, or Iboa" (vs Okrika's "Ibuosa"). The language is spoken across all 35+ Kalabari settlements. There is no written standard form; it exists primarily in oral tradition. The Kalabari New Year Festival (celebrated annually) is a key occasion where the language, songs, and oral histories are transmitted.
+  </div>
+</div>
+
+<!-- ECONOMY -->
+<div id="economy" class="panel">
+  <div class="section-label">Economic Landscape — Ke and Degema LGA</div>
+
+  <div class="stat-row">
+    <div class="stat"><div class="n" style="color:#0F6E56">138,941</div><div class="l">Degema LGA population (2006 census)</div></div>
+    <div class="stat"><div class="n" style="color:#185FA5">1,011 km²</div><div class="l">Degema LGA area</div></div>
+    <div class="stat"><div class="n" style="color:#854F0B">27 km</div><div class="l">Port Harcourt to Degema (east by water)</div></div>
+    <div class="stat"><div class="n" style="color:#993C1D">42 mi</div><div class="l">Degema to Bonny via Boler Creek route</div></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h4>Traditional Economy (Ke's Core)</h4>
+      <ul>
+        <li>Fishing — the foundational livelihood; ~270 fish species in local waters</li>
+        <li>Canoe-building — expert boat-makers; Omu-Aru (war canoes) historically</li>
+        <li>Palm oil production — Degema was a major 19th-century palm oil port</li>
+        <li>Salt production — evaporated from coastal swamps; traded inland</li>
+        <li>Cassava, taro, plantain, yam cultivation</li>
+        <li>Trading with inland Igbo, Yoruba, Ogoni, Ibibio communities</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Oil & Gas Economy (Modern)</h4>
+      <ul>
+        <li>Shell's Soku fields: ~300,000 barrels/day in Kalabari territory</li>
+        <li>NNPC OML-18 includes Bukuma Well 8 — in Degema LGA, near Ke</li>
+        <li>Cawthorne Channel — one of SPDC's largest oilfields; Bakana is landlord</li>
+        <li>Communities have sought surveillance contracts and royalties from companies</li>
+        <li>Oil revenues reduced 15–20% at times due to community vandalism/blockades</li>
+        <li>13% derivation allocation to Niger Delta states under 1999 Constitution</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Colonial-Era Trade Heritage (Degema)</h4>
+      <ul>
+        <li>Degema port: exported palm oil, kernels, timber to Europe</li>
+        <li>Abonnema port (near Ke): served as seaport until Port Harcourt's rise</li>
+        <li>Thomas & Harrison, E.G. Williams — British firms at Degema</li>
+        <li>Individual chiefs owned launches (passenger boats) and fly-boats</li>
+        <li>Port Harcourt (27km east) gradually eclipsed Degema as the commercial hub</li>
+        <li>The Abonnema port closure impacted the entire Degema division economy</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Land & Water Disputes</h4>
+      <ul>
+        <li>Ke vs. Bille: active court case over territorial boundaries (2025)</li>
+        <li>Kalabari vs. Nembe: historical Santa Barbara River boundary (settled 1954)</li>
+        <li>Kula vs. Nembe: boundary disputes along the Santa Barbara River</li>
+        <li>Krakrama vs. Bille: separate court case ongoing</li>
+        <li>Communities compete over oil flow station ownership (SPDC GMoU clusters)</li>
+        <li>NDDC (Niger Delta Development Commission) and HYPREP tasked with remediation</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout red">
+    <strong>Environmental Crisis — Ke's Backyard</strong>
+    In 2024–2025, an NNPC wellhead fire at Bukuma Well 8 (OML-18) in Degema LGA devastated multiple communities including Buguma and Bukuma — blamed on illegal bunkering. The Kalabari Regent declared the area a "disaster zone." Oil spills across the Kalabari kingdom have destroyed fishing grounds, contaminated drinking water, and rendered some mangroves lifeless. This is Ke's most pressing existential challenge. HYPREP (Hydrocarbon Pollution Remediation Project) has been mandated to address Shell-related pollution.
+  </div>
+</div>
+
+<!-- TODAY -->
+<div id="today" class="panel">
+  <div class="section-label">Ke Kingdom in 2026</div>
+
+  <div class="callout gold">
+    <strong>Current Status</strong>
+    Ke Kingdom is a living Kalabari-language speaking community in Degema LGA, Rivers State. It is among the most historically significant — yet under-documented — communities in Nigeria. Its Facebook community page ("KE TOWN — A coastal community in Degema LGA") has 498+ followers. It is not yet on Wikipedia as a standalone article. The Kalabari Kingdom as a whole is currently under a regency (Dr. C.I.T. Numbere) pending a new coronation.
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h4>Ke in the 2025–2026 Context</h4>
+      <ul>
+        <li>Land dispute with Bille community active in courts (2025)</li>
+        <li>Oil spill devastation across Degema LGA (2024–2025) affecting livelihoods</li>
+        <li>Revival of Elem Kalabari (Old Shipping) under Asari Dokubo may affect Ke's position in kingdom politics</li>
+        <li>Degema LGA population estimated ~249,773 (2006 census, LGA-wide)</li>
+        <li>Christianity dominant religion; traditional cultural practices maintained</li>
+        <li>Main occupations: fishing, petty trading, government employment, oil industry</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Ke Kingdom's Sub-Communities</h4>
+      <ul>
+        <li>Kalaekuleama — confirmed constituent community</li>
+        <li>Kemsaipruye-Igbo group of houses — main war canoe house lineage</li>
+        <li>Ke Kingdom encompasses multiple compounds (Polo) along the creeks</li>
+        <li>Communities accessible primarily by water from Degema or Abonnema</li>
+        <li>No bridge connection — boat is the main mode of transport</li>
+        <li>Mobile network coverage varies; 4G available near Degema town</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Cultural Preservation Concerns</h4>
+      <ul>
+        <li>Risk of language drift as youth migrate to Port Harcourt</li>
+        <li>Oral histories not yet formally archived</li>
+        <li>Traditional fishing techniques threatened by pollution and overfishing</li>
+        <li>Ekine masquerade participation declining due to youth migration</li>
+        <li>George fabric tradition maintained but imports increasingly dominant</li>
+        <li>No dedicated cultural website or digital archive for Ke Kingdom</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Development Infrastructure</h4>
+      <ul>
+        <li>Degema General Hospital (LGA headquarters)</li>
+        <li>Medium Security Custodial Center in Degema town</li>
+        <li>Zonal Hospital Degema</li>
+        <li>Primary/secondary schools in Ke and neighboring communities</li>
+        <li>Power supply erratic; diesel generators common</li>
+        <li>Roads: mainly waterways; no major road connections to Ke</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section-label">Notable Families & Surnames in Kalabari (Western Names)</div>
+  <div class="callout gray">
+    <strong>The European Name Tradition</strong>
+    Contact with Portuguese, Dutch, English, and Welsh traders gave Kalabari people Western surnames that persist today: Briggs, West, Harry, Dicks, Princewill, Horsefall, Bob-Manuel, Georgewill, Johnbull, Omekwe, Amachree, Oruwari, Owukori. These surnames are a living marker of 400 years of maritime trade. In Ke, common lineage surnames follow the Kemsaipruye-Igbo house tradition. Names like Amachree and Briggs have royal/chief-class significance.
+  </div>
+
+  <div class="section-label">What Does Not Yet Exist (Website Opportunity)</div>
+  <div class="callout purple">
+    <strong>The Digital Gap</strong>
+    There is currently no Wikipedia article, no dedicated website, no digital archive, and no academic paper specifically about Ke Kingdom. The only digital presence is a 498-follower Facebook page. Given that Ke is one of the two most ancient Kalabari communities — the original language keeper, co-founder of the Ekine-Sekiapu — the absence of a proper digital home is a significant cultural loss. This is exactly why a dedicated web presence for Ke Kingdom is historically and culturally urgent.
+  </div>
+</div>
+
+</div>
+
+<script>
+function showTab(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>

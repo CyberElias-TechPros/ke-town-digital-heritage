@@ -1,5 +1,6 @@
 import Header from "./Header";
 import Footer from "./Footer";
+import WhatsAppShare from "./WhatsAppShare";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,6 +12,7 @@ const Layout = ({ children }: LayoutProps) => {
       <Header />
       <main className="flex-1">{children}</main>
       <Footer />
+      <WhatsAppShare />
     </div>
   );
 };

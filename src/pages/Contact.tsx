@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Phone, MapPin, Facebook, MessageCircle, Send, Camera, BookOpen } from "lucide-react";
+import { Mail, Phone, MapPin, Facebook, MessageCircle, Send, Camera, BookOpen, Loader2 } from "lucide-react";
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
 import AnimatedCard from "@/components/AnimatedCard";
+import { api } from "@/lib/api";
 
 const contactMethods = [
   { icon: Facebook, title: "Facebook", desc: "KE Town Community Page (498+ followers)", link: "#", action: "Visit Page" },
@@ -21,12 +22,47 @@ const submissionTypes = [
 const Contact = () => {
   const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "", type: "general" });
   const [submitted, setSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [newsletterError, setNewsletterError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
-    setFormData({ name: "", email: "", subject: "", message: "", type: "general" });
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await api.submitContact(formData);
+      setSubmitted(true);
+      setFormData({ name: "", email: "", subject: "", message: "", type: "general" });
+      setTimeout(() => setSubmitted(false), 5000);
+    } catch (err: any) {
+      setError(err.message || "Failed to send message. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterEmail) return;
+
+    setNewsletterLoading(true);
+    setNewsletterError("");
+
+    try {
+      await api.subscribeNewsletter(newsletterEmail);
+      setNewsletterSubmitted(true);
+      setNewsletterEmail("");
+      setTimeout(() => setNewsletterSubmitted(false), 5000);
+    } catch (err: any) {
+      setNewsletterError(err.message || "Failed to subscribe. Please try again.");
+    } finally {
+      setNewsletterLoading(false);
+    }
   };
 
   return (
@@ -76,6 +112,15 @@ const Contact = () => {
                   className="bg-secondary/10 border border-secondary/20 text-secondary rounded-lg p-4 mb-6 font-ui text-sm"
                 >
                   ✓ Thank you! Your message has been sent. We'll get back to you soon.
+                </motion.div>
+              )}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-destructive/10 border border-destructive/20 text-destructive rounded-lg p-4 mb-6 font-ui text-sm"
+                >
+                  {error}
                 </motion.div>
               )}
               <form onSubmit={handleSubmit} className="space-y-5">
@@ -140,9 +185,20 @@ const Contact = () => {
                 </div>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 px-8 py-3 bg-secondary text-secondary-foreground rounded-lg font-ui font-semibold text-sm hover:bg-secondary/90 transition-all shadow-[var(--shadow-gold)]"
+                  disabled={isLoading}
+                  className="inline-flex items-center gap-2 px-8 py-3 bg-secondary text-secondary-foreground rounded-lg font-ui font-semibold text-sm hover:bg-secondary/90 transition-all shadow-[var(--shadow-gold)] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Send size={16} /> Send Message
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send size={16} />
+                      Send Message
+                    </>
+                  )}
                 </button>
               </form>
             </div>
@@ -172,14 +228,43 @@ const Contact = () => {
                 <p className="text-primary-foreground/70 text-sm font-body mb-4">
                   Stay updated with community news, events, and announcements.
                 </p>
-                <form className="flex gap-2" onSubmit={(e) => e.preventDefault()}>
+                {newsletterSubmitted && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-secondary/20 border border-secondary/30 text-secondary-foreground rounded-lg p-3 mb-4 font-ui text-sm"
+                  >
+                    ✓ Successfully subscribed to the newsletter!
+                  </motion.div>
+                )}
+                {newsletterError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-destructive/20 border border-destructive/30 text-destructive-foreground rounded-lg p-3 mb-4 font-ui text-sm"
+                  >
+                    {newsletterError}
+                  </motion.div>
+                )}
+                <form className="flex gap-2" onSubmit={handleNewsletterSubmit}>
                   <input
                     type="email"
+                    value={newsletterEmail}
+                    onChange={(e) => setNewsletterEmail(e.target.value)}
                     placeholder="your@email.com"
+                    required
                     className="flex-1 px-4 py-2.5 rounded-lg bg-primary-foreground/10 border border-primary-foreground/20 text-primary-foreground font-ui text-sm placeholder:text-primary-foreground/40 focus:outline-none focus:ring-2 focus:ring-secondary"
                   />
-                  <button type="submit" className="px-4 py-2.5 bg-secondary text-secondary-foreground rounded-lg font-ui font-semibold text-sm hover:bg-secondary/90 transition-all">
-                    Subscribe
+                  <button 
+                    type="submit" 
+                    disabled={newsletterLoading}
+                    className="px-4 py-2.5 bg-secondary text-secondary-foreground rounded-lg font-ui font-semibold text-sm hover:bg-secondary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {newsletterLoading ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      "Subscribe"
+                    )}
                   </button>
                 </form>
               </div>

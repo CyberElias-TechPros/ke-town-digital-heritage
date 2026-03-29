@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
 import AnimatedCard from "@/components/AnimatedCard";
+import AudioPhrasebook from "@/components/AudioPhrasebook";
 import cultureImg from "@/assets/culture-masquerade.jpg";
 import attireImg from "@/assets/attire-george.jpg";
 import cuisineImg from "@/assets/cuisine-onunu.jpg";
@@ -37,12 +38,18 @@ const marriageSteps = [
 ];
 
 const phrases = [
-  { kalabari: "A ro sin te oo!", english: "Welcome!", context: "Greeting visitors" },
-  { kalabari: "Kengemina Kalabari", english: "We are Kalabari", context: "Identity declaration" },
-  { kalabari: "Opu Ama", english: "Big Town / City", context: "Place reference" },
-  { kalabari: "Igba Alabo", english: "Purification rites", context: "Spiritual ceremony" },
-  { kalabari: "Amanyanabo", english: "King / Paramount Ruler", context: "Title of respect" },
-  { kalabari: "Wari", english: "War Canoe House", context: "Political/social unit" },
+  { id: "1", kalabari: "A ro sin te oo!", english: "Welcome!", context: "Greeting visitors", category: "Greetings", pronunciation: "ah-roh-sin-teh-oh" },
+  { id: "2", kalabari: "Kengemina Kalabari", english: "We are Kalabari", context: "Identity declaration", category: "Identity", pronunciation: "ken-geh-mee-nah-kah-lah-bah-ree" },
+  { id: "3", kalabari: "Opu Ama", english: "Big Town / City", context: "Place reference", category: "Places", pronunciation: "oh-poo-ah-mah" },
+  { id: "4", kalabari: "Igba Alabo", english: "Purification rites", context: "Spiritual ceremony", category: "Spirituality", pronunciation: "ee-gbah-ah-lah-boh" },
+  { id: "5", kalabari: "Amanyanabo", english: "King / Paramount Ruler", context: "Title of respect", category: "Titles", pronunciation: "ah-mahn-yah-nah-boh" },
+  { id: "6", kalabari: "Wari", english: "War Canoe House", context: "Political/social unit", category: "Social Structure", pronunciation: "wah-ree" },
+  { id: "7", kalabari: "Owu", english: "Water Spirits", context: "Spiritual beings", category: "Spirituality", pronunciation: "oh-woo" },
+  { id: "8", kalabari: "Ekine", english: "Masquerade Society", context: "Cultural institution", category: "Culture", pronunciation: "eh-kee-neh" },
+  { id: "9", kalabari: "Bibife", english: "Buying of the mouth", context: "Marriage ceremony", category: "Marriage", pronunciation: "bee-bee-feh" },
+  { id: "10", kalabari: "Iya", english: "Highest marriage form", context: "Prestigious ceremony", category: "Marriage", pronunciation: "ee-yah" },
+  { id: "11", kalabari: "George", english: "Traditional fabric", context: "Cultural textile", category: "Attire", pronunciation: "jorj" },
+  { id: "12", kalabari: "Onunu", english: "Yam and plantain dish", context: "Traditional cuisine", category: "Food", pronunciation: "oh-noo-noo" },
 ];
 
 const Culture = () => {
@@ -182,30 +189,11 @@ const Culture = () => {
 
               {activeTab === "Language" && (
                 <div>
-                  <SectionHeading title="Kalabari Phrasebook" subtitle="Basic phrases in the Kalabari (Awome) language" />
-                  <div className="max-w-2xl mx-auto">
-                    <div className="bg-card rounded-xl border border-border overflow-hidden shadow-[var(--shadow-card)]">
-                      <div className="grid grid-cols-3 gap-0 bg-primary text-primary-foreground px-6 py-3 font-ui text-xs font-semibold uppercase tracking-wider">
-                        <span>Kalabari</span>
-                        <span>English</span>
-                        <span>Context</span>
-                      </div>
-                      {phrases.map((phrase, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0 }}
-                          whileInView={{ opacity: 1 }}
-                          viewport={{ once: true }}
-                          transition={{ delay: i * 0.05 }}
-                          className="grid grid-cols-3 gap-0 px-6 py-4 border-t border-border hover:bg-muted/50 transition-colors"
-                        >
-                          <span className="font-display font-semibold text-foreground text-sm">{phrase.kalabari}</span>
-                          <span className="text-sm text-muted-foreground font-body">{phrase.english}</span>
-                          <span className="text-xs text-muted-foreground font-ui">{phrase.context}</span>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
+                  <AudioPhrasebook
+                    phrases={phrases}
+                    title="Kalabari Phrasebook"
+                    subtitle="Learn basic phrases in the Kalabari (Awome) language with audio pronunciation"
+                  />
                 </div>
               )}
 

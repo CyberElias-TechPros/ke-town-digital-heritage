@@ -3,8 +3,8 @@ import { MapPin, Clock, Ship, Compass, BookOpen, Sun, CloudRain, Thermometer } f
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
 import AnimatedCard from "@/components/AnimatedCard";
+import InteractiveMap from "@/components/InteractiveMap";
 import heroImg from "@/assets/hero-waterway.jpg";
-import envImg from "@/assets/environment-mangrove.jpg";
 
 const travelInfo = [
   { icon: MapPin, title: "Location", desc: "Ke Town, Degema LGA, Rivers State, Nigeria. Located in the eastern Niger Delta waterway system." },
@@ -121,19 +121,58 @@ const Visit = () => {
         </div>
       </section>
 
-      {/* Map placeholder */}
+      {/* Interactive Map */}
       <section className="section-padding bg-muted/50">
         <div className="container-narrow">
-          <SectionHeading title="Location Map" subtitle="Ke Town in the Niger Delta" />
-          <div className="bg-card rounded-xl border border-border overflow-hidden shadow-[var(--shadow-card)]">
-            <div className="relative h-80 bg-ke-water/10 flex items-center justify-center">
-              <img src={envImg} alt="Ke Town area" loading="lazy" className="w-full h-full object-cover opacity-40" />
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <MapPin size={40} className="text-secondary mb-2" />
-                <p className="font-display text-lg font-semibold text-foreground">Ke Town, Degema LGA</p>
-                <p className="text-sm text-muted-foreground font-ui">Rivers State, Nigeria • ~4.8°N, 6.8°E</p>
-              </div>
-            </div>
+          <SectionHeading title="Location Map" subtitle="Explore Ke Town and the surrounding Niger Delta waterways" />
+          <InteractiveMap
+            locations={[
+              {
+                name: "Ke Town",
+                lat: 4.7833,
+                lng: 6.8167,
+                description: "Main settlement in Degema LGA",
+                type: "town",
+              },
+              {
+                name: "Degema",
+                lat: 4.75,
+                lng: 6.85,
+                description: "Local Government Area headquarters",
+                type: "landmark",
+              },
+              {
+                name: "New Calabar River",
+                lat: 4.8,
+                lng: 6.8,
+                description: "Major waterway system",
+                type: "waterway",
+              },
+              {
+                name: "Bille Creek",
+                lat: 4.7667,
+                lng: 6.8333,
+                description: "Traditional fishing area",
+                type: "waterway",
+              },
+              {
+                name: "Kra-kra Creek",
+                lat: 4.8167,
+                lng: 6.7833,
+                description: "Mangrove waterway",
+                type: "waterway",
+              },
+            ]}
+            center={{ lat: 4.7833, lng: 6.8167 }}
+            zoom={12}
+            height="450px"
+          />
+          <div className="mt-6 text-center">
+            <p className="text-sm text-muted-foreground font-body">
+              Ke Town is located at approximately 4.78°N, 6.82°E in the Niger Delta region.
+              <br />
+              Click on markers to learn more about each location.
+            </p>
           </div>
         </div>
       </section>
