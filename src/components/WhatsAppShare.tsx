@@ -11,8 +11,8 @@ interface WhatsAppShareProps {
 }
 
 const WhatsAppShare = ({
-  title = "KE Town Digital Heritage",
-  text = "Check out KE Town Digital Heritage - preserving Kalabari culture and connecting the community!",
+  title = "KE Kingdom Digital Heritage",
+  text = "Check out KE Kingdom Digital Heritage - preserving Kalabari culture and connecting the community!",
   url,
   className = "",
   variant = "floating",

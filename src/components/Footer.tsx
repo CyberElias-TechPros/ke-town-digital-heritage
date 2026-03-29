@@ -22,10 +22,10 @@ const Footer = () => {
               <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground font-display font-bold text-lg">
                 K
               </div>
-              <span className="font-display text-xl font-bold">KE Town</span>
+              <span className="font-display text-xl font-bold">KE Kingdom</span>
             </div>
             <p className="text-primary-foreground/70 text-sm font-body leading-relaxed">
-              A digital home for the Kalabari community of Ke Town, Degema LGA, Rivers State. Preserving culture, connecting diaspora.
+              A digital home for the Kalabari community of Ke Kingdom, Degema LGA, Rivers State. Preserving culture, connecting diaspora.
             </p>
           </div>
 
@@ -37,7 +37,7 @@ const Footer = () => {
                 { label: "History & Origins", path: "/history" },
                 { label: "Culture & Traditions", path: "/culture" },
                 { label: "Gallery & Media", path: "/gallery" },
-                { label: "Visit Ke Town", path: "/visit" },
+                { label: "Visit Ke Kingdom", path: "/visit" },
               ].map((link) => (
                 <li key={link.path}>
                   <Link
@@ -78,15 +78,15 @@ const Footer = () => {
             <div className="space-y-3 font-ui text-sm text-primary-foreground/70">
               <div className="flex items-center gap-2">
                 <MapPin size={14} className="text-secondary flex-shrink-0" />
-                <span>Ke Town, Degema LGA, Rivers State</span>
+                <span>Ke Kingdom, Degema LGA, Rivers State</span>
               </div>
               <div className="flex items-center gap-2">
                 <Facebook size={14} className="text-secondary flex-shrink-0" />
-                <a href="#" className="hover:text-secondary transition-colors">KE Town Facebook</a>
+                <a href="#" className="hover:text-secondary transition-colors">KE Kingdom Facebook</a>
               </div>
               <div className="flex items-center gap-2">
                 <Mail size={14} className="text-secondary flex-shrink-0" />
-                <a href="mailto:info@ketown.com.ng" className="hover:text-secondary transition-colors">info@ketown.com.ng</a>
+                <a href="mailto:info@keKingdom.com.ng" className="hover:text-secondary transition-colors">info@keKingdom.com.ng</a>
               </div>
             </div>
           </div>
@@ -94,7 +94,7 @@ const Footer = () => {
 
         <div className="border-t border-primary-foreground/10 mt-10 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-primary-foreground/50 text-xs font-ui">
-            © {new Date().getFullYear()} KE Town Community. All rights reserved.
+            © {new Date().getFullYear()} KE Kingdom Community. All rights reserved.
           </p>
           <p className="text-primary-foreground/50 text-xs font-ui">
             Preserving Kalabari Heritage for Future Generations

@@ -24,7 +24,7 @@ const SectionHeading = ({ title, subtitle, centered = true, light = false }: Sec
       <div className="flex items-center gap-3 mb-4 justify-center">
         <div className={`h-px w-12 ${light ? "bg-secondary/50" : "bg-secondary"}`} />
         <span className={`text-xs font-ui font-semibold uppercase tracking-[0.2em] ${light ? "text-secondary" : "text-secondary"}`}>
-          KE Town
+          KE Kingdom
         </span>
         <div className={`h-px w-12 ${light ? "bg-secondary/50" : "bg-secondary"}`} />
       </div>

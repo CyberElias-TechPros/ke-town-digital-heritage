@@ -1,5 +1,5 @@
 // ============================================
-// KE Town Backend — Node.js + Express + MongoDB
+// KE Kingdom Backend — Node.js + Express + MongoDB
 // ============================================
 // To run: cd server && npm install && npm run dev
 // Requires: Node.js 18+, MongoDB connection string in .env
@@ -16,7 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ketown', {
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/keKingdom', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 }).then(() => console.log('MongoDB connected'))
@@ -37,7 +37,7 @@ app.use('/api/search', require('./routes/search'));
 app.use('/api/donations', require('./routes/donations'));
 app.use('/api/admin', require('./routes/admin'));
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'KE Town API' }));
+app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'KE Kingdom API' }));
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`KE Town API running on port ${PORT}`));
+app.listen(PORT, () => console.log(`KE Kingdom API running on port ${PORT}`));

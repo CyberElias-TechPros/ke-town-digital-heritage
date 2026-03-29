@@ -7,10 +7,10 @@ import AnimatedCard from "@/components/AnimatedCard";
 import { api } from "@/lib/api";
 
 const contactMethods = [
-  { icon: Facebook, title: "Facebook", desc: "KE Town Community Page (498+ followers)", link: "#", action: "Visit Page" },
+  { icon: Facebook, title: "Facebook", desc: "KE Kingdom Community Page (498+ followers)", link: "#", action: "Visit Page" },
   { icon: MessageCircle, title: "WhatsApp", desc: "Join our WhatsApp community group", link: "#", action: "Join Group" },
-  { icon: Mail, title: "Email", desc: "info@ketown.com.ng", link: "mailto:info@ketown.com.ng", action: "Send Email" },
-  { icon: MapPin, title: "Location", desc: "Ke Town, Degema LGA, Rivers State, Nigeria", link: "#", action: "View Map" },
+  { icon: Mail, title: "Email", desc: "info@keKingdom.com.ng", link: "mailto:info@keKingdom.com.ng", action: "Send Email" },
+  { icon: MapPin, title: "Location", desc: "Ke Kingdom, Degema LGA, Rivers State, Nigeria", link: "#", action: "View Map" },
 ];
 
 const submissionTypes = [
@@ -77,7 +77,7 @@ const Contact = () => {
               Get in <span className="text-gradient-gold">Touch</span>
             </h1>
             <p className="text-primary-foreground/70 font-body text-lg max-w-2xl mx-auto">
-              Reach out to community leadership, submit your stories, or connect with the Ke Town family worldwide.
+              Reach out to community leadership, submit your stories, or connect with the Ke Kingdom family worldwide.
             </p>
           </motion.div>
         </div>

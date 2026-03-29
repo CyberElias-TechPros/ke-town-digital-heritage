@@ -15,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const categories = ["All", "Historical", "Cultural", "Contemporary", "Environment"];
 
 const defaultGalleryItems = [
-  { src: heroImg, title: "Ke Town Waterways", category: "Contemporary", desc: "Aerial view of the mangrove waterways surrounding Ke Town" },
+  { src: heroImg, title: "Ke Kingdom Waterways", category: "Contemporary", desc: "Aerial view of the mangrove waterways surrounding Ke Kingdom" },
   { src: cultureImg, title: "Masquerade Festival", category: "Cultural", desc: "Kalabari masquerade dancers during the Owu-Aru-Sun festival" },
   { src: historyImg, title: "War Canoe Heritage", category: "Historical", desc: "Historical illustration of the Kalabari war canoe house system" },
   { src: attireImg, title: "Traditional Attire", category: "Cultural", desc: "Kalabari woman in traditional George fabric and coral beads" },
@@ -159,7 +159,7 @@ const Gallery = () => {
               Visual <span className="text-gradient-gold">Archive</span>
             </h1>
             <p className="text-primary-foreground/70 font-body text-lg max-w-2xl mx-auto">
-              A collection of photographs, artwork, and media documenting the beauty and heritage of Ke Town and Kalabari culture.
+              A collection of photographs, artwork, and media documenting the beauty and heritage of Ke Kingdom and Kalabari culture.
             </p>
           </motion.div>
         </div>
@@ -398,7 +398,7 @@ const Gallery = () => {
       {/* Submission CTA */}
       <section className="section-padding bg-muted/50">
         <div className="container-narrow text-center">
-          <SectionHeading title="Contribute to the Archive" subtitle="Share your photos, videos, and memories of Ke Town" />
+          <SectionHeading title="Contribute to the Archive" subtitle="Share your photos, videos, and memories of Ke Kingdom" />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

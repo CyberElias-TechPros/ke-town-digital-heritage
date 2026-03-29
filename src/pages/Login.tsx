@@ -48,7 +48,7 @@ const Login = () => {
                 Sign In
               </h1>
               <p className="text-primary-foreground/70 font-body">
-                Access your KE Town community account
+                Access your KE Kingdom community account
               </p>
             </div>
 

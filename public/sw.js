@@ -1,4 +1,4 @@
-const CACHE_NAME = "ke-town-v1";
+const CACHE_NAME = "ke-Kingdom-v1";
 const STATIC_ASSETS = [
   "/",
   "/index.html",
@@ -92,9 +92,9 @@ async function syncFormData() {
 // Push notifications
 self.addEventListener("push", (event) => {
   const data = event.data?.json() ?? {};
-  const title = data.title || "KE Town Update";
+  const title = data.title || "KE Kingdom Update";
   const options = {
-    body: data.body || "New update from KE Town Digital Heritage",
+    body: data.body || "New update from KE Kingdom Digital Heritage",
     icon: "/favicon.ico",
     badge: "/favicon.ico",
     vibrate: [100, 50, 100],

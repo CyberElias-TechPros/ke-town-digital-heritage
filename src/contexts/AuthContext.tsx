@@ -33,8 +33,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Load user from localStorage on mount
   useEffect(() => {
-    const storedToken = localStorage.getItem('ketown_token');
-    const storedUser = localStorage.getItem('ketown_user');
+    const storedToken = localStorage.getItem('keKingdom_token');
+    const storedUser = localStorage.getItem('keKingdom_user');
 
     if (storedToken && storedUser) {
       setToken(storedToken);
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
-        localStorage.setItem('ketown_user', JSON.stringify(data.user));
+        localStorage.setItem('keKingdom_user', JSON.stringify(data.user));
       } else {
         // Token invalid, clear storage
         logout();
@@ -83,8 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setUser(data.user);
     setToken(data.token);
-    localStorage.setItem('ketown_token', data.token);
-    localStorage.setItem('ketown_user', JSON.stringify(data.user));
+    localStorage.setItem('keKingdom_token', data.token);
+    localStorage.setItem('keKingdom_user', JSON.stringify(data.user));
   };
 
   const register = async (fullName: string, email: string, password: string) => {
@@ -104,15 +104,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setUser(data.user);
     setToken(data.token);
-    localStorage.setItem('ketown_token', data.token);
-    localStorage.setItem('ketown_user', JSON.stringify(data.user));
+    localStorage.setItem('keKingdom_token', data.token);
+    localStorage.setItem('keKingdom_user', JSON.stringify(data.user));
   };
 
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem('ketown_token');
-    localStorage.removeItem('ketown_user');
+    localStorage.removeItem('keKingdom_token');
+    localStorage.removeItem('keKingdom_user');
   };
 
   const updateProfile = async (profileData: Partial<User>) => {
@@ -134,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     setUser(data.user);
-    localStorage.setItem('ketown_user', JSON.stringify(data.user));
+    localStorage.setItem('keKingdom_user', JSON.stringify(data.user));
   };
 
   const value = {

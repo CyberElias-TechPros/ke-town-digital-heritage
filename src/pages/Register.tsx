@@ -61,7 +61,7 @@ const Register = () => {
                 Create Account
               </h1>
               <p className="text-primary-foreground/70 font-body">
-                Become part of the KE Town community
+                Become part of the KE Kingdom community
               </p>
             </div>
 

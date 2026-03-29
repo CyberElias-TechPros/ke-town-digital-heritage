@@ -25,7 +25,7 @@ router.post('/register', async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'ketown-secret-key-2024',
+      process.env.JWT_SECRET || 'keKingdom-secret-key-2024',
       { expiresIn: '7d' }
     );
 
@@ -73,7 +73,7 @@ router.post('/login', async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'ketown-secret-key-2024',
+      process.env.JWT_SECRET || 'keKingdom-secret-key-2024',
       { expiresIn: '7d' }
     );
 

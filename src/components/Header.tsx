@@ -59,7 +59,7 @@ const Header = () => {
             </div>
             <div>
               <span className="font-display text-xl font-bold text-primary-foreground tracking-tight">
-                KE Town
+                KE Kingdom
               </span>
               <span className="hidden md:block text-xs text-primary-foreground/60 font-ui -mt-0.5">
                 Kalabari Heritage

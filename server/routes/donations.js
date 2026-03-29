@@ -33,7 +33,7 @@ router.post('/initialize', async (req, res) => {
     }
 
     // Generate unique reference
-    const reference = `KETOWN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const reference = `KEKingdom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Create donation record
     const donation = await Donation.create({

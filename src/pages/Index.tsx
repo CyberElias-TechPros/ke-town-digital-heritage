@@ -13,15 +13,15 @@ import { api } from "@/lib/api";
 const quickCards = [
   { icon: BookOpen, title: "History & Origins", desc: "Discover the ancient roots of the Kalabari Kingdom", path: "/history", color: "bg-ke-gold/10 text-ke-gold" },
   { icon: Camera, title: "Culture & Traditions", desc: "Masquerades, festivals, cuisine, and language", path: "/culture", color: "bg-ke-water/10 text-ke-water" },
-  { icon: MapPin, title: "Visit Ke Town", desc: "Travel guide to the Niger Delta waterways", path: "/visit", color: "bg-ke-deep/10 text-ke-deep" },
-  { icon: Users, title: "Diaspora Connect", desc: "Join the global Ke Town community", path: "/diaspora", color: "bg-secondary/10 text-secondary" },
+  { icon: MapPin, title: "Visit Ke Kingdom", desc: "Travel guide to the Niger Delta waterways", path: "/visit", color: "bg-ke-deep/10 text-ke-deep" },
+  { icon: Users, title: "Diaspora Connect", desc: "Join the global Ke Kingdom community", path: "/diaspora", color: "bg-secondary/10 text-secondary" },
 ];
 
 const stats = [
+  { num: "800 AD", label: "Earliest Settlement" },
   { num: "33", label: "Kalabari Towns" },
   { num: "3", label: "LGAs in Kingdom" },
-  { num: "138K+", label: "Degema Population" },
-  { num: "1,011", label: "km² LGA Area" },
+  { num: "~579K", label: "Kalabari Population" },
 ];
 
 interface NewsItem {
@@ -87,7 +87,7 @@ const Index = () => {
       {/* Hero Section */}
       <section ref={heroRef} className="relative h-screen min-h-[600px] overflow-hidden">
         <motion.div style={{ y: heroY }} className="absolute inset-0">
-          <img src={heroImg} alt="Ke Town waterways" width={1920} height={1080} className="w-full h-full object-cover" />
+          <img src={heroImg} alt="Ke Kingdom waterways" width={1920} height={1080} className="w-full h-full object-cover" />
           <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, hsl(160 37% 16% / 0.4) 0%, hsl(160 37% 16% / 0.8) 70%, hsl(160 37% 16%) 100%)" }} />
         </motion.div>
 
@@ -109,7 +109,7 @@ const Index = () => {
             className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-primary-foreground mb-4 leading-[0.95]"
           >
             Welcome to<br />
-            <span className="text-gradient-gold">KE Town</span>
+            <span className="text-gradient-gold">KE Kingdom</span>
           </motion.h1>
 
           <motion.p
@@ -185,27 +185,30 @@ const Index = () => {
       {/* About Section */}
       <section className="section-padding bg-background">
         <div className="container-narrow">
-          <SectionHeading
-            title="About Ke Town"
-            subtitle="A coastal Kalabari community with centuries of history"
-          />
-          <div className="grid md:grid-cols-2 gap-10 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <p className="text-muted-foreground font-body leading-relaxed mb-6">
-                Ke Town is a coastal Kalabari community situated in Degema Local Government Area of Rivers State, Nigeria. It sits among the mangrove swamps and waterways of the Niger Delta, and is one of 33 Kalabari towns that form the Kalabari Kingdom — an independent traditional state of the Ijaw ethnic group.
-              </p>
-              <p className="text-muted-foreground font-body leading-relaxed mb-6">
-                Ke Town holds the <strong className="text-foreground">Kemsaipruye-Igbo group of houses</strong>, one of the historic war canoe house lineages of the Kalabari people, embodying centuries of maritime tradition and warrior heritage.
-              </p>
-              <Link to="/history" className="inline-flex items-center gap-2 text-secondary font-ui font-semibold text-sm hover:gap-3 transition-all">
-                Read Full History <ArrowRight size={16} />
-              </Link>
-            </motion.div>
+            <SectionHeading
+              title="About Ke Kingdom"
+              subtitle="One of the two ancient foundations of the entire Kalabari nation"
+            />
+            <div className="grid md:grid-cols-2 gap-10 items-center">
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+              >
+                <p className="text-muted-foreground font-body leading-relaxed mb-6">
+                  Ke Kingdom is a coastal Kalabari community situated in Degema Local Government Area of Rivers State, Nigeria. Archaeological evidence dates settlement to <strong className="text-foreground">at least 800 AD</strong>, making it one of the oldest documented human settlements in the eastern Niger Delta.
+                </p>
+                <p className="text-muted-foreground font-body leading-relaxed mb-6">
+                  According to oral historian Chief Young Georgewill (2015), Ke is one of only <strong className="text-foreground">two original indigenous communities</strong> in all of Kalabari territory — the other being Angulama. Every other major Kalabari city arrived later as immigrants. Ke gave the Kalabari nation its language and its Ekine masquerade tradition.
+                </p>
+                <p className="text-muted-foreground font-body leading-relaxed mb-6">
+                  Currently led by <strong className="text-foreground">HRM King Agolia Cookey Aboko Omoni XIII</strong> (crowned August 2020), Ke Kingdom holds the <strong className="text-foreground">Kemsaipruye-Igbo group of houses</strong> — one of the historic war canoe house lineages embodying centuries of maritime tradition.
+                </p>
+                <Link to="/history" className="inline-flex items-center gap-2 text-secondary font-ui font-semibold text-sm hover:gap-3 transition-all">
+                  Read Full History <ArrowRight size={16} />
+                </Link>
+              </motion.div>
             <motion.div
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -222,7 +225,7 @@ const Index = () => {
       {/* Quick Cards */}
       <section className="section-padding bg-muted/50">
         <div className="container-narrow">
-          <SectionHeading title="Explore KE Town" subtitle="Discover the many facets of our community" />
+          <SectionHeading title="Explore KE Kingdom" subtitle="Discover the many facets of our community" />
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {quickCards.map((card, i) => (
               <AnimatedCard key={card.path} delay={i * 0.1}>
@@ -346,10 +349,10 @@ const Index = () => {
             viewport={{ once: true }}
           >
             <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
-              Join the KE Town Community
+              Join the KE Kingdom Community
             </h2>
             <p className="text-primary-foreground/70 font-body text-lg max-w-xl mx-auto mb-8">
-              Whether you're from Ke Town or simply curious about Kalabari culture, there's a place for you here.
+              Whether you're from Ke Kingdom or simply curious about Kalabari culture, there's a place for you here.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link

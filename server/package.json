@@ -1,7 +1,7 @@
 {
-  "name": "ketown-server",
+  "name": "keKingdom-server",
   "version": "1.0.0",
-  "description": "KE Town Community Web App — Express + MongoDB Backend",
+  "description": "KE Kingdom Community Web App — Express + MongoDB Backend",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, Fish, FileText, ExternalLink, Leaf, Droplets, Loader2, Send, Check, AlertCircle } from "lucide-react";
+import { AlertTriangle, Fish, FileText, ExternalLink, Leaf, Droplets, Loader2, Send, Check, AlertCircle, HeartPulse, ShieldAlert } from "lucide-react";
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
 import AnimatedCard from "@/components/AnimatedCard";
@@ -9,9 +9,9 @@ import { api } from "@/lib/api";
 
 const impactStats = [
   { label: "Fish Species at Risk", value: "270+", icon: Fish },
-  { label: "Annual Rainfall", value: "1,862mm", icon: Droplets },
-  { label: "Oil Pipelines Nearby", value: "Multiple", icon: AlertTriangle },
-  { label: "Ecosystem Type", value: "Mangrove", icon: Leaf },
+  { label: "Barrels Spilled Annually", value: "240K", icon: AlertTriangle },
+  { label: "Food Security Reduction", value: "60%", icon: ShieldAlert },
+  { label: "Respiratory Issues", value: "68%", icon: HeartPulse },
 ];
 
 const resources = [
@@ -202,6 +202,81 @@ const Environment = () => {
         </div>
       </section>
 
+      {/* Health Impact */}
+      <section className="section-padding bg-background">
+        <div className="container-narrow">
+          <SectionHeading title="Health Impact on Communities" subtitle="The human cost of oil pollution in Degema LGA and surrounding Kalabari communities" />
+          <div className="grid md:grid-cols-2 gap-8 mb-8">
+            <div className="bg-card rounded-xl border border-border p-6 shadow-[var(--shadow-card)]">
+              <h3 className="font-display text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+                <HeartPulse size={20} className="text-destructive" />
+                Health Statistics
+              </h3>
+              <ul className="space-y-3">
+                {[
+                  { label: "Neonatal Mortality", value: "29 per 1,000 births" },
+                  { label: "Infant Mortality", value: "57 per 1,000 births" },
+                  { label: "Skilled Birth Attendance", value: "Only 17% of births" },
+                  { label: "Respiratory Issues (refining areas)", value: "68% of residents vs 22% in non-exposed areas" },
+                ].map((stat, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <div className="w-2 h-2 rounded-full bg-destructive mt-1.5 flex-shrink-0" />
+                    <div>
+                      <span className="text-sm font-ui font-medium text-foreground">{stat.label}:</span>{" "}
+                      <span className="text-sm text-muted-foreground font-body">{stat.value}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-card rounded-xl border border-border p-6 shadow-[var(--shadow-card)]">
+              <h3 className="font-display text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+                <ShieldAlert size={20} className="text-destructive" />
+                Contamination Data
+              </h3>
+              <ul className="space-y-3">
+                {[
+                  { label: "Benzene in Drinking Water", value: "1,200 μg/L — 240× WHO guidelines" },
+                  { label: "Heavy Metals (Lead, Cadmium)", value: "200-300% above FAO/WHO thresholds" },
+                  { label: "Annual Crude Oil Spilled", value: "~240,000 barrels in the Niger Delta" },
+                  { label: "Household Food Security", value: "60% reduction in oil-impacted communities" },
+                ].map((stat, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <div className="w-2 h-2 rounded-full bg-destructive mt-1.5 flex-shrink-0" />
+                    <div>
+                      <span className="text-sm font-ui font-medium text-foreground">{stat.label}:</span>{" "}
+                      <span className="text-sm text-muted-foreground font-body">{stat.value}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Specific Incidents */}
+          <div className="bg-card rounded-xl border border-destructive/20 p-6 shadow-[var(--shadow-card)]">
+            <h3 className="font-display text-xl font-semibold text-foreground mb-4">Notable Incidents</h3>
+            <div className="space-y-4">
+              <div className="border-l-3 border-destructive pl-4">
+                <span className="text-xs font-ui text-destructive font-medium">2024–2025</span>
+                <h4 className="font-display text-base font-semibold text-foreground mt-1">NNPC OML-18 Bukuma Well 8 Fire</h4>
+                <p className="text-sm text-muted-foreground font-body mt-1">A wellhead fire caused by illegal bunkering devastated multiple communities in Degema LGA including Buguma and Bukuma. The Kalabari Regent declared the area a "disaster zone." Ke and neighbouring communities face ongoing environmental threats.</p>
+              </div>
+              <div className="border-l-3 border-destructive pl-4">
+                <span className="text-xs font-ui text-destructive font-medium">2019</span>
+                <h4 className="font-display text-base font-semibold text-foreground mt-1">Kalaekuleama Burning by Operation Delta Safe</h4>
+                <p className="text-sm text-muted-foreground font-body mt-1">Kalaekuleama community (a constituent of Ke Kingdom) was mistakenly burned by Operation Delta Safe due to false illegal bunkering reports — highlighting the dangers of misinformation in the region.</p>
+              </div>
+              <div className="border-l-3 border-secondary pl-4">
+                <span className="text-xs font-ui text-secondary font-medium">2022</span>
+                <h4 className="font-display text-base font-semibold text-foreground mt-1">Ke Kingdom's Zero-Tolerance Declaration</h4>
+                <p className="text-sm text-muted-foreground font-body mt-1">The Concerned Youths of Ke (CYK) publicly debunked media claims of ongoing bunkering, citing proactive reporting to authorities and town-crier announcements under Governor Wike's anti-crime drive.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Beyond Oil Campaign */}
       <section className="section-padding bg-muted/50">
         <div className="container-narrow">
@@ -283,7 +358,7 @@ const Environment = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="font-display text-2xl font-bold text-foreground mb-2">Submit Environment Report</h3>
-            <p className="text-sm text-muted-foreground font-body mb-6">Help document environmental issues affecting Ke Town and the Niger Delta.</p>
+            <p className="text-sm text-muted-foreground font-body mb-6">Help document environmental issues affecting Ke Kingdom and the Niger Delta.</p>
 
             {submitSuccess ? (
               <motion.div
@@ -323,7 +398,7 @@ const Environment = () => {
                     required
                     value={reportForm.location}
                     onChange={(e) => setReportForm({ ...reportForm, location: e.target.value })}
-                    placeholder="e.g., Ke Town, Bille Area"
+                    placeholder="e.g., Ke Kingdom, Bille Area"
                     className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground font-ui text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
                   />
                 </div>

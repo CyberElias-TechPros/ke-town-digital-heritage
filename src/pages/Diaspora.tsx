@@ -15,8 +15,8 @@ const diasporaLocations = [
 ];
 
 const opportunities = [
-  { title: "Youth Mentorship Program", type: "Mentorship", desc: "Connect with experienced professionals from the Ke Town diaspora for career guidance." },
-  { title: "Community Development Volunteer", type: "Volunteer", desc: "Help organize and execute development projects in Ke Town during your next visit." },
+  { title: "Youth Mentorship Program", type: "Mentorship", desc: "Connect with experienced professionals from the Ke Kingdom diaspora for career guidance." },
+  { title: "Community Development Volunteer", type: "Volunteer", desc: "Help organize and execute development projects in Ke Kingdom during your next visit." },
   { title: "Cultural Documentation Intern", type: "Internship", desc: "Help document Kalabari oral histories, language, and traditions for digital preservation." },
 ];
 
@@ -158,7 +158,7 @@ const Diaspora = () => {
               One Community, <span className="text-gradient-gold">Worldwide</span>
             </h1>
             <p className="text-primary-foreground/70 font-body text-lg max-w-2xl mx-auto">
-              Connecting Ke Town sons and daughters across Nigeria and the world — stay informed, give back, and come home.
+              Connecting Ke Kingdom sons and daughters across Nigeria and the world — stay informed, give back, and come home.
             </p>
           </motion.div>
         </div>
@@ -167,7 +167,7 @@ const Diaspora = () => {
       {/* Directory */}
       <section className="section-padding bg-background">
         <div className="container-narrow">
-          <SectionHeading title="Community Worldwide" subtitle="Ke Town diaspora across the globe" />
+          <SectionHeading title="Community Worldwide" subtitle="Ke Kingdom diaspora across the globe" />
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
             {diasporaLocations.map((loc, i) => (
               <AnimatedCard key={i} delay={i * 0.1}>
@@ -200,10 +200,61 @@ const Diaspora = () => {
         </div>
       </section>
 
+      {/* Historical Migrations */}
+      <section className="section-padding bg-muted/50">
+        <div className="container-narrow">
+          <SectionHeading title="Historical Migrations" subtitle="How Ke Kingdom's people spread across the Niger Delta and beyond" />
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-card rounded-xl border border-border p-6 shadow-[var(--shadow-card)]">
+              <h3 className="font-display text-xl font-semibold text-foreground mb-4">The Dispersal of Ke</h3>
+              <p className="text-sm text-muted-foreground font-body leading-relaxed mb-4">
+                Ke was once a massive "metropolis" of the Delta before several catastrophes reduced its size. Oral traditions record three major depopulation events:
+              </p>
+              <ul className="space-y-3">
+                {[
+                  { title: "The Fallen Silk Cotton Tree", desc: "A giant tree fell during a festival, killing thousands and leading to mass exodus." },
+                  { title: "The Pestilence", desc: "A severe disease outbreak (likely smallpox) forced survivors to flee to Okrika, Nembe, and Bonny." },
+                  { title: "War with 'Sea Beings'", desc: "Possibly early conflicts with European slave raiders or coastal adversaries." },
+                ].map((event, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-secondary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-secondary text-xs font-ui font-bold">{i + 1}</span>
+                    </div>
+                    <div>
+                      <span className="text-sm font-ui font-medium text-foreground">{event.title}:</span>{" "}
+                      <span className="text-sm text-muted-foreground font-body">{event.desc}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-sm text-muted-foreground font-body leading-relaxed mt-4">
+                Ke migrants first settled at <strong className="text-foreground">Fibiri</strong> before moving to Oloma and eventually becoming part of the Grand Bonny Kingdom. This migration path connects Ke to communities across the eastern Niger Delta.
+              </p>
+            </div>
+            <div className="bg-card rounded-xl border border-border p-6 shadow-[var(--shadow-card)]">
+              <h3 className="font-display text-xl font-semibold text-foreground mb-4">The European Name Tradition</h3>
+              <p className="text-sm text-muted-foreground font-body leading-relaxed mb-4">
+                Contact with Portuguese, Dutch, English, and Welsh traders gave Kalabari people Western surnames that persist today — a living marker of 400 years of maritime trade:
+              </p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {["Briggs", "West", "Harry", "Dicks", "Princewill", "Horsefall", "Bob-Manuel", "Georgewill", "Johnbull", "Omekwe", "Amachree", "Oruwari", "Owukori"].map((name, i) => (
+                  <span key={i} className="inline-block px-3 py-1.5 bg-secondary/10 text-secondary rounded-full text-sm font-ui">
+                    {name}
+                  </span>
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground font-body leading-relaxed">
+                In Ke, common lineage surnames follow the <strong className="text-foreground">Kemsaipruye-Igbo</strong> house tradition. Names like Amachree and Briggs have royal/chief-class significance. These surnames are evidence of centuries of international commerce and cultural exchange.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Development Projects */}
       <section className="section-padding bg-muted/50">
         <div className="container-narrow">
-          <SectionHeading title="Development Projects" subtitle="Community-driven initiatives to improve Ke Town" />
+          <SectionHeading title="Development Projects" subtitle="Community-driven initiatives to improve Ke Kingdom" />
           {isLoadingProjects ? (
             <div className="flex justify-center items-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-secondary" />
@@ -276,10 +327,10 @@ const Diaspora = () => {
         <div className="relative z-10 container-narrow px-4 md:px-8 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
-              Come Home to Ke Town
+              Come Home to Ke Kingdom
             </h2>
             <p className="text-primary-foreground/70 font-body text-lg max-w-xl mx-auto mb-8">
-              Plan your homecoming visit. Whether it's for the Kalabari New Year Festival or just to reconnect with your roots — Ke Town awaits.
+              Plan your homecoming visit. Whether it's for the Kalabari New Year Festival or just to reconnect with your roots — Ke Kingdom awaits.
             </p>
             <a href="/contact" className="inline-flex items-center gap-2 px-6 py-3 bg-secondary text-secondary-foreground rounded-lg font-ui font-semibold text-sm hover:bg-secondary/90 transition-all shadow-[var(--shadow-gold)]">
               Plan Your Visit <ArrowRight size={16} />
@@ -303,7 +354,7 @@ const Diaspora = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="font-display text-2xl font-bold text-foreground mb-2">Join the Directory</h3>
-            <p className="text-sm text-muted-foreground font-body mb-6">Register to be listed in the Ke Town community directory (opt-in).</p>
+            <p className="text-sm text-muted-foreground font-body mb-6">Register to be listed in the Ke Kingdom community directory (opt-in).</p>
             
             {registerSuccess ? (
               <motion.div
@@ -364,8 +415,8 @@ const Diaspora = () => {
                   onChange={(e) => setRegisterForm({ ...registerForm, connection: e.target.value })}
                   className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground font-ui text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
                 >
-                  <option value="">Connection to Ke Town</option>
-                  <option value="born">Born in Ke Town</option>
+                  <option value="">Connection to Ke Kingdom</option>
+                  <option value="born">Born in Ke Kingdom</option>
                   <option value="descendant">Descendant</option>
                   <option value="married">Married into</option>
                   <option value="friend">Friend / Ally</option>

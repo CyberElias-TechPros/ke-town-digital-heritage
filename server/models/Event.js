@@ -6,7 +6,7 @@ const EventSchema = new mongoose.Schema({
   date: { type: Date, required: true },
   endDate: { type: Date },
   type: { type: String, enum: ['festival', 'cultural', 'community', 'meeting', 'sport'], default: 'community' },
-  location: { type: String, default: 'Ke Town' },
+  location: { type: String, default: 'Ke Kingdom' },
   image: { type: String },
   isRecurring: { type: Boolean, default: false },
   status: { type: String, enum: ['upcoming', 'ongoing', 'completed'], default: 'upcoming' },

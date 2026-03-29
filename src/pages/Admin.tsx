@@ -198,7 +198,7 @@ const Admin = () => {
                   Welcome, {user?.fullName}
                 </h1>
                 <p className="text-primary-foreground/70 font-body">
-                  Manage KE Town Digital Heritage content
+                  Manage KE Kingdom Digital Heritage content
                 </p>
               </div>
               <button

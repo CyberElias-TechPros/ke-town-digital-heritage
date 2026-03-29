@@ -7,7 +7,7 @@ interface MapLocation {
   lat: number;
   lng: number;
   description?: string;
-  type?: "town" | "landmark" | "waterway" | "festival";
+  type?: "Kingdom" | "landmark" | "waterway" | "festival";
 }
 
 interface InteractiveMapProps {
@@ -19,11 +19,11 @@ interface InteractiveMapProps {
 
 const defaultLocations: MapLocation[] = [
   {
-    name: "Ke Town",
+    name: "Ke Kingdom",
     lat: 4.7833,
     lng: 6.8167,
     description: "Main settlement in Degema LGA",
-    type: "town",
+    type: "Kingdom",
   },
   {
     name: "Degema",
@@ -85,7 +85,7 @@ const InteractiveMap = ({
 
   const getTypeColor = (type?: string) => {
     switch (type) {
-      case "town":
+      case "Kingdom":
         return "bg-secondary text-secondary-foreground";
       case "landmark":
         return "bg-accent text-accent-foreground";
@@ -110,7 +110,7 @@ const InteractiveMap = ({
         <div className="absolute inset-0">
           <img
             src={tileUrl}
-            alt="Map of Ke Town area"
+            alt="Map of Ke Kingdom area"
             className="w-full h-full object-cover"
             onLoad={() => setMapLoaded(true)}
             onError={() => setMapLoaded(false)}
@@ -191,7 +191,7 @@ const InteractiveMap = ({
       <div className="p-4 bg-card border-t border-border">
         <div className="flex flex-wrap gap-3">
           {[
-            { type: "town", label: "Towns" },
+            { type: "Kingdom", label: "Kingdoms" },
             { type: "landmark", label: "Landmarks" },
             { type: "waterway", label: "Waterways" },
             { type: "festival", label: "Festival Sites" },
