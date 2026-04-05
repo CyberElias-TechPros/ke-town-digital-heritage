@@ -11,6 +11,8 @@ const UserSchema = new mongoose.Schema({
   location: { type: String },
   isActive: { type: Boolean, default: true },
   lastLogin: { type: Date },
+  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 }, { timestamps: true });
 
 // Hash password before saving

@@ -3,6 +3,7 @@ import { MapPin, Clock, Ship, Compass, BookOpen, Sun, CloudRain, Thermometer } f
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
 import AnimatedCard from "@/components/AnimatedCard";
+import SEO from "@/components/PageSEO";
 import InteractiveMap from "@/components/InteractiveMap";
 import heroImg from "@/assets/hero-waterway.jpg";
 
@@ -45,6 +46,7 @@ const experiences = [
 const Visit = () => {
   return (
     <Layout>
+      <SEO page="/visit" />
       {/* Hero */}
       <section className="relative pt-32 pb-20 overflow-hidden">
         <div className="absolute inset-0">

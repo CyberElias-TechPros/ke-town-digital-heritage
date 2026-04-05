@@ -380,6 +380,326 @@ class ApiClient {
       token,
     });
   }
+
+  // Calendar
+  async getCalendar(year?: number, start?: string, end?: string, type?: string, category?: string) {
+    const params = new URLSearchParams();
+    if (year) params.append('year', year.toString());
+    if (start) params.append('start', start);
+    if (end) params.append('end', end);
+    if (type) params.append('type', type);
+    if (category) params.append('category', category);
+    return this.request(`/calendar?${params.toString()}`);
+  }
+
+  async getFestivals(year?: number) {
+    const params = year ? `?year=${year}` : '';
+    return this.request(`/calendar/festivals${params}`);
+  }
+
+  async getUpcomingEvents(limit = 5) {
+    return this.request(`/calendar/upcoming?limit=${limit}`);
+  }
+
+  async getBestTimeToVisit() {
+    return this.request('/calendar/best-time-to-visit');
+  }
+
+  // Jobs
+  async getJobs(type?: string, category?: string, location?: string, search?: string, limit = 20, page = 1) {
+    const params = new URLSearchParams({ limit: limit.toString(), page: page.toString() });
+    if (type) params.append('type', type);
+    if (category) params.append('category', category);
+    if (location) params.append('location', location);
+    if (search) params.append('search', search);
+    return this.request(`/jobs?${params.toString()}`);
+  }
+
+  async getJob(id: string) {
+    return this.request(`/jobs/${id}`);
+  }
+
+  async createJob(token: string, data: Record<string, unknown>) {
+    return this.request('/jobs', {
+      method: 'POST',
+      body: data,
+      token,
+    });
+  }
+
+  async updateJob(token: string, id: string, data: Record<string, unknown>) {
+    return this.request(`/jobs/${id}`, {
+      method: 'PUT',
+      body: data,
+      token,
+    });
+  }
+
+  async deleteJob(token: string, id: string) {
+    return this.request(`/jobs/${id}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  // War Canoe Houses / Genealogy
+  async getWarCanoeHouses(community?: string, status?: string) {
+    const params = new URLSearchParams();
+    if (community) params.append('community', community);
+    if (status) params.append('status', status);
+    return this.request(`/genealogy/houses?${params.toString()}`);
+  }
+
+  async getWarCanoeHouse(id: string) {
+    return this.request(`/genealogy/houses/${id}`);
+  }
+
+  async getGenealogyTree() {
+    return this.request('/genealogy/tree');
+  }
+
+  // Oral Histories
+  async getOralHistories(category?: string, language?: string, search?: string, limit = 20, page = 1) {
+    const params = new URLSearchParams({ limit: limit.toString(), page: page.toString() });
+    if (category) params.append('category', category);
+    if (language) params.append('language', language);
+    if (search) params.append('search', search);
+    return this.request(`/oral-history?${params.toString()}`);
+  }
+
+  async getOralHistory(id: string) {
+    return this.request(`/oral-history/${id}`);
+  }
+
+  async createOralHistory(token: string, data: Record<string, unknown>) {
+    return this.request('/oral-history', {
+      method: 'POST',
+      body: data,
+      token,
+    });
+  }
+
+  // Mentorship
+  async getMentors(skill?: string, limit = 20, page = 1) {
+    const params = new URLSearchParams({ limit: limit.toString(), page: page.toString() });
+    if (skill) params.append('skill', skill);
+    return this.request(`/mentorship/mentors?${params.toString()}`);
+  }
+
+  async getMentees(limit = 20, page = 1) {
+    return this.request(`/mentorship/mentees?limit=${limit}&page=${page}`);
+  }
+
+  async registerAsMentor(token: string, data: Record<string, unknown>) {
+    return this.request('/mentorship/register', {
+      method: 'POST',
+      body: data,
+      token,
+    });
+  }
+
+  async requestMentorship(token: string, mentorId: string, note?: string) {
+    return this.request('/mentorship/request', {
+      method: 'POST',
+      body: { mentorId, note },
+      token,
+    });
+  }
+
+  async getMyMentorship(token: string) {
+    return this.request('/mentorship/my', { token });
+  }
+
+  // Posts
+  async getPosts() {
+    return this.request('/posts');
+  }
+
+  async getMyPosts(token: string) {
+    return this.request('/posts/my', { token });
+  }
+
+  async getUserPosts(token: string, userId: string) {
+    return this.request(`/posts/user/${userId}`, { token });
+  }
+
+  async createPost(token: string, data: { content: string; imageUrl?: string; isPublic?: boolean }) {
+    return this.request('/posts', {
+      method: 'POST',
+      body: data,
+      token,
+    });
+  }
+
+  async updatePost(token: string, id: string, data: Record<string, unknown>) {
+    return this.request(`/posts/${id}`, {
+      method: 'PUT',
+      body: data,
+      token,
+    });
+  }
+
+  async deletePost(token: string, id: string) {
+    return this.request(`/posts/${id}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  async likePost(token: string, id: string) {
+    return this.request(`/posts/${id}/like`, {
+      method: 'POST',
+      token,
+    });
+  }
+
+  // Comments
+  async getComments(targetType: string, targetId: string) {
+    return this.request(`/comments/${targetType}/${targetId}`);
+  }
+
+  async createComment(token: string, data: { content: string; targetType: string; targetId: string }) {
+    return this.request('/comments', {
+      method: 'POST',
+      body: data,
+      token,
+    });
+  }
+
+  async deleteComment(token: string, id: string) {
+    return this.request(`/comments/${id}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  // Social / Activity
+  async getFollowingActivity(token: string) {
+    return this.request('/social/following', { token });
+  }
+
+  async getMyActivity(token: string) {
+    return this.request('/social/me', { token });
+  }
+
+  async getGlobalActivity() {
+    return this.request('/social/global');
+  }
+
+  async followUser(token: string, userId: string) {
+    return this.request(`/social/follow/${userId}`, {
+      method: 'POST',
+      token,
+    });
+  }
+
+  async getUserProfile(userId: string) {
+    return this.request(`/auth/user/${userId}`);
+  }
+
+  // Elder Stories
+  async getElderStories(category?: string, featured?: boolean) {
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    if (featured) params.append('featured', 'true');
+    return this.request(`/elder-stories?${params.toString()}`);
+  }
+
+  async getElderStory(id: string) {
+    return this.request(`/elder-stories/${id}`);
+  }
+
+  async createElderStory(token: string, data: Record<string, unknown>) {
+    return this.request('/elder-stories', {
+      method: 'POST',
+      body: data,
+      token,
+    });
+  }
+
+  async updateElderStory(token: string, id: string, data: Record<string, unknown>) {
+    return this.request(`/elder-stories/${id}`, {
+      method: 'PUT',
+      body: data,
+      token,
+    });
+  }
+
+  async deleteElderStory(token: string, id: string) {
+    return this.request(`/elder-stories/${id}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  // Marketplace
+  async getProducts(category?: string, search?: string, featured?: boolean) {
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    if (search) params.append('search', search);
+    if (featured) params.append('featured', 'true');
+    return this.request(`/marketplace?${params.toString()}`);
+  }
+
+  async getProduct(id: string) {
+    return this.request(`/marketplace/${id}`);
+  }
+
+  async createProduct(token: string, data: Record<string, unknown>) {
+    return this.request('/marketplace', {
+      method: 'POST',
+      body: data,
+      token,
+    });
+  }
+
+  async updateProduct(token: string, id: string, data: Record<string, unknown>) {
+    return this.request(`/marketplace/${id}`, {
+      method: 'PUT',
+      body: data,
+      token,
+    });
+  }
+
+  async deleteProduct(token: string, id: string) {
+    return this.request(`/marketplace/${id}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  // Search suggestions (enhanced)
+  async getAllSuggestions(query: string) {
+    const suggestions: Array<{text: string, type: string}> = [];
+    try {
+      const searchResults = await this.getSearchSuggestions(query);
+      if (Array.isArray(searchResults)) {
+        suggestions.push(...searchResults.slice(0, 5));
+      }
+    } catch {}
+    
+    // Add calendar events
+    try {
+      const events = await this.getUpcomingEvents(3);
+      if (events && events.upcoming) {
+        events.upcoming.forEach((e: any) => {
+          suggestions.push({ text: e.title, type: 'event' });
+        });
+      }
+    } catch {}
+
+    // Add jobs
+    try {
+      const jobs = await this.getJobs(undefined, undefined, undefined, query, 3);
+      if (jobs && jobs.jobs) {
+        jobs.jobs.forEach((j: any) => {
+          suggestions.push({ text: j.title, type: 'job' });
+        });
+      }
+    } catch {}
+
+    return suggestions.slice(0, 10);
+  }
 }
 
 export const api = new ApiClient(API_URL);

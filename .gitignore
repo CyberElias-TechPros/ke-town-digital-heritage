@@ -12,6 +12,17 @@ dist
 dist-ssr
 *.local
 
+# Uploaded files (store locally but don't commit)
+server/uploads/
+*.mp4
+*.mov
+*.webm
+*.mkv
+*.mp3
+*.wav
+*.ogg
+*.m4a
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

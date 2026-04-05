@@ -1,7 +1,54 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Facebook, Mail, Phone, MapPin } from "lucide-react";
+import { Facebook, MapPin } from "lucide-react";
+import { useAdSense } from "./AdUnit";
+
+const AD_CLIENT = "ca-pub-9117572925263537";
 
 const Footer = () => {
+  useAdSense();
+  const [adsLoaded, setAdsLoaded] = useState(false);
+
+  useEffect(() => {
+    const checkAds = setInterval(() => {
+      const ads = document.querySelectorAll(".adsbygoogle");
+      if (ads.length > 0) {
+        try {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+          setAdsLoaded(true);
+        } catch (e) {}
+      }
+    }, 500);
+
+    setTimeout(() => {
+      clearInterval(checkAds);
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+        setAdsLoaded(true);
+      } catch (e) {}
+    }, 2000);
+
+    return () => clearInterval(checkAds);
+  }, []);
+
+  const quickLinks = [
+    { label: "History", path: "/history" },
+    { label: "Timeline", path: "/timeline" },
+    { label: "Culture", path: "/culture" },
+    { label: "Elder Stories", path: "/elder-stories" },
+    { label: "Gallery", path: "/gallery" },
+    { label: "Marketplace", path: "/marketplace" },
+    { label: "Virtual Tours", path: "/virtual-tours" },
+  ];
+
+  const communityLinks = [
+    { label: "Visit", path: "/visit" },
+    { label: "Diaspora", path: "/diaspora" },
+    { label: "Environment", path: "/environment" },
+    { label: "Posts", path: "/posts" },
+    { label: "Contact", path: "/contact" },
+  ];
+
   return (
     <footer className="bg-primary text-primary-foreground">
       {/* Wave top */}
@@ -13,6 +60,22 @@ const Footer = () => {
           />
         </svg>
       </div>
+
+      {/* Ad Space - Above Footer (Only shows when ad loads) */}
+      {adsLoaded && (
+        <div className="bg-primary/95 py-4 border-b border-primary-foreground/10">
+          <div className="container-narrow px-4">
+            <ins
+              className="adsbygoogle"
+              style={{ display: "block", width: "100%", minHeight: "90px" }}
+              data-ad-client={AD_CLIENT}
+              data-ad-slot="7966964742"
+              data-ad-format="auto"
+              data-full-width-responsive="true"
+            />
+          </div>
+        </div>
+      )}
 
       <div className="container-narrow px-4 md:px-8 pb-12 pt-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
@@ -33,12 +96,7 @@ const Footer = () => {
           <div>
             <h4 className="font-display text-lg font-semibold mb-4 text-secondary">Quick Links</h4>
             <ul className="space-y-2 font-ui text-sm">
-              {[
-                { label: "History & Origins", path: "/history" },
-                { label: "Culture & Traditions", path: "/culture" },
-                { label: "Gallery & Media", path: "/gallery" },
-                { label: "Visit Ke Kingdom", path: "/visit" },
-              ].map((link) => (
+              {quickLinks.map((link) => (
                 <li key={link.path}>
                   <Link
                     to={link.path}
@@ -55,11 +113,7 @@ const Footer = () => {
           <div>
             <h4 className="font-display text-lg font-semibold mb-4 text-secondary">Community</h4>
             <ul className="space-y-2 font-ui text-sm">
-              {[
-                { label: "Diaspora Connect", path: "/diaspora" },
-                { label: "Environment", path: "/environment" },
-                { label: "Contact Us", path: "/contact" },
-              ].map((link) => (
+              {communityLinks.map((link) => (
                 <li key={link.path}>
                   <Link
                     to={link.path}
@@ -83,10 +137,6 @@ const Footer = () => {
               <div className="flex items-center gap-2">
                 <Facebook size={14} className="text-secondary flex-shrink-0" />
                 <a href="#" className="hover:text-secondary transition-colors">KE Kingdom Facebook</a>
-              </div>
-              <div className="flex items-center gap-2">
-                <Mail size={14} className="text-secondary flex-shrink-0" />
-                <a href="mailto:info@keKingdom.com.ng" className="hover:text-secondary transition-colors">info@keKingdom.com.ng</a>
               </div>
             </div>
           </div>

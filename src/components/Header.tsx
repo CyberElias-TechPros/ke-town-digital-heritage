@@ -3,23 +3,37 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ChevronDown, Search } from "lucide-react";
 import SearchModal from "./SearchModal";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks = [
   { label: "Home", path: "/" },
   { label: "History", path: "/history" },
+  { label: "Timeline", path: "/timeline" },
   { label: "Culture", path: "/culture" },
+  { label: "Elder Stories", path: "/elder-stories" },
   { label: "Gallery", path: "/gallery" },
+  { label: "Marketplace", path: "/marketplace" },
+  { label: "Virtual Tours", path: "/virtual-tours" },
   { label: "Visit", path: "/visit" },
   { label: "Diaspora", path: "/diaspora" },
   { label: "Environment", path: "/environment" },
   { label: "Contact", path: "/contact" },
+  { label: "Posts", path: "/posts", auth: true },
+  { label: "Activity", path: "/activity", auth: true },
+];
+
+const authLinks = [
+  { label: "Profile", path: "/profile" },
+  { label: "Admin", path: "/admin", admin: true },
 ];
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -70,18 +84,53 @@ const Header = () => {
           {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`px-3 py-2 rounded-md text-sm font-ui font-medium transition-all duration-200 ${
-                  location.pathname === link.path
-                    ? "bg-secondary/20 text-secondary"
-                    : "text-primary-foreground/80 hover:text-secondary hover:bg-secondary/10"
-                }`}
-              >
-                {link.label}
-              </Link>
+              (link.auth && !isAuthenticated) ? null : (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`px-3 py-2 rounded-md text-sm font-ui font-medium transition-all duration-200 ${
+                    location.pathname === link.path
+                      ? "bg-secondary/20 text-secondary"
+                      : "text-primary-foreground/80 hover:text-secondary hover:bg-secondary/10"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              )
             ))}
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to="/profile"
+                  className={`px-3 py-2 rounded-md text-sm font-ui font-medium transition-all duration-200 ${
+                    location.pathname === "/profile"
+                      ? "bg-secondary/20 text-secondary"
+                      : "text-primary-foreground/80 hover:text-secondary hover:bg-secondary/10"
+                  }`}
+                >
+                  Profile
+                </Link>
+                {user?.role === 'admin' && (
+                  <Link
+                    to="/admin"
+                    className={`px-3 py-2 rounded-md text-sm font-ui font-medium transition-all duration-200 ${
+                      location.pathname === "/admin"
+                        ? "bg-secondary/20 text-secondary"
+                        : "text-primary-foreground/80 hover:text-secondary hover:bg-secondary/10"
+                    }`}
+                  >
+                    Admin
+                  </Link>
+                )}
+              </>
+            ) : (
+              <Link
+                to="/login"
+                className="px-4 py-2 rounded-md text-sm font-ui font-medium bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-all"
+              >
+                Login
+              </Link>
+            )}
           </nav>
 
           {/* Search and Mobile toggle */}
@@ -119,24 +168,48 @@ const Header = () => {
             >
               <nav className="flex flex-col px-4 py-4 gap-1">
                 {navLinks.map((link, i) => (
-                  <motion.div
-                    key={link.path}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                  >
-                    <Link
-                      to={link.path}
-                      className={`block px-4 py-3 rounded-lg text-base font-ui font-medium transition-all ${
-                        location.pathname === link.path
-                          ? "bg-secondary/20 text-secondary"
-                          : "text-primary-foreground/80 hover:bg-secondary/10 hover:text-secondary"
-                      }`}
+                  (link.auth && !isAuthenticated) ? null : (
+                    <motion.div
+                      key={link.path}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 }}
                     >
-                      {link.label}
+                      <Link
+                        to={link.path}
+                        className={`block px-4 py-3 rounded-lg text-base font-ui font-medium transition-all ${
+                          location.pathname === link.path
+                            ? "bg-secondary/20 text-secondary"
+                            : "text-primary-foreground/80 hover:bg-secondary/10 hover:text-secondary"
+                        }`}
+                      >
+                        {link.label}
+                      </Link>
+                    </motion.div>
+                  )
+                ))}
+                {isAuthenticated ? (
+                  <>
+                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: navLinks.length * 0.05 }}>
+                      <Link to="/profile" className="block px-4 py-3 rounded-lg text-base font-ui font-medium text-primary-foreground/80 hover:bg-secondary/10 hover:text-secondary">
+                        Profile
+                      </Link>
+                    </motion.div>
+                    {user?.role === 'admin' && (
+                      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + 1) * 0.05 }}>
+                        <Link to="/admin" className="block px-4 py-3 rounded-lg text-base font-ui font-medium text-primary-foreground/80 hover:bg-secondary/10 hover:text-secondary">
+                          Admin
+                        </Link>
+                      </motion.div>
+                    )}
+                  </>
+                ) : (
+                  <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: navLinks.length * 0.05 }}>
+                    <Link to="/login" className="block px-4 py-3 rounded-lg text-base font-ui font-medium bg-secondary text-secondary-foreground text-center">
+                      Login
                     </Link>
                   </motion.div>
-                ))}
+                )}
               </nav>
             </motion.div>
           )}

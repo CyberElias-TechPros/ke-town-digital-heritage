@@ -15,6 +15,13 @@ import Environment from "./pages/Environment.tsx";
 import Contact from "./pages/Contact.tsx";
 import Login from "./pages/Login.tsx";
 import Register from "./pages/Register.tsx";
+import Profile from "./pages/Profile.tsx";
+import Posts from "./pages/Posts.tsx";
+import Activity from "./pages/Activity.tsx";
+import Timeline from "./pages/Timeline.tsx";
+import ElderStories from "./pages/ElderStories.tsx";
+import Marketplace from "./pages/Marketplace.tsx";
+import VirtualTours from "./pages/VirtualTours.tsx";
 import Admin from "./pages/Admin.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -50,6 +57,13 @@ const App = () => {
             <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/posts" element={<Posts />} />
+            <Route path="/activity" element={<Activity />} />
+            <Route path="/timeline" element={<Timeline />} />
+            <Route path="/elder-stories" element={<ElderStories />} />
+            <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/virtual-tours" element={<VirtualTours />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

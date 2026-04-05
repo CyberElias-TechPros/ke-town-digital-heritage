@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
 import AnimatedCard from "@/components/AnimatedCard";
+import SEO from "@/components/PageSEO";
 import historyImg from "@/assets/history-canoe.jpg";
 
 const timelineEvents = [
@@ -41,6 +42,7 @@ const notables = [
 const History = () => {
   return (
     <Layout>
+      <SEO page="/history" />
       {/* Hero */}
       <section className="relative pt-32 pb-20 overflow-hidden">
         <div className="absolute inset-0" style={{ background: "var(--gradient-hero)" }} />

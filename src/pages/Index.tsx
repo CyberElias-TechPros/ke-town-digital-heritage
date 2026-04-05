@@ -5,6 +5,7 @@ import { ArrowRight, Calendar, BookOpen, Camera, Users, MapPin, Clock, Loader2 }
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
 import AnimatedCard from "@/components/AnimatedCard";
+import SEO from "@/components/PageSEO";
 import heroImg from "@/assets/hero-waterway.jpg";
 import cultureImg from "@/assets/culture-masquerade.jpg";
 import historyImg from "@/assets/history-canoe.jpg";
@@ -84,6 +85,7 @@ const Index = () => {
 
   return (
     <Layout>
+      <SEO page="/" />
       {/* Hero Section */}
       <section ref={heroRef} className="relative h-screen min-h-[600px] overflow-hidden">
         <motion.div style={{ y: heroY }} className="absolute inset-0">

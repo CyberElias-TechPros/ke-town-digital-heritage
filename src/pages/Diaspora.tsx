@@ -4,6 +4,7 @@ import { Globe, Users, Heart, Briefcase, BookOpen, ArrowRight, Loader2, CreditCa
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
 import AnimatedCard from "@/components/AnimatedCard";
+import SEO from "@/components/PageSEO";
 import { api } from "@/lib/api";
 
 const diasporaLocations = [
@@ -148,6 +149,7 @@ const Diaspora = () => {
 
   return (
     <Layout>
+      <SEO page="/diaspora" />
       {/* Hero */}
       <section className="relative pt-32 pb-20 overflow-hidden">
         <div className="absolute inset-0" style={{ background: "var(--gradient-hero)" }} />

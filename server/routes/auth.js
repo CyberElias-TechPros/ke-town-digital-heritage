@@ -218,4 +218,17 @@ router.put('/users/:id/status', authenticate, requireAdmin, async (req, res) => 
   }
 });
 
+// Get public user profile
+router.get('/user/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('fullName avatar bio location followers following createdAt');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

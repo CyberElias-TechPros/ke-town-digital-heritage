@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { AlertTriangle, Fish, FileText, ExternalLink, Leaf, Droplets, Loader2, Send, Check, AlertCircle, HeartPulse, ShieldAlert } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Leaf, AlertTriangle, Droplets, TreePine, Wind, Heart, Search, ExternalLink } from "lucide-react";
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
-import AnimatedCard from "@/components/AnimatedCard";
+import SEO from "@/components/PageSEO";
 import envImg from "@/assets/environment-mangrove.jpg";
 import { api } from "@/lib/api";
 
@@ -106,6 +106,7 @@ const Environment = () => {
 
   return (
     <Layout>
+      <SEO page="/environment" />
       {/* Hero */}
       <section className="relative pt-32 pb-20 overflow-hidden">
         <div className="absolute inset-0">

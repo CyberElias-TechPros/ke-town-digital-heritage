@@ -1,14 +1,49 @@
+# robots.txt for KE Kingdom Digital Heritage
+# https://ke.freegameplay.site/
+
+User-agent: *
+Allow: /
+Allow: /history
+Allow: /timeline
+Allow: /culture
+Allow: /elder-stories
+Allow: /gallery
+Allow: /marketplace
+Allow: /virtual-tours
+Allow: /visit
+Allow: /diaspora
+Allow: /environment
+Allow: /contact
+Allow: /login
+Allow: /register
+Allow: /posts
+Allow: /activity
+
+Crawl-delay: 1
+
+Sitemap: https://ke.freegameplay.site/sitemap.xml
+
+Disallow: /admin
+Disallow: /api
+Disallow: /profile/
+Disallow: /*?
+
 User-agent: Googlebot
 Allow: /
+Disallow: /admin
+Disallow: /api
+
+User-agent: Googlebot-Image
+Allow: /src/assets/
+Allow: /gallery
 
 User-agent: Bingbot
 Allow: /
+Disallow: /admin
+Disallow: /api
 
-User-agent: Twitterbot
+User-agent: twitterbot
 Allow: /
 
 User-agent: facebookexternalhit
-Allow: /
-
-User-agent: *
 Allow: /

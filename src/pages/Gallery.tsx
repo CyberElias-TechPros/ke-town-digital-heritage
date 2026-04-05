@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Upload, Play, Loader2, Check, AlertCircle } from "lucide-react";
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
+import SEO from "@/components/PageSEO";
 import heroImg from "@/assets/hero-waterway.jpg";
 import cultureImg from "@/assets/culture-masquerade.jpg";
 import historyImg from "@/assets/history-canoe.jpg";
@@ -149,6 +150,7 @@ const Gallery = () => {
 
   return (
     <Layout>
+      <SEO page="/gallery" />
       {/* Hero */}
       <section className="relative pt-32 pb-20 overflow-hidden">
         <div className="absolute inset-0" style={{ background: "var(--gradient-hero)" }} />
