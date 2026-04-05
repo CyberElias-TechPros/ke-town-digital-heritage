@@ -1,4 +1,5 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.MODE === 'production' ? 'https://kesrv.freegameplay.site/api' : 'http://localhost:5000/api');
 
 interface RequestOptions {
   method?: string;
@@ -680,9 +681,9 @@ class ApiClient {
     
     // Add calendar events
     try {
-      const events = await this.getUpcomingEvents(3);
-      if (events && events.upcoming) {
-        events.upcoming.forEach((e: any) => {
+      const events = await this.getUpcomingEvents(3) as { upcoming?: Array<{ title: string }> };
+      if (events?.upcoming) {
+        events.upcoming.forEach((e) => {
           suggestions.push({ text: e.title, type: 'event' });
         });
       }
@@ -690,9 +691,9 @@ class ApiClient {
 
     // Add jobs
     try {
-      const jobs = await this.getJobs(undefined, undefined, undefined, query, 3);
-      if (jobs && jobs.jobs) {
-        jobs.jobs.forEach((j: any) => {
+      const jobs = await this.getJobs(undefined, undefined, undefined, query, 3) as { jobs?: Array<{ title: string }> };
+      if (jobs?.jobs) {
+        jobs.jobs.forEach((j) => {
           suggestions.push({ text: j.title, type: 'job' });
         });
       }
