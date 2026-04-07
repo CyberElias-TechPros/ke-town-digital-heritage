@@ -117,6 +117,11 @@ connectDB().then(() => {
   app.use('/api/social', require('./routes/social'));
   app.use('/api/elder-stories', require('./routes/elderStories'));
   app.use('/api/marketplace', require('./routes/marketplace'));
+  app.use('/api/orders', require('./routes/orders'));
+  app.use('/api/cart', require('./routes/cart'));
+  app.use('/api/shop', require('./routes/shop'));
+  app.use('/api/messages', require('./routes/messages'));
+  app.use('/api/notifications', require('./routes/notifications'));
 
   app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'KE Kingdom API' }));
 

@@ -1,17 +1,18 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Leaf, AlertTriangle, Droplets, TreePine, Wind, Heart, Search, ExternalLink } from "lucide-react";
+import { Leaf, AlertTriangle, Droplets, TreePine, Wind, Search, ExternalLink, Fish, FileText, Loader2, Check, AlertCircle, Send, Heart } from "lucide-react";
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
 import SEO from "@/components/PageSEO";
 import envImg from "@/assets/environment-mangrove.jpg";
 import { api } from "@/lib/api";
+import AnimatedCard from "@/components/AnimatedCard";
 
 const impactStats = [
   { label: "Fish Species at Risk", value: "270+", icon: Fish },
   { label: "Barrels Spilled Annually", value: "240K", icon: AlertTriangle },
-  { label: "Food Security Reduction", value: "60%", icon: ShieldAlert },
-  { label: "Respiratory Issues", value: "68%", icon: HeartPulse },
+  { label: "Food Security Reduction", value: "60%", icon: AlertTriangle },
+  { label: "Respiratory Issues", value: "68%", icon: Heart },
 ];
 
 const resources = [
@@ -210,7 +211,7 @@ const Environment = () => {
           <div className="grid md:grid-cols-2 gap-8 mb-8">
             <div className="bg-card rounded-xl border border-border p-6 shadow-[var(--shadow-card)]">
               <h3 className="font-display text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                <HeartPulse size={20} className="text-destructive" />
+                <Heart size={20} className="text-destructive" />
                 Health Statistics
               </h3>
               <ul className="space-y-3">
@@ -232,7 +233,7 @@ const Environment = () => {
             </div>
             <div className="bg-card rounded-xl border border-border p-6 shadow-[var(--shadow-card)]">
               <h3 className="font-display text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                <ShieldAlert size={20} className="text-destructive" />
+                <AlertTriangle size={20} className="text-destructive" />
                 Contamination Data
               </h3>
               <ul className="space-y-3">

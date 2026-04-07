@@ -8,6 +8,16 @@ interface User {
   avatar?: string;
   bio?: string;
   location?: string;
+  isSeller?: boolean;
+  shopName?: string;
+  shopVerified?: boolean;
+  sellerRating?: number;
+  totalSales?: number;
+  followers?: string[];
+  following?: string[];
+  profileVisibility?: 'public' | 'followers' | 'private';
+  allowMessages?: boolean;
+  showOnlineStatus?: boolean;
 }
 
 interface AuthContextType {
@@ -15,10 +25,12 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isSeller: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (fullName: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  updateUser: (data: User) => void;
   updateProfile: (data: Partial<User>) => Promise<void>;
 }
 
@@ -142,10 +154,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     token,
     isAuthenticated: !!token,
     isAdmin: user?.role === 'admin',
+    isSeller: user?.isSeller || false,
     isLoading,
     login,
     register,
     logout,
+    updateUser: (data: User) => {
+      setUser(data);
+      localStorage.setItem('keKingdom_user', JSON.stringify(data));
+    },
     updateProfile
   };
 

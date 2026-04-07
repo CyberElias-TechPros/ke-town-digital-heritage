@@ -5,33 +5,65 @@ import { Menu, X, ChevronDown, Search } from "lucide-react";
 import SearchModal from "./SearchModal";
 import { useAuth } from "@/contexts/AuthContext";
 
-const navLinks = [
-  { label: "Home", path: "/" },
-  { label: "History", path: "/history" },
-  { label: "Timeline", path: "/timeline" },
-  { label: "Culture", path: "/culture" },
-  { label: "Elder Stories", path: "/elder-stories" },
-  { label: "Gallery", path: "/gallery" },
-  { label: "Marketplace", path: "/marketplace" },
-  { label: "Virtual Tours", path: "/virtual-tours" },
-  { label: "Visit", path: "/visit" },
-  { label: "Diaspora", path: "/diaspora" },
-  { label: "Environment", path: "/environment" },
-  { label: "Contact", path: "/contact" },
-  { label: "Posts", path: "/posts", auth: true },
-  { label: "Activity", path: "/activity", auth: true },
+const navGroups = [
+  {
+    label: "Explore",
+    items: [
+      { label: "Home", path: "/" },
+    ]
+  },
+  {
+    label: "Heritage",
+    items: [
+      { label: "History", path: "/history" },
+      { label: "Timeline", path: "/timeline" },
+      { label: "Culture", path: "/culture" },
+      { label: "Elder Stories", path: "/elder-stories" },
+    ]
+  },
+  {
+    label: "Experience",
+    items: [
+      { label: "Gallery", path: "/gallery" },
+      { label: "Marketplace", path: "/marketplace" },
+      { label: "Virtual Tours", path: "/virtual-tours" },
+      { label: "Visit", path: "/visit" },
+    ]
+  },
+  {
+    label: "Community",
+    items: [
+      { label: "Diaspora", path: "/diaspora" },
+      { label: "Environment", path: "/environment" },
+      { label: "Posts", path: "/posts", auth: true },
+      { label: "Activity", path: "/activity", auth: true },
+    ]
+  },
+  {
+    label: "Connect",
+    items: [
+      { label: "Contact", path: "/contact" },
+    ]
+  },
 ];
 
-const authLinks = [
-  { label: "Profile", path: "/profile" },
-  { label: "Admin", path: "/admin", admin: true },
-];
+interface NavItem {
+  label: string;
+  path?: string;
+  auth?: boolean;
+  admin?: boolean;
+}
+
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
 
@@ -81,48 +113,96 @@ const Header = () => {
             </div>
           </Link>
 
-          {/* Desktop nav */}
+          {/* Desktop nav with dropdowns */}
           <nav className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link) => (
-              (link.auth && !isAuthenticated) ? null : (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`px-3 py-2 rounded-md text-sm font-ui font-medium transition-all duration-200 ${
-                    location.pathname === link.path
-                      ? "bg-secondary/20 text-secondary"
-                      : "text-primary-foreground/80 hover:text-secondary hover:bg-secondary/10"
-                  }`}
+            {navGroups.map((group) => (
+              <div key={group.label} className="relative">
+                <button
+                  onClick={() => setActiveDropdown(activeDropdown === group.label ? null : group.label)}
+                  onMouseEnter={() => activeDropdown && setActiveDropdown(group.label)}
+                  className="px-3 py-2 rounded-md text-sm font-ui font-medium text-primary-foreground/80 hover:text-secondary hover:bg-secondary/10 transition-all duration-200 flex items-center gap-1"
                 >
-                  {link.label}
-                </Link>
-              )
-            ))}
-            {isAuthenticated ? (
-              <>
-                <Link
-                  to="/profile"
-                  className={`px-3 py-2 rounded-md text-sm font-ui font-medium transition-all duration-200 ${
-                    location.pathname === "/profile"
-                      ? "bg-secondary/20 text-secondary"
-                      : "text-primary-foreground/80 hover:text-secondary hover:bg-secondary/10"
-                  }`}
-                >
-                  Profile
-                </Link>
-                {user?.role === 'admin' && (
-                  <Link
-                    to="/admin"
-                    className={`px-3 py-2 rounded-md text-sm font-ui font-medium transition-all duration-200 ${
-                      location.pathname === "/admin"
-                        ? "bg-secondary/20 text-secondary"
-                        : "text-primary-foreground/80 hover:text-secondary hover:bg-secondary/10"
-                    }`}
+                  {group.label}
+                  <ChevronDown size={14} className={`transition-transform ${activeDropdown === group.label ? 'rotate-180' : ''}`} />
+                </button>
+                {activeDropdown === group.label && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="absolute top-full left-0 mt-1 min-w-[180px] bg-card rounded-lg border border-border shadow-lg overflow-hidden z-50"
+                    onMouseLeave={() => setActiveDropdown(null)}
                   >
-                    Admin
-                  </Link>
+                    {group.items.map((item) => (
+                      (item.auth && !isAuthenticated) ? null : (
+                        <Link
+                          key={item.path}
+                          to={item.path || "#"}
+                          className={`block px-4 py-2.5 text-sm font-ui transition-all ${
+                            location.pathname === item.path
+                              ? "bg-secondary/20 text-secondary"
+                              : "text-foreground hover:bg-secondary/10 hover:text-secondary"
+                          }`}
+                        >
+                          {item.label}
+                        </Link>
+                      )
+                    ))}
+                  </motion.div>
                 )}
-              </>
+              </div>
+            ))}
+            {/* User menu (logged in) or Login */}
+            {isAuthenticated ? (
+              <div className="relative">
+                <button
+                  onClick={() => setActiveDropdown(activeDropdown === 'account' ? null : 'account')}
+                  className="px-3 py-2 rounded-md text-sm font-ui font-medium text-primary-foreground/80 hover:text-secondary hover:bg-secondary/10 transition-all duration-200 flex items-center gap-1"
+                >
+                  Account
+                  <ChevronDown size={14} className={`transition-transform ${activeDropdown === 'account' ? 'rotate-180' : ''}`} />
+                </button>
+                {activeDropdown === 'account' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="absolute top-full right-0 mt-1 min-w-[160px] bg-card rounded-lg border border-border shadow-lg overflow-hidden z-50"
+                    onMouseLeave={() => setActiveDropdown(null)}
+                  >
+                    <Link
+                      to="/profile"
+                      className={`block px-4 py-2.5 text-sm font-ui transition-all ${
+                        location.pathname === "/profile"
+                          ? "bg-secondary/20 text-secondary"
+                          : "text-foreground hover:bg-secondary/10 hover:text-secondary"
+                      }`}
+                    >
+                      Profile
+                    </Link>
+                    <Link
+                      to="/messages"
+                      className={`block px-4 py-2.5 text-sm font-ui transition-all ${
+                        location.pathname === "/messages"
+                          ? "bg-secondary/20 text-secondary"
+                          : "text-foreground hover:bg-secondary/10 hover:text-secondary"
+                      }`}
+                    >
+                      Messages
+                    </Link>
+                    {user?.role === 'admin' && (
+                      <Link
+                        to="/admin"
+                        className={`block px-4 py-2.5 text-sm font-ui transition-all ${
+                          location.pathname === "/admin"
+                            ? "bg-secondary/20 text-secondary"
+                            : "text-foreground hover:bg-secondary/10 hover:text-secondary"
+                        }`}
+                      >
+                        Admin
+                      </Link>
+                    )}
+                  </motion.div>
+                )}
+              </div>
             ) : (
               <Link
                 to="/login"
@@ -166,49 +246,63 @@ const Header = () => {
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="lg:hidden bg-primary/98 backdrop-blur-md border-t border-primary-foreground/10 overflow-hidden"
             >
-              <nav className="flex flex-col px-4 py-4 gap-1">
-                {navLinks.map((link, i) => (
-                  (link.auth && !isAuthenticated) ? null : (
-                    <motion.div
-                      key={link.path}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                    >
-                      <Link
-                        to={link.path}
-                        className={`block px-4 py-3 rounded-lg text-base font-ui font-medium transition-all ${
-                          location.pathname === link.path
-                            ? "bg-secondary/20 text-secondary"
-                            : "text-primary-foreground/80 hover:bg-secondary/10 hover:text-secondary"
-                        }`}
-                      >
-                        {link.label}
-                      </Link>
-                    </motion.div>
-                  )
+              <nav className="flex flex-col px-4 py-4 gap-4">
+                {/* Grouped mobile nav */}
+                {navGroups.map((group, gi) => (
+                  <div key={group.label}>
+                    <div className="text-xs font-ui font-semibold text-secondary uppercase tracking-wider mb-2 px-2">
+                      {group.label}
+                    </div>
+                    <div className="space-y-1">
+                      {group.items.map((item, ii) => (
+                        (item.auth && !isAuthenticated) ? null : (
+                          <motion.div
+                            key={item.path}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: (gi * 3 + ii) * 0.05 }}
+                          >
+                            <Link
+                              to={item.path || "#"}
+                              className={`block px-4 py-2.5 rounded-lg text-base font-ui font-medium transition-all ${
+                                location.pathname === item.path
+                                  ? "bg-secondary/20 text-secondary"
+                                  : "text-primary-foreground/80 hover:bg-secondary/10 hover:text-secondary"
+                              }`}
+                            >
+                              {item.label}
+                            </Link>
+                          </motion.div>
+                        )
+                      ))}
+                    </div>
+                  </div>
                 ))}
+                {/* User section */}
                 {isAuthenticated ? (
-                  <>
-                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: navLinks.length * 0.05 }}>
-                      <Link to="/profile" className="block px-4 py-3 rounded-lg text-base font-ui font-medium text-primary-foreground/80 hover:bg-secondary/10 hover:text-secondary">
-                        Profile
-                      </Link>
-                    </motion.div>
-                    {user?.role === 'admin' && (
-                      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + 1) * 0.05 }}>
-                        <Link to="/admin" className="block px-4 py-3 rounded-lg text-base font-ui font-medium text-primary-foreground/80 hover:bg-secondary/10 hover:text-secondary">
-                          Admin
-                        </Link>
-                      </motion.div>
-                    )}
-                  </>
-                ) : (
-                  <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: navLinks.length * 0.05 }}>
-                    <Link to="/login" className="block px-4 py-3 rounded-lg text-base font-ui font-medium bg-secondary text-secondary-foreground text-center">
-                      Login
+                  <div className="border-t border-primary-foreground/10 pt-3 mt-2">
+                    <div className="text-xs font-ui font-semibold text-secondary uppercase tracking-wider mb-2 px-2">
+                      Account
+                    </div>
+                    <Link to="/profile" className="block px-4 py-2.5 rounded-lg text-base font-ui font-medium text-primary-foreground/80 hover:bg-secondary/10 hover:text-secondary">
+                      Profile
                     </Link>
-                  </motion.div>
+                    <Link to="/messages" className="block px-4 py-2.5 rounded-lg text-base font-ui font-medium text-primary-foreground/80 hover:bg-secondary/10 hover:text-secondary">
+                      Messages
+                    </Link>
+                    {user?.role === 'admin' && (
+                      <Link to="/admin" className="block px-4 py-2.5 rounded-lg text-base font-ui font-medium text-primary-foreground/80 hover:bg-secondary/10 hover:text-secondary">
+                        Admin
+                      </Link>
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="block px-4 py-3 rounded-lg text-base font-ui font-medium bg-secondary text-secondary-foreground text-center"
+                  >
+                    Login
+                  </Link>
                 )}
               </nav>
             </motion.div>

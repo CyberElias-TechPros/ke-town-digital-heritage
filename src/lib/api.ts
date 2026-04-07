@@ -669,6 +669,161 @@ class ApiClient {
     });
   }
 
+  // Cart
+  async getCart(token: string) {
+    return this.request('/cart', { token });
+  }
+
+  async addToCart(token: string, productId: string, quantity = 1) {
+    return this.request('/cart/add', {
+      method: 'POST',
+      body: { productId, quantity },
+      token,
+    });
+  }
+
+  async updateCartItem(token: string, productId: string, quantity: number) {
+    return this.request(`/cart/update/${productId}`, {
+      method: 'PUT',
+      body: { quantity },
+      token,
+    });
+  }
+
+  async removeFromCart(token: string, productId: string) {
+    return this.request(`/cart/remove/${productId}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  async clearCart(token: string) {
+    return this.request('/cart/clear', {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  // Orders
+  async createOrder(token: string, data: { items: Array<{ product: string; quantity: number }>; shippingAddress: Record<string, string>; paymentMethod?: string; notes?: string }) {
+    return this.request('/orders', {
+      method: 'POST',
+      body: data,
+      token,
+    });
+  }
+
+  async getMyOrders(token: string) {
+    return this.request('/orders/my-orders', { token });
+  }
+
+  async getMySales(token: string) {
+    return this.request('/orders/my-sales', { token });
+  }
+
+  async getOrder(token: string, id: string) {
+    return this.request(`/orders/${id}`, { token });
+  }
+
+  async updateOrderStatus(token: string, id: string, status: string) {
+    return this.request(`/orders/${id}/status`, {
+      method: 'PUT',
+      body: { status },
+      token,
+    });
+  }
+
+  // Shop
+  async getShopProfile(token: string) {
+    return this.request('/shop/profile', { token });
+  }
+
+  async becomeSeller(token: string, shopName: string, shopDescription?: string) {
+    return this.request('/shop/become-seller', {
+      method: 'POST',
+      body: { shopName, shopDescription },
+      token,
+    });
+  }
+
+  async updateShop(token: string, data: Record<string, unknown>) {
+    return this.request('/shop/update-shop', {
+      method: 'PUT',
+      body: data,
+      token,
+    });
+  }
+
+  async getMyProducts(token: string) {
+    return this.request('/shop/my-products', { token });
+  }
+
+  async closeShop(token: string) {
+    return this.request('/shop/close-shop', {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  // Messages
+  async getConversations(token: string) {
+    return this.request('/messages/conversations', { token });
+  }
+
+  async getMessages(token: string, conversationId: string) {
+    return this.request(`/messages/conversations/${conversationId}`, { token });
+  }
+
+  async startConversation(token: string, recipientId: string, productId?: string, initialMessage?: string) {
+    return this.request('/messages/conversations', {
+      method: 'POST',
+      body: { recipientId, productId, initialMessage },
+      token,
+    });
+  }
+
+  async sendMessage(token: string, conversationId: string, content: string) {
+    return this.request(`/messages/${conversationId}`, {
+      method: 'POST',
+      body: { content },
+      token,
+    });
+  }
+
+  async markMessageRead(token: string, messageId: string) {
+    return this.request(`/messages/${messageId}/read`, {
+      method: 'PUT',
+      token,
+    });
+  }
+
+  async getUnreadMessageCount(token: string) {
+    return this.request('/messages/unread/count', { token });
+  }
+
+  // Notifications
+  async getNotifications(token: string) {
+    return this.request('/notifications', { token });
+  }
+
+  async getUnreadNotificationCount(token: string) {
+    return this.request('/notifications/unread-count', { token });
+  }
+
+  async markAllNotificationsRead(token: string) {
+    return this.request('/notifications/mark-read', {
+      method: 'PUT',
+      token,
+    });
+  }
+
+  async markNotificationRead(token: string, notificationId: string) {
+    return this.request(`/notifications/${notificationId}/read`, {
+      method: 'PUT',
+      token,
+    });
+  }
+
   // Search suggestions (enhanced)
   async getAllSuggestions(query: string) {
     const suggestions: Array<{text: string, type: string}> = [];

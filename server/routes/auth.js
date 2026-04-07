@@ -84,7 +84,10 @@ router.post('/login', async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         role: user.role,
-        avatar: user.avatar
+        avatar: user.avatar,
+        isSeller: user.isSeller,
+        shopName: user.shopName,
+        shopVerified: user.shopVerified
       },
       token
     });
@@ -105,7 +108,16 @@ router.get('/me', authenticate, async (req, res) => {
         avatar: req.user.avatar,
         bio: req.user.bio,
         location: req.user.location,
-        createdAt: req.user.createdAt
+        createdAt: req.user.createdAt,
+        isSeller: req.user.isSeller,
+        shopName: req.user.shopName,
+        shopVerified: req.user.shopVerified,
+        sellerRating: req.user.sellerRating,
+        totalSales: req.user.totalSales,
+        followers: req.user.followers,
+        following: req.user.following,
+        profileVisibility: req.user.profileVisibility,
+        allowMessages: req.user.allowMessages
       }
     });
   } catch (error) {
@@ -116,11 +128,11 @@ router.get('/me', authenticate, async (req, res) => {
 // Update user profile
 router.put('/profile', authenticate, async (req, res) => {
   try {
-    const { fullName, bio, location, avatar } = req.body;
+    const { fullName, bio, location, avatar, profileVisibility, allowMessages, showOnlineStatus } = req.body;
     
     const user = await User.findByIdAndUpdate(
       req.user._id,
-      { fullName, bio, location, avatar },
+      { fullName, bio, location, avatar, profileVisibility, allowMessages, showOnlineStatus },
       { new: true, runValidators: true }
     ).select('-password');
 
@@ -221,7 +233,9 @@ router.put('/users/:id/status', authenticate, requireAdmin, async (req, res) => 
 // Get public user profile
 router.get('/user/:id', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('fullName avatar bio location followers following createdAt');
+    const user = await User.findById(req.params.id).select(
+      'fullName avatar bio location followers following createdAt isSeller shopName shopVerified sellerRating'
+    );
     if (!user) {
       return res.status(404).json({ error: 'User not found.' });
     }

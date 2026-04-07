@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
   User, Mail, MapPin, Globe, Calendar, Edit, Camera, 
-  Save, X, Check, Clock, FileText, MessageCircle
+  Save, X, Check, Clock, FileText, MessageCircle, ShoppingBag,
+  Store, Package, DollarSign, TrendingUp, Users, Settings
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,12 +33,86 @@ const Profile = () => {
   });
 
   const [activeTab, setActiveTab] = useState("profile");
+  const [shopData, setShopData] = useState<any>(null);
+  const [myProducts, setMyProducts] = useState<any[]>([]);
+  const [myOrders, setMyOrders] = useState<any[]>([]);
+  const [mySales, setMySales] = useState<any[]>([]);
+  const [shopForm, setShopForm] = useState({ shopName: "", shopDescription: "", shopBanner: "" });
+  const [showBecomeSeller, setShowBecomeSeller] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
     }
   }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (token && activeTab === "shop") {
+      loadShopData();
+    }
+    if (token && activeTab === "orders") {
+      loadOrderData();
+    }
+  }, [token, activeTab]);
+
+  const loadShopData = async () => {
+    if (!token) return;
+    try {
+      const profile = await api.getShopProfile(token);
+      setShopData(profile);
+      const products = await api.getMyProducts(token);
+      setMyProducts(products as any[]);
+      setShopForm({
+        shopName: profile.shopName || "",
+        shopDescription: profile.shopDescription || "",
+        shopBanner: profile.shopBanner || ""
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const loadOrderData = async () => {
+    if (!token) return;
+    try {
+      const orders = await api.getMyOrders(token);
+      const sales = await api.getMySales(token);
+      setMyOrders(orders as any[]);
+      setMySales(sales as any[]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleBecomeSeller = async () => {
+    if (!token) return;
+    setIsLoading(true);
+    try {
+      const result = await api.becomeSeller(token, shopForm.shopName, shopForm.shopDescription);
+      updateUser({ ...user!, isSeller: true, shopName: shopForm.shopName });
+      setShopData(result);
+      setShowBecomeSeller(false);
+      setSuccess("Congratulations! You are now a seller!");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateShop = async () => {
+    if (!token) return;
+    setIsLoading(true);
+    try {
+      const result = await api.updateShop(token, shopForm);
+      setShopData(result);
+      setSuccess("Shop updated successfully!");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -170,7 +245,9 @@ const Profile = () => {
               {[
                 { id: "profile", label: "Profile", icon: User },
                 { id: "password", label: "Password", icon: Check },
-                { id: "activity", label: "Activity", icon: Clock }
+                { id: "activity", label: "Activity", icon: Clock },
+                { id: "shop", label: "My Shop", icon: Store },
+                { id: "orders", label: "Orders", icon: ShoppingBag }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -370,6 +447,209 @@ const Profile = () => {
                     <Clock size={48} className="mx-auto mb-4 opacity-50" />
                     <p className="font-ui">No recent activity</p>
                     <p className="text-sm mt-2">Your actions will appear here</p>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "shop" && (
+                <div className="space-y-6">
+                  {!user?.isSeller && !showBecomeSeller && (
+                    <div className="text-center py-8">
+                      <Store size={48} className="mx-auto mb-4 text-muted-foreground opacity-50" />
+                      <h3 className="font-display text-lg font-semibold text-foreground mb-2">Become a Seller</h3>
+                      <p className="text-muted-foreground mb-4">Start selling your products to the community</p>
+                      <button
+                        onClick={() => setShowBecomeSeller(true)}
+                        className="px-6 py-2 bg-secondary text-secondary-foreground rounded-lg font-ui hover:bg-secondary/90 transition-all"
+                      >
+                        Open Your Shop
+                      </button>
+                    </div>
+                  )}
+
+                  {(user?.isSeller || showBecomeSeller) && (
+                    <>
+                      {showBecomeSeller && (
+                        <div className="bg-muted/50 rounded-lg p-6 mb-6">
+                          <h3 className="font-display text-lg font-semibold text-foreground mb-4">Create Your Shop</h3>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block font-ui text-sm font-medium text-foreground mb-2">Shop Name</label>
+                              <input
+                                type="text"
+                                value={shopForm.shopName}
+                                onChange={(e) => setShopForm({ ...shopForm, shopName: e.target.value })}
+                                className="w-full px-4 py-3 bg-background border border-border rounded-lg font-ui text-foreground focus:outline-none focus:ring-2 focus:ring-secondary"
+                                placeholder="Your Shop Name"
+                              />
+                            </div>
+                            <div>
+                              <label className="block font-ui text-sm font-medium text-foreground mb-2">Description</label>
+                              <textarea
+                                value={shopForm.shopDescription}
+                                onChange={(e) => setShopForm({ ...shopForm, shopDescription: e.target.value })}
+                                rows={3}
+                                className="w-full px-4 py-3 bg-background border border-border rounded-lg font-ui text-foreground focus:outline-none focus:ring-2 focus:ring-secondary resize-none"
+                                placeholder="Tell customers about your shop..."
+                              />
+                            </div>
+                            <div className="flex gap-3">
+                              <button
+                                onClick={handleBecomeSeller}
+                                disabled={isLoading || !shopForm.shopName}
+                                className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg font-ui hover:bg-secondary/90 transition-all disabled:opacity-50"
+                              >
+                                {isLoading ? "Creating..." : "Create Shop"}
+                              </button>
+                              <button
+                                onClick={() => setShowBecomeSeller(false)}
+                                className="px-4 py-2 bg-muted text-muted-foreground rounded-lg font-ui hover:bg-muted/80"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {shopData && user?.isSeller && (
+                        <>
+                          <div className="grid md:grid-cols-4 gap-4">
+                            <div className="bg-secondary/10 rounded-lg p-4">
+                              <div className="flex items-center gap-3">
+                                <Store className="text-secondary" size={24} />
+                                <div>
+                                  <p className="text-sm text-muted-foreground">Shop Name</p>
+                                  <p className="font-semibold text-foreground">{shopData.shopName}</p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="bg-secondary/10 rounded-lg p-4">
+                              <div className="flex items-center gap-3">
+                                <Package className="text-secondary" size={24} />
+                                <div>
+                                  <p className="text-sm text-muted-foreground">Products</p>
+                                  <p className="font-semibold text-foreground">{myProducts.length}</p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="bg-secondary/10 rounded-lg p-4">
+                              <div className="flex items-center gap-3">
+                                <DollarSign className="text-secondary" size={24} />
+                                <div>
+                                  <p className="text-sm text-muted-foreground">Total Sales</p>
+                                  <p className="font-semibold text-foreground">{shopData.totalSales || 0}</p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="bg-secondary/10 rounded-lg p-4">
+                              <div className="flex items-center gap-3">
+                                <TrendingUp className="text-secondary" size={24} />
+                                <div>
+                                  <p className="text-sm text-muted-foreground">Rating</p>
+                                  <p className="font-semibold text-foreground">{shopData.sellerRating?.toFixed(1) || "New"}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="border-t border-border pt-6">
+                            <h4 className="font-display text-lg font-semibold text-foreground mb-4">Your Products</h4>
+                            {myProducts.length === 0 ? (
+                              <div className="text-center py-8 text-muted-foreground">
+                                <Package size={40} className="mx-auto mb-2 opacity-50" />
+                                <p>No products yet</p>
+                                <a href="/marketplace" className="text-secondary hover:underline text-sm">Add your first product</a>
+                              </div>
+                            ) : (
+                              <div className="grid md:grid-cols-3 gap-4">
+                                {myProducts.map((product: any) => (
+                                  <div key={product._id} className="border border-border rounded-lg p-3">
+                                    <div className="aspect-square bg-muted rounded-lg mb-2 overflow-hidden">
+                                      {product.images?.[0] ? (
+                                        <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                          <Package size={32} />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <p className="font-medium text-foreground truncate">{product.name}</p>
+                                    <p className="text-sm text-secondary">₦{product.price?.toLocaleString()}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {activeTab === "orders" && (
+                <div className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <h3 className="font-display text-lg font-semibold text-foreground mb-4">My Purchases</h3>
+                      {myOrders.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <ShoppingBag size={40} className="mx-auto mb-2 opacity-50" />
+                          <p>No orders yet</p>
+                          <a href="/marketplace" className="text-secondary hover:underline text-sm">Start shopping</a>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {myOrders.map((order: any) => (
+                            <div key={order._id} className="border border-border rounded-lg p-4">
+                              <div className="flex justify-between items-start mb-2">
+                                <span className="text-sm text-muted-foreground">Order #{order._id.slice(-8)}</span>
+                                <span className={`px-2 py-1 rounded text-xs ${
+                                  order.status === 'delivered' ? 'bg-secondary/20 text-secondary' :
+                                  order.status === 'cancelled' ? 'bg-destructive/20 text-destructive' :
+                                  'bg-yellow-500/20 text-yellow-600'
+                                }`}>
+                                  {order.status}
+                                </span>
+                              </div>
+                              <p className="font-medium text-foreground">{order.items?.length} item(s)</p>
+                              <p className="text-sm text-secondary">₦{order.totalAmount?.toLocaleString()}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <h3 className="font-display text-lg font-semibold text-foreground mb-4">My Sales</h3>
+                      {mySales.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <DollarSign size={40} className="mx-auto mb-2 opacity-50" />
+                          <p>No sales yet</p>
+                          {user?.isSeller && <p className="text-sm">Share your products to get sales</p>}
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {mySales.map((sale: any) => (
+                            <div key={sale._id} className="border border-border rounded-lg p-4">
+                              <div className="flex justify-between items-start mb-2">
+                                <span className="text-sm text-muted-foreground">Order #{sale._id.slice(-8)}</span>
+                                <span className={`px-2 py-1 rounded text-xs ${
+                                  sale.status === 'delivered' ? 'bg-secondary/20 text-secondary' :
+                                  sale.status === 'cancelled' ? 'bg-destructive/20 text-destructive' :
+                                  'bg-yellow-500/20 text-yellow-600'
+                                }`}>
+                                  {sale.status}
+                                </span>
+                              </div>
+                              <p className="font-medium text-foreground">{sale.items?.length} item(s) to {sale.buyer?.fullName}</p>
+                              <p className="text-sm text-secondary">₦{sale.totalAmount?.toLocaleString()}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

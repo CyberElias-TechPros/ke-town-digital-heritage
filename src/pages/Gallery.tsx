@@ -1,28 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Upload, Play, Loader2, Check, AlertCircle } from "lucide-react";
+import { X, Upload, Loader2, Check, AlertCircle } from "lucide-react";
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
 import SEO from "@/components/PageSEO";
-import heroImg from "@/assets/hero-waterway.jpg";
-import cultureImg from "@/assets/culture-masquerade.jpg";
-import historyImg from "@/assets/history-canoe.jpg";
-import attireImg from "@/assets/attire-george.jpg";
-import envImg from "@/assets/environment-mangrove.jpg";
-import cuisineImg from "@/assets/cuisine-onunu.jpg";
 import { api } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 
 const categories = ["All", "Historical", "Cultural", "Contemporary", "Environment"];
-
-const defaultGalleryItems = [
-  { src: heroImg, title: "Ke Kingdom Waterways", category: "Contemporary", desc: "Aerial view of the mangrove waterways surrounding Ke Kingdom" },
-  { src: cultureImg, title: "Masquerade Festival", category: "Cultural", desc: "Kalabari masquerade dancers during the Owu-Aru-Sun festival" },
-  { src: historyImg, title: "War Canoe Heritage", category: "Historical", desc: "Historical illustration of the Kalabari war canoe house system" },
-  { src: attireImg, title: "Traditional Attire", category: "Cultural", desc: "Kalabari woman in traditional George fabric and coral beads" },
-  { src: envImg, title: "Mangrove Ecosystem", category: "Environment", desc: "The lush mangrove swamps of the Niger Delta" },
-  { src: cuisineImg, title: "Kalabari Cuisine", category: "Cultural", desc: "Traditional Onunu dish and Fisherman's Soup" },
-];
 
 interface GalleryItem {
   _id?: string;
@@ -38,7 +23,9 @@ const Gallery = () => {
   const { isAuthenticated, token } = useAuth();
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
-  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(defaultGalleryItems);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadTitle, setUploadTitle] = useState("");
@@ -54,6 +41,8 @@ const Gallery = () => {
   }, []);
 
   const fetchGalleryItems = async () => {
+    setIsLoading(true);
+    setError("");
     try {
       const items = await api.getGallery() as any[];
       if (items && items.length > 0) {
@@ -66,10 +55,13 @@ const Gallery = () => {
           submittedBy: item.submittedBy,
           approved: item.approved,
         }));
-        setGalleryItems([...defaultGalleryItems, ...formattedItems.filter((item: GalleryItem) => item.approved)]);
+        setGalleryItems(formattedItems.filter((item: GalleryItem) => item.approved));
       }
-    } catch (error) {
-      console.error("Failed to fetch gallery items:", error);
+    } catch (err: any) {
+      console.error("Failed to fetch gallery items:", err);
+      setError(err.message || "Unable to load gallery. Please try again later.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -187,38 +179,52 @@ const Gallery = () => {
             ))}
           </div>
 
-          {/* Masonry Grid */}
-          <motion.div layout className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
-            <AnimatePresence>
-              {filtered.map((item, i) => (
-                <motion.div
-                  key={item._id || item.title}
-                  layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.3, delay: i * 0.05 }}
-                  className="break-inside-avoid cursor-pointer group"
-                  onClick={() => setSelectedImage(item)}
-                >
-                  <div className="rounded-xl overflow-hidden border border-border shadow-[var(--shadow-card)] hover-lift">
-                    <div className="relative">
-                      <img src={item.src} alt={item.title} loading="lazy" className="w-full object-cover" />
-                      <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/40 transition-all duration-300 flex items-center justify-center">
-                        <span className="text-primary-foreground font-ui text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                          View Full Size
-                        </span>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-secondary" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-20">
+              <AlertCircle className="w-10 h-10 text-destructive mx-auto mb-4" />
+              <p className="text-muted-foreground font-body">{error}</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-muted-foreground font-body">No gallery items available yet. Be the first to submit!</p>
+            </div>
+          ) : (
+            <motion.div layout className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
+              <AnimatePresence>
+                {filtered.map((item, i) => (
+                  <motion.div
+                    key={item._id || item.title}
+                    layout
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.3, delay: i * 0.05 }}
+                    className="break-inside-avoid cursor-pointer group"
+                    onClick={() => setSelectedImage(item)}
+                  >
+                    <div className="rounded-xl overflow-hidden border border-border shadow-[var(--shadow-card)] hover-lift">
+                      <div className="relative">
+                        <img src={item.src} alt={item.title} loading="lazy" className="w-full object-cover" />
+                        <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/40 transition-all duration-300 flex items-center justify-center">
+                          <span className="text-primary-foreground font-ui text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                            View Full Size
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-display text-base font-semibold text-foreground">{item.title}</h3>
+                        <span className="tag-ke bg-secondary/10 text-secondary mt-1 inline-block">{item.category}</span>
                       </div>
                     </div>
-                    <div className="p-4">
-                      <h3 className="font-display text-base font-semibold text-foreground">{item.title}</h3>
-                      <span className="tag-ke bg-secondary/10 text-secondary mt-1 inline-block">{item.category}</span>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
         </div>
       </section>
 

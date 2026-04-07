@@ -33,97 +33,11 @@ const categories = [
   { id: "food", label: "Food & Drinks" },
 ];
 
-const sampleProducts: Product[] = [
-  {
-    _id: "1",
-    name: "George Cloth - Traditional Kalabari Fabric",
-    description: "Authentic Indian-origin cotton with gold brocade. Perfect for traditional ceremonies and special occasions.",
-    price: 25000,
-    currency: "NGN",
-    category: "textiles",
-    artisanName: "Grace Textiles",
-    artisanLocation: "Ke Kingdom",
-    stock: 15,
-    isFeatured: true,
-    tags: ["fabric", "traditional", "ceremony"],
-    images: ["https://images.unsplash.com/photo-1558171813-4c088753af8f?w=400"]
-  },
-  {
-    _id: "2",
-    name: "Coral Bead Necklace (Ikala)",
-    description: "Handcrafted coral bead necklace featuring traditional Kalabari design. Symbol of status and cultural identity.",
-    price: 45000,
-    currency: "NGN",
-    category: "jewelry",
-    artisanName: "Kalabari Beads Co.",
-    artisanLocation: "Buguma",
-    stock: 8,
-    isFeatured: true,
-    tags: ["beads", "coral", "traditional"],
-    images: ["https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400"]
-  },
-  {
-    _id: "3",
-    name: "Ekine Mask Carving",
-    description: "Hand-carved wooden mask representing water spirit. Traditional motif from the Ekine masquerade society.",
-    price: 85000,
-    currency: "NGN",
-    category: "masquerade",
-    artisanName: "Chief Woodcarver",
-    artisanLocation: "Ke Kingdom",
-    stock: 3,
-    isFeatured: true,
-    tags: ["mask", "woodcarving", "spiritual"],
-    images: ["https://images.unsplash.com/photo-1582560469781-1965b9af903d?w=400"]
-  },
-  {
-    _id: "4",
-    name: "Kalabari Traditional Attire Set",
-    description: "Complete set including Etibo (wax-cotton shirt) and George wrapper. Ready-to-wear traditional outfit.",
-    price: 75000,
-    currency: "NGN",
-    category: "textiles",
-    artisanName: "Kalabari Fashion House",
-    artisanLocation: "Degema",
-    stock: 10,
-    isFeatured: false,
-    tags: ["attire", "outfit", "traditional"],
-    images: ["https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400"]
-  },
-  {
-    _id: "5",
-    name: "Onunu Spice Mix",
-    description: "Traditional spice blend for preparing authentic Kalabari onunu (pounded yam and plantain). Made with local ingredients.",
-    price: 3500,
-    currency: "NGN",
-    category: "food",
-    artisanName: "Ke Kitchen Delights",
-    artisanLocation: "Ke Kingdom",
-    stock: 50,
-    isFeatured: false,
-    tags: ["food", "spice", "cooking"],
-    images: ["https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400"]
-  },
-  {
-    _id: "6",
-    name: "War Canoe Model",
-    description: "Miniature replica of traditional Kalabari war canoe. Handcrafted with attention to historical accuracy.",
-    price: 35000,
-    currency: "NGN",
-    category: "crafts",
-    artisanName: "Delta Crafts",
-    artisanLocation: "Port Harcourt",
-    stock: 5,
-    isFeatured: true,
-    tags: ["craft", "canoe", "decorative"],
-    images: ["https://images.unsplash.com/photo-1559825481-12a05cc00344?w=400"]
-  },
-];
-
 export default function Marketplace() {
   const { isAuthenticated } = useAuth();
-  const [products, setProducts] = useState<Product[]>(sampleProducts);
-  const [loading, setLoading] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
@@ -135,14 +49,14 @@ export default function Marketplace() {
 
   const loadProducts = async () => {
     setLoading(true);
+    setError("");
     try {
       const category = selectedCategory === "all" ? undefined : selectedCategory;
       const data = await api.getProducts(category);
-      if (data && (data as Product[]).length > 0) {
-        setProducts(data as Product[]);
-      }
-    } catch (error) {
-      console.log("Using sample products");
+      setProducts(data as Product[]);
+    } catch (err: any) {
+      console.error("Failed to load products:", err);
+      setError(err.message || "Unable to load products");
     } finally {
       setLoading(false);
     }
@@ -271,6 +185,10 @@ export default function Marketplace() {
           {loading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-secondary" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <p className="text-destructive">{error}</p>
             </div>
           ) : filteredProducts.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

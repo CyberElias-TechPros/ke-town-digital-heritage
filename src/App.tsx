@@ -24,6 +24,7 @@ import Marketplace from "./pages/Marketplace.tsx";
 import VirtualTours from "./pages/VirtualTours.tsx";
 import Admin from "./pages/Admin.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Messages from "./pages/Messages.tsx";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,7 @@ const App = () => {
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/virtual-tours" element={<VirtualTours />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/messages" element={<Messages />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>

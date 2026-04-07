@@ -37,91 +37,10 @@ const categories = [
   { id: "spirituality", label: "Spirituality" },
 ];
 
-const sampleStories: ElderStory[] = [
-  {
-    _id: "1",
-    title: "The Origins of the War Canoe Houses",
-    description: "Elder Victor Igbuku recounts the founding of the war canoe house system and its significance in Kalabari society.",
-    elderName: "Chief Victor Igbuku",
-    elderTitle: "Traditional Chief, Ke Kingdom",
-    category: "war-canoe",
-    duration: "12:34",
-    language: "Kalabari",
-    tags: ["Wari", "History", "Tradition"],
-    isFeatured: true,
-    thumbnailUrl: "https://images.unsplash.com/photo-1531168556467-80aace0d0144?w=400",
-    audioUrl: ""
-  },
-  {
-    _id: "2",
-    title: "The Night of the Dinkoru",
-    description: "Matriarch Grace Alabo describes the traditional wake-keeping ceremony and its meaning in Kalabari culture.",
-    elderName: "Grace Alabo",
-    elderTitle: "Women's Leader",
-    category: "customs",
-    duration: "8:45",
-    language: "Kalabari",
-    tags: ["Funeral", "Tradition", "Customs"],
-    isFeatured: true,
-    thumbnailUrl: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400"
-  },
-  {
-    _id: "3",
-    title: "The Art of Net Fishing",
-    description: "Fisherman Paul Okpo shares traditional fishing techniques passed down through generations.",
-    elderName: "Paul Okpo",
-    elderTitle: "Master Fisherman",
-    category: "fishing",
-    duration: "15:20",
-    language: "Kalabari",
-    tags: ["Fishing", "Livelihood", "Tradition"],
-    isFeatured: false,
-    thumbnailUrl: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400"
-  },
-  {
-    _id: "4",
-    title: "The Owu-Aru-Sun Festival",
-    description: "Chief Benjamin Yomiyahoo explains the grand masquerade festival and its spiritual significance.",
-    elderName: "Chief Benjamin Yomiyahoo",
-    elderTitle: "Ekine Priest",
-    category: "masquerade",
-    duration: "18:12",
-    language: "Kalabari",
-    tags: ["Festival", "Masquerade", "Spirituality"],
-    isFeatured: true,
-    thumbnailUrl: "https://images.unsplash.com/photo-1517220901313-1411bc38c9b4?w=400"
-  },
-  {
-    _id: "5",
-    title: "Traditional Marriage Rites",
-    description: "Elder Mary Omenka describes the step-by-step process of Kalabari traditional marriage.",
-    elderName: "Elder Mary Omenka",
-    elderTitle: "Marriage Counselor",
-    category: "marriage",
-    duration: "22:45",
-    language: "Kalabari",
-    tags: ["Marriage", "Customs", "Tradition"],
-    isFeatured: false,
-    thumbnailUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400"
-  },
-  {
-    _id: "6",
-    title: "The First Settlement at Ke",
-    description: "Historian Chief Young Georgewill shares the oral history of Ke Kingdom's founding around 800 AD.",
-    elderName: "Chief Young Georgewill",
-    elderTitle: "Oral Historian",
-    category: "history",
-    duration: "25:30",
-    language: "Kalabari",
-    tags: ["History", "Settlement", "Origins"],
-    isFeatured: true,
-    thumbnailUrl: "https://images.unsplash.com/photo-1460518451285-97b6aa326961?w=400"
-  },
-];
-
 export default function ElderStories() {
-  const [stories, setStories] = useState<ElderStory[]>(sampleStories);
-  const [loading, setLoading] = useState(false);
+  const [stories, setStories] = useState<ElderStory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedStory, setSelectedStory] = useState<ElderStory | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -134,14 +53,14 @@ export default function ElderStories() {
 
   const loadStories = async () => {
     setLoading(true);
+    setError("");
     try {
       const category = selectedCategory === "all" ? undefined : selectedCategory;
       const data = await api.getElderStories(category);
-      if (data && (data as ElderStory[]).length > 0) {
-        setStories(data as ElderStory[]);
-      }
-    } catch (error) {
-      console.log("Using sample stories");
+      setStories(data as ElderStory[]);
+    } catch (err: any) {
+      console.error("Failed to load stories:", err);
+      setError(err.message || "Unable to load stories");
     } finally {
       setLoading(false);
     }
