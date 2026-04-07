@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -25,8 +25,20 @@ import VirtualTours from "./pages/VirtualTours.tsx";
 import Admin from "./pages/Admin.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Messages from "./pages/Messages.tsx";
+import keicon from "./assets/keicon.png";
 
 const queryClient = new QueryClient();
+
+const LoadingScreen = () => (
+  <div className="min-h-screen bg-primary flex flex-col items-center justify-center">
+    <img 
+      src={keicon} 
+      alt="KE Kingdom" 
+      className="w-20 h-20 rounded-full mb-6 animate-pulse"
+    />
+    <div className="w-8 h-8 border-2 border-secondary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 // ScrollToTop component - scrolls to top of page on route change
 const ScrollToTop = () => {
@@ -40,6 +52,17 @@ const ScrollToTop = () => {
 };
 
 const App = () => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

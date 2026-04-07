@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ChevronDown, Search } from "lucide-react";
 import SearchModal from "./SearchModal";
 import { useAuth } from "@/contexts/AuthContext";
+import keicon from "@/assets/keicon.png";
 
 const navGroups = [
   {
@@ -100,9 +101,7 @@ const Header = () => {
       >
         <div className="container-narrow flex items-center justify-between px-4 md:px-8">
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground font-display font-bold text-lg group-hover:scale-110 transition-transform">
-              K
-            </div>
+            <img src={keicon} alt="KE Kingdom" className="w-10 h-10 rounded-full object-cover group-hover:scale-110 transition-transform" />
             <div>
               <span className="font-display text-xl font-bold text-primary-foreground tracking-tight">
                 KE Kingdom
