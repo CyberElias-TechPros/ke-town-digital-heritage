@@ -48,37 +48,35 @@ app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/upload', uploadLimiter);
 
-// Database connection - Priority: Atlas Sharded -> Localhost
+// Database connection - Multiple fallbacks for robustness
 const connectDB = async () => {
   const mongooseOptions = {
-    serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 45000,
+    serverSelectionTimeoutMS: 30000,
+    socketTimeoutMS: 60000,
+    maxPoolSize: 10,
   };
 
-  // Priority 1: Atlas sharded (direct connection)
-  const ATLAS_URI_1 = 'mongodb://cybereliastk_db_user:3bBKj4DtLRh7DNd8@ac-okkbkq6-shard-00-00.rz1xdmd.mongodb.net:27017,ac-okkbkq6-shard-00-01.rz1xdmd.mongodb.net:27017,ac-okkbkq6-shard-00-02.rz1xdmd.mongodb.net:27017/keKingdom?ssl=true&replicaSet=atlas-ljgzbm-shard-0&authSource=admin&appName=CEA';
-  
-  // Priority 2: Localhost
-  const LOCAL_URI = 'mongodb://localhost:27017/keKingdom';
+  const connectionOptions = [
+    { name: 'Atlas SRV', uri: 'mongodb+srv://cybereliastk_db_user:3bBKj4DtLRh7DNd8@cea.rz1xdmd.mongodb.net/keKingdom?retryWrites=true&w=majority' },
+    { name: 'Atlas Sharded', uri: 'mongodb://cybereliastk_db_user:3bBKj4DtLRh7DNd8@ac-okkbkq6-shard-00-00.rz1xdmd.mongodb.net:27017,ac-okkbkq6-shard-00-01.rz1xdmd.mongodb.net:27017,ac-okkbkq6-shard-00-02.rz1xdmd.mongodb.net:27017/keKingdom?ssl=true&replicaSet=atlas-ljgzbm-shard-0&authSource=admin&appName=CEA' },
+    { name: 'Localhost', uri: 'mongodb://localhost:27017/keKingdom' },
+  ];
 
-  // Try Atlas sharded first
-  console.log('Trying MongoDB Atlas Sharded...');
-  try {
-    await mongoose.connect(ATLAS_URI_1, mongooseOptions);
-    console.log('✅ Connected to MongoDB Atlas Sharded (keKingdom)');
-    return;
-  } catch (err1) {
-    console.log(`❌ MongoDB Atlas Sharded failed: ${err1.message}`);
-  }
+  let connected = false;
   
-  // Try localhost
-  console.log('Trying Localhost MongoDB...');
-  try {
-    await mongoose.connect(LOCAL_URI, mongooseOptions);
-    console.log('✅ Connected to Localhost MongoDB (keKingdom)');
-    return;
-  } catch (err2) {
-    console.log(`❌ Localhost failed: ${err2.message}`);
+  for (const option of connectionOptions) {
+    console.log(`Trying ${option.name}...`);
+    try {
+      await mongoose.connect(option.uri, mongooseOptions);
+      console.log(`✅ Connected to ${option.name}`);
+      connected = true;
+      break;
+    } catch (err) {
+      console.log(`❌ ${option.name} failed: ${err.message}`);
+    }
+  }
+
+  if (!connected) {
     console.log('⚠️ All databases unreachable. Running without database connection.');
   }
 
@@ -87,7 +85,8 @@ const connectDB = async () => {
   });
 
   mongoose.connection.on('disconnected', () => {
-    console.log('⚠️ MongoDB disconnected');
+    console.log('⚠️ MongoDB disconnected, attempting reconnect...');
+    connectDB();
   });
 };
 
