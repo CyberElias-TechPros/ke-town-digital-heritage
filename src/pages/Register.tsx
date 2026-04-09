@@ -176,6 +176,17 @@ const Register = () => {
                   </Link>
                 </p>
               </div>
+
+              <div className="mt-6 pt-4 border-t border-border/50 text-center">
+                <a 
+                  href="https://cybereliasacademy.com.ng" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-xs text-muted-foreground/60 hover:text-secondary/80 font-ui transition-colors"
+                >
+                  Need tech skills? Visit Cyber Elias Academy →
+                </a>
+              </div>
             </div>
           </motion.div>
         </div>

@@ -223,6 +223,32 @@ const Visit = () => {
           </div>
         </div>
       </section>
+
+      {/* Cyber Elias Academy Ad - Before Footer */}
+      <section className="py-8 bg-card border-t border-border">
+        <div className="container-narrow px-4">
+          <a 
+            href="https://cybereliasacademy.com.ng" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex flex-col md:flex-row items-center justify-between gap-4 p-6 bg-gradient-to-r from-secondary/5 to-transparent rounded-xl border border-secondary/10 hover:border-secondary/20 transition-all group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center">
+                <BookOpen size={24} className="text-secondary" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-display text-lg font-semibold text-foreground">Cyber Elias Academy</h3>
+                <p className="text-sm text-muted-foreground">IT Training, Certifications, Web Development & Digital Services</p>
+                <p className="text-xs text-secondary/70 mt-1">From Zero to Expert, Together</p>
+              </div>
+            </div>
+            <span className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg text-sm font-ui font-medium group-hover:bg-secondary/90 transition-colors">
+              Visit Website
+            </span>
+          </a>
+        </div>
+      </section>
     </Layout>
   );
 };

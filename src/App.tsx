@@ -25,6 +25,7 @@ import VirtualTours from "./pages/VirtualTours.tsx";
 import Admin from "./pages/Admin.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Messages from "./pages/Messages.tsx";
+import DigitalSkills from "./pages/DigitalSkills.tsx";
 import keicon from "./assets/keicon.png";
 
 const queryClient = new QueryClient();
@@ -90,6 +91,7 @@ const App = () => {
             <Route path="/virtual-tours" element={<VirtualTours />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/messages" element={<Messages />} />
+            <Route path="/digital-skills" element={<DigitalSkills />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>

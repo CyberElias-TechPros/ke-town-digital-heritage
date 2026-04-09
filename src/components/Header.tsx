@@ -32,6 +32,16 @@ const navGroups = [
     ]
   },
   {
+    label: "Learn Digital Skills",
+    items: [
+      { label: "Cyber Elias Academy", path: "/digital-skills", external: true, url: "https://cybereliasacademy.com.ng" },
+      { label: "IT Training", path: "/digital-skills" },
+      { label: "Certifications", path: "/digital-skills" },
+      { label: "Web Development", path: "/digital-skills" },
+      { label: "IT Consultancy", path: "/digital-skills" },
+    ]
+  },
+  {
     label: "Community",
     items: [
       { label: "Diaspora", path: "/diaspora" },
@@ -53,6 +63,8 @@ interface NavItem {
   path?: string;
   auth?: boolean;
   admin?: boolean;
+  external?: boolean;
+  url?: string;
 }
 
 interface NavGroup {
@@ -133,17 +145,29 @@ const Header = () => {
                   >
                     {group.items.map((item) => (
                       (item.auth && !isAuthenticated) ? null : (
-                        <Link
-                          key={item.path}
-                          to={item.path || "#"}
-                          className={`block px-4 py-2.5 text-sm font-ui transition-all ${
-                            location.pathname === item.path
-                              ? "bg-secondary/20 text-secondary"
-                              : "text-foreground hover:bg-secondary/10 hover:text-secondary"
-                          }`}
-                        >
-                          {item.label}
-                        </Link>
+                        item.external ? (
+                          <a
+                            key={item.url}
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block px-4 py-2.5 text-sm font-ui transition-all text-foreground hover:bg-secondary/10 hover:text-secondary"
+                          >
+                            {item.label}
+                          </a>
+                        ) : (
+                          <Link
+                            key={item.path}
+                            to={item.path || "#"}
+                            className={`block px-4 py-2.5 text-sm font-ui transition-all ${
+                              location.pathname === item.path
+                                ? "bg-secondary/20 text-secondary"
+                                : "text-foreground hover:bg-secondary/10 hover:text-secondary"
+                            }`}
+                          >
+                            {item.label}
+                          </Link>
+                        )
                       )
                     ))}
                   </motion.div>
@@ -256,21 +280,32 @@ const Header = () => {
                       {group.items.map((item, ii) => (
                         (item.auth && !isAuthenticated) ? null : (
                           <motion.div
-                            key={item.path}
+                            key={item.external ? item.url : item.path}
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: (gi * 3 + ii) * 0.05 }}
                           >
-                            <Link
-                              to={item.path || "#"}
-                              className={`block px-4 py-2.5 rounded-lg text-base font-ui font-medium transition-all ${
-                                location.pathname === item.path
-                                  ? "bg-secondary/20 text-secondary"
-                                  : "text-primary-foreground/80 hover:bg-secondary/10 hover:text-secondary"
-                              }`}
-                            >
-                              {item.label}
-                            </Link>
+                            {item.external ? (
+                              <a
+                                href={item.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block px-4 py-2.5 rounded-lg text-base font-ui font-medium text-primary-foreground/80 hover:bg-secondary/10 hover:text-secondary"
+                              >
+                                {item.label}
+                              </a>
+                            ) : (
+                              <Link
+                                to={item.path || "#"}
+                                className={`block px-4 py-2.5 rounded-lg text-base font-ui font-medium transition-all ${
+                                  location.pathname === item.path
+                                    ? "bg-secondary/20 text-secondary"
+                                    : "text-primary-foreground/80 hover:bg-secondary/10 hover:text-secondary"
+                                }`}
+                              >
+                                {item.label}
+                              </Link>
+                            )}
                           </motion.div>
                         )
                       ))}

@@ -143,12 +143,24 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-primary-foreground/10 mt-10 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-primary-foreground/50 text-xs font-ui">
-            © {new Date().getFullYear()} KE Kingdom Community. All rights reserved.
-          </p>
-          <p className="text-primary-foreground/50 text-xs font-ui">
-            Preserving Kalabari Heritage for Future Generations
-          </p>
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <p className="text-primary-foreground/50 text-xs font-ui">
+              © {new Date().getFullYear()} KE Kingdom Community. All rights reserved.
+            </p>
+            <span className="hidden md:block text-primary-foreground/30">•</span>
+            <p className="text-primary-foreground/50 text-xs font-ui">
+              Preserving Kalabari Heritage for Future Generations
+            </p>
+          </div>
+          <a 
+            href="https://cybereliasacademy.com.ng" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/10 border border-secondary/20 text-secondary/80 text-xs font-ui hover:bg-secondary/20 hover:text-secondary transition-all"
+          >
+            <span>Built by</span>
+            <span className="font-semibold">Cyber Elias Academy</span>
+          </a>
         </div>
       </div>
     </footer>

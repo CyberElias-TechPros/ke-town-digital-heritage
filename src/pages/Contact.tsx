@@ -12,6 +12,7 @@ const contactMethods = [
   { icon: MessageCircle, title: "WhatsApp", desc: "Join our WhatsApp community group", link: "#", action: "Join Group" },
   { icon: Mail, title: "Email", desc: "info@keKingdom.com.ng", link: "mailto:info@keKingdom.com.ng", action: "Send Email" },
   { icon: MapPin, title: "Location", desc: "Ke Kingdom, Degema LGA, Rivers State, Nigeria", link: "#", action: "View Map" },
+  { icon: BookOpen, title: "Tech Training", desc: "Cyber Elias Academy - Digital skills, courses & services", link: "https://cybereliasacademy.com.ng", action: "Visit Academy", accent: true },
 ];
 
 const submissionTypes = [
@@ -91,9 +92,14 @@ const Contact = () => {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
             {contactMethods.map((method, i) => (
               <AnimatedCard key={i} delay={i * 0.1}>
-                <a href={method.link} className="p-6 block text-center group">
-                  <div className="w-14 h-14 rounded-xl bg-ke-gold/10 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                    <method.icon size={24} className="text-secondary" />
+                <a 
+                  href={method.link} 
+                  target={method.link.startsWith('http') ? '_blank' : undefined}
+                  rel={method.link.startsWith('http') ? 'noopener noreferrer' : undefined}
+                  className={`p-6 block text-center group ${method.accent ? 'bg-secondary/5 border border-secondary/20 rounded-xl' : ''}`}
+                >
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform ${method.accent ? 'bg-secondary/20' : 'bg-ke-gold/10'}`}>
+                    <method.icon size={24} className={method.accent ? 'text-secondary' : 'text-secondary'} />
                   </div>
                   <h3 className="font-display text-lg font-semibold text-foreground mb-1">{method.title}</h3>
                   <p className="text-xs text-muted-foreground font-body mb-3">{method.desc}</p>

@@ -184,6 +184,31 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Cyber Elias Academy Promo - Subtle Banner */}
+      <section className="bg-secondary/5 border-y border-secondary/10 py-3">
+        <div className="container-narrow px-4">
+          <a 
+            href="https://cybereliasacademy.com.ng" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center justify-between group hover:bg-secondary/10 rounded-lg px-4 py-2 transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center">
+                <BookOpen size={16} className="text-secondary" />
+              </div>
+              <div>
+                <span className="text-sm font-ui font-semibold text-foreground">Cyber Elias Academy</span>
+                <span className="text-xs text-muted-foreground block">Empowering Digital Skills in Nigeria</span>
+              </div>
+            </div>
+            <span className="text-xs font-ui text-secondary font-medium group-hover:translate-x-1 transition-transform">
+              Learn More →
+            </span>
+          </a>
+        </div>
+      </section>
+
       {/* About Section */}
       <section className="section-padding bg-background">
         <div className="container-narrow">
