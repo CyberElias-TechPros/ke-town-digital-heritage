@@ -142,23 +142,23 @@ export default function ActivityPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {activities.map((activity) => (
-              <div key={activity._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            {activities?.map((activity) => (
+              <div key={activity?._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <div className="flex items-start gap-3">
-                  <Link to={`/profile/${activity.user._id}`}>
+                  <Link to={`/profile/${activity?.user?._id}`}>
                     <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-medium flex-shrink-0">
-                      {activity.user.fullName.charAt(0).toUpperCase()}
+                      {activity?.user?.fullName?.charAt(0)?.toUpperCase() || '?'}
                     </div>
                   </Link>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <Link to={`/profile/${activity.user._id}`} className="font-semibold text-gray-900 hover:text-secondary">
-                        {activity.user.fullName}
+                      <Link to={`/profile/${activity?.user?._id}`} className="font-semibold text-gray-900 hover:text-secondary">
+                        {activity?.user?.fullName || 'Unknown User'}
                       </Link>
-                      {getActivityIcon(activity.type)}
+                      {getActivityIcon(activity?.type)}
                     </div>
-                    <p className="text-gray-600 text-sm mt-0.5">{activity.description}</p>
-                    <p className="text-gray-400 text-xs mt-1">{formatDate(activity.createdAt)}</p>
+                    <p className="text-gray-600 text-sm mt-0.5">{activity?.description}</p>
+                    <p className="text-gray-400 text-xs mt-1">{formatDate(activity?.createdAt)}</p>
                   </div>
                 </div>
               </div>

@@ -1,24 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
-interface User {
-  id: string;
-  fullName: string;
-  email: string;
-  role: 'user' | 'admin';
-  avatar?: string;
-  bio?: string;
-  location?: string;
-  isSeller?: boolean;
-  shopName?: string;
-  shopVerified?: boolean;
-  sellerRating?: number;
-  totalSales?: number;
-  followers?: string[];
-  following?: string[];
-  profileVisibility?: 'public' | 'followers' | 'private';
-  allowMessages?: boolean;
-  showOnlineStatus?: boolean;
-}
+import { api, User } from '../lib/api';
 
 interface AuthContextType {
   user: User | null;
@@ -35,8 +16,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -59,40 +38,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserProfile = async (authToken: string) => {
     try {
-      const response = await fetch(`${API_URL}/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-        localStorage.setItem('keKingdom_user', JSON.stringify(data.user));
-      } else {
-        // Token invalid, clear storage
-        logout();
-      }
+      const data = await api.getProfile(authToken);
+      setUser(data.user);
+      localStorage.setItem('keKingdom_user', JSON.stringify(data.user));
     } catch (error) {
       console.error('Error fetching user profile:', error);
+      logout();
     }
   };
 
   const login = async (email: string, password: string) => {
-    const response = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email, password })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Login failed');
-    }
-
+    const data = await api.login(email, password);
     setUser(data.user);
     setToken(data.token);
     localStorage.setItem('keKingdom_token', data.token);
@@ -100,20 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (fullName: string, email: string, password: string) => {
-    const response = await fetch(`${API_URL}/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ fullName, email, password })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Registration failed');
-    }
-
+    const data = await api.register(fullName, email, password);
     setUser(data.user);
     setToken(data.token);
     localStorage.setItem('keKingdom_token', data.token);
@@ -130,20 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateProfile = async (profileData: Partial<User>) => {
     if (!token) throw new Error('Not authenticated');
 
-    const response = await fetch(`${API_URL}/auth/profile`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(profileData)
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Profile update failed');
-    }
+    const data = await api.updateProfile(token, profileData);
 
     setUser(data.user);
     localStorage.setItem('keKingdom_user', JSON.stringify(data.user));

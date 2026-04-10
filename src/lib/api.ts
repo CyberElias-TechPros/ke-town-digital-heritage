@@ -1,5 +1,69 @@
-const API_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.MODE === 'production' ? 'https://kesrv.freegameplay.site/api' : 'http://localhost:5000/api');
+export interface User {
+  id: string;
+  fullName: string;
+  email: string;
+  role: 'user' | 'admin';
+  avatar?: string;
+  bio?: string;
+  location?: string;
+  isSeller?: boolean;
+  shopName?: string;
+  shopVerified?: boolean;
+  sellerRating?: number;
+  totalSales?: number;
+  followers?: string[];
+  following?: string[];
+  profileVisibility?: 'public' | 'followers' | 'private';
+  allowMessages?: boolean;
+  showOnlineStatus?: boolean;
+}
+
+const API_SERVERS = import.meta.env.VITE_API_SERVERS || 
+  (import.meta.env.MODE === 'production' 
+    ? 'https://ke-town-digital-heritage-production.up.railway.app,https://kesrv.freegameplay.site'
+    : 'https://ke-town-digital-heritage-production.up.railway.app,https://kesrv.freegameplay.site');
+
+console.log('API Servers:', API_SERVERS);
+
+const API_BASE = API_SERVERS.split(',')[0] + '/api';
+
+let workingServer: string | null = null;
+let serverHealthStatus: Map<string, boolean> = new Map();
+
+async function getWorkingServer(): Promise<string> {
+  const servers = API_SERVERS.split(',').map(s => s.trim());
+  
+  if (workingServer && serverHealthStatus.get(workingServer) === true) {
+    return workingServer;
+  }
+
+  for (const server of servers) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch(server + '/api/health', {
+        method: 'GET',
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        workingServer = server;
+        serverHealthStatus.set(server, true);
+        return server;
+      }
+    } catch {
+      serverHealthStatus.set(server, false);
+    }
+  }
+
+  return servers[0];
+}
+
+async function clearServerCache() {
+  workingServer = null;
+}
 
 interface RequestOptions {
   method?: string;
@@ -16,62 +80,88 @@ class ApiClient {
   }
 
   private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-    const { method = 'GET', body, headers = {}, token } = options;
+    const servers = API_SERVERS.split(',').map(s => s.trim());
+    let lastError: Error | null = null;
 
-    const config: RequestInit = {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...headers,
-      },
-    };
+    for (let i = 0; i < servers.length; i++) {
+      const server = servers[i];
+      const { method = 'GET', body, headers = {}, token } = options;
 
-    if (token) {
-      config.headers = {
-        ...config.headers,
-        'Authorization': `Bearer ${token}`,
+      const config: RequestInit = {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          ...headers,
+        },
       };
+
+      if (token) {
+        config.headers = {
+          ...config.headers,
+          'Authorization': `Bearer ${token}`,
+        };
+      }
+
+      if (body) {
+        config.body = JSON.stringify(body);
+      }
+
+      try {
+        const url = `${server}/api${endpoint}`;
+        console.log(`Trying ${url}...`);
+        const response = await fetch(url, config);
+        console.log(`Response from ${server}:`, response.status);
+
+        if (response.ok) {
+          workingServer = server;
+          serverHealthStatus.set(server, true);
+          console.log(`Success using ${server}`);
+          return response.json();
+        }
+
+        const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
+        const errMsg = errorData.error || `HTTP ${response.status}`;
+        console.error(`${server} returned ${response.status}: ${errMsg}`);
+        throw new Error(errMsg);
+      } catch (err: unknown) {
+        const error = err as Error;
+        console.error(`Server ${server} failed:`, error.message);
+        lastError = error;
+        serverHealthStatus.set(server, false);
+        if (i < servers.length - 1) {
+          console.warn(`Trying next server...`);
+        }
+      }
     }
 
-    if (body) {
-      config.body = JSON.stringify(body);
-    }
-
-    const response = await fetch(`${this.baseUrl}${endpoint}`, config);
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Request failed' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
-    }
-
-    return response.json();
+    throw lastError || new Error('All servers failed');
   }
 
   // Auth endpoints
-  async login(email: string, password: string) {
+  async login(email: string, password: string): Promise<{ user: User; token: string }> {
     return this.request('/auth/login', {
       method: 'POST',
       body: { email, password },
-    });
+    }) as Promise<{ user: User; token: string }>;
   }
 
-  async register(fullName: string, email: string, password: string) {
+  async register(fullName: string, email: string, password: string): Promise<{ user: User; token: string }> {
     return this.request('/auth/register', {
       method: 'POST',
       body: { fullName, email, password },
-    });
+    }) as Promise<{ user: User; token: string }>;
   }
 
-  async getProfile(token: string) {
-    return this.request('/auth/me', { token });
+  async getProfile(token: string): Promise<{ user: User }> {
+    return this.request('/auth/me', { token }) as Promise<{ user: User }>;
   }
 
-  async updateProfile(token: string, data: Record<string, unknown>) {
+  async updateProfile(token: string, data: Record<string, unknown>): Promise<{ user: User }> {
     return this.request('/auth/profile', {
       method: 'PUT',
       body: data,
       token,
-    });
+    }) as Promise<{ user: User }>;
   }
 
   // Events
@@ -858,4 +948,5 @@ class ApiClient {
   }
 }
 
-export const api = new ApiClient(API_URL);
+export const api = new ApiClient(API_BASE);
+export { getWorkingServer, clearServerCache, API_SERVERS };

@@ -136,7 +136,17 @@ connectDB().then(() => {
   app.use('/api/messages', require('./routes/messages'));
   app.use('/api/notifications', require('./routes/notifications'));
 
-  app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'KE Kingdom API' }));
+  app.get('/api/health', (req, res) => res.json({ 
+    status: 'ok', 
+    service: 'KE Kingdom API',
+    server: process.env.SERVER_NAME || 'primary',
+    timestamp: new Date().toISOString()
+  }));
+
+  app.get('/api/servers', (req, res) => res.json({
+    primary: 'https://kesrv.freegameplay.site',
+    secondary: 'https://ke-town-digital-heritage-production.up.railway.app'
+  }));
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => console.log(`KE Kingdom API running on port ${PORT}`));
