@@ -5,7 +5,7 @@ const User = require('../models/User');
 router.get('/', authenticate, async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
-      .populate('cart.product', 'name price images category artisan artisanName stock');
+      .populate('cart.product', 'title price images category seller stock');
     res.json(user.cart || []);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -30,7 +30,7 @@ router.post('/add', authenticate, async (req, res) => {
     await user.save();
     
     const updatedUser = await User.findById(req.user.id)
-      .populate('cart.product', 'name price images category artisan artisanName stock');
+      .populate('cart.product', 'title price images category seller stock');
     res.json(updatedUser.cart);
   } catch (e) {
     res.status(400).json({ error: e.message });
@@ -59,7 +59,7 @@ router.put('/update/:productId', authenticate, async (req, res) => {
     await user.save();
     
     const updatedUser = await User.findById(req.user.id)
-      .populate('cart.product', 'name price images category artisan artisanName stock');
+      .populate('cart.product', 'title price images category seller stock');
     res.json(updatedUser.cart);
   } catch (e) {
     res.status(400).json({ error: e.message });
@@ -77,7 +77,7 @@ router.delete('/remove/:productId', authenticate, async (req, res) => {
     await user.save();
     
     const updatedUser = await User.findById(req.user.id)
-      .populate('cart.product', 'name price images category artisan artisanName stock');
+      .populate('cart.product', 'title price images category seller stock');
     res.json(updatedUser.cart);
   } catch (e) {
     res.status(400).json({ error: e.message });

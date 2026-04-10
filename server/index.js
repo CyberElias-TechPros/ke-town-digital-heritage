@@ -135,6 +135,7 @@ connectDB().then(() => {
   app.use('/api/shop', require('./routes/shop'));
   app.use('/api/messages', require('./routes/messages'));
   app.use('/api/notifications', require('./routes/notifications'));
+  app.use('/api/groups', require('./routes/groups'));
 
   app.get('/api/health', (req, res) => res.json({ 
     status: 'ok', 

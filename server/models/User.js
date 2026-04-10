@@ -41,6 +41,7 @@ const UserSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
   }],
   unreadCount: { type: Number, default: 0 },
+  rsvpedEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }],
   
   // Privacy & Social Settings
   profileVisibility: { type: String, enum: ['public', 'followers', 'private'], default: 'public' },

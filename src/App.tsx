@@ -26,6 +26,12 @@ import Admin from "./pages/Admin.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Messages from "./pages/Messages.tsx";
 import DigitalSkills from "./pages/DigitalSkills.tsx";
+import Feed from "./pages/Feed.tsx";
+import Groups from "./pages/Groups.tsx";
+import Events from "./pages/Events.tsx";
+import Cart from "./pages/Cart.tsx";
+import Settings from "./pages/Settings.tsx";
+import Notifications from "./pages/Notifications.tsx";
 import keicon from "./assets/keicon.png";
 
 const queryClient = new QueryClient();
@@ -83,6 +89,12 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/feed" element={<Feed />} />
+            <Route path="/groups" element={<Groups />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/notifications" element={<Notifications />} />
             <Route path="/posts" element={<Posts />} />
             <Route path="/activity" element={<Activity />} />
             <Route path="/timeline" element={<Timeline />} />

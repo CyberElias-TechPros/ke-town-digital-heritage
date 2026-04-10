@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, X, Loader2, FileText, Image, MapPin, Calendar, Users, Leaf } from "lucide-react";
+import { Search, X, Loader2, FileText, Image, MapPin, Calendar, Users, Leaf, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "@/lib/api";
 
@@ -8,9 +8,10 @@ interface SearchResult {
   id: string;
   type: string;
   title: string;
-  description: string;
+  description?: string;
   url: string;
   image?: string;
+  date?: string;
 }
 
 interface SearchModalProps {
@@ -66,6 +67,12 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
+      case "user":
+        return <User size={16} />;
+      case "group":
+        return <Users size={16} />;
+      case "post":
+        return <FileText size={16} />;
       case "news":
         return <FileText size={16} />;
       case "gallery":
@@ -85,6 +92,12 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
 
   const getTypeLabel = (type: string) => {
     switch (type) {
+      case "user":
+        return "User";
+      case "group":
+        return "Group";
+      case "post":
+        return "Post";
       case "news":
         return "News";
       case "gallery":

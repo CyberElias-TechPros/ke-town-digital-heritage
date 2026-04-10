@@ -1,10 +1,14 @@
 const router = require('express').Router();
+const { authenticate } = require('../middleware/auth');
 const Event = require('../models/Event');
 const News = require('../models/News');
 const GalleryItem = require('../models/GalleryItem');
 const DirectoryMember = require('../models/DirectoryMember');
 const EnvironmentReport = require('../models/EnvironmentReport');
 const Project = require('../models/Project');
+const User = require('../models/User');
+const Group = require('../models/Group');
+const Post = require('../models/Post');
 
 // Global search across all content
 router.get('/', async (req, res) => {
@@ -17,6 +21,69 @@ router.get('/', async (req, res) => {
 
     const searchRegex = new RegExp(q.trim(), 'i');
     const results = [];
+
+    // Search Users (authenticated)
+    if (!type || type === 'users') {
+      const users = await User.find({
+        $or: [
+          { fullName: searchRegex },
+          { email: searchRegex }
+        ]
+      }).select('fullName avatar bio').limit(parseInt(limit));
+      
+      users.forEach(user => {
+        results.push({
+          type: 'user',
+          id: user._id,
+          title: user.fullName,
+          excerpt: user.bio?.substring(0, 100) || '',
+          image: user.avatar,
+          url: `/profile/${user._id}`
+        });
+      });
+    }
+
+    // Search Groups
+    if (!type || type === 'groups') {
+      const groups = await Group.find({
+        $or: [
+          { name: searchRegex },
+          { description: searchRegex }
+        ],
+        isActive: true
+      }).limit(parseInt(limit));
+      
+      groups.forEach(group => {
+        results.push({
+          type: 'group',
+          id: group._id,
+          title: group.name,
+          excerpt: group.description?.substring(0, 100) || '',
+          url: `/groups/${group._id}`
+        });
+      });
+    }
+
+    // Search Posts (authenticated)
+    if (!type || type === 'posts') {
+      const posts = await Post.find({
+        $or: [
+          { content: searchRegex },
+          { hashtags: searchRegex }
+        ]
+      }).populate('author', 'fullName avatar').limit(parseInt(limit));
+      
+      posts.forEach(post => {
+        results.push({
+          type: 'post',
+          id: post._id,
+          title: post.author?.fullName || 'Anonymous',
+          excerpt: post.content.substring(0, 100) + '...',
+          image: post.author?.avatar,
+          url: `/posts`
+        });
+      });
+    }
 
     // Search Events
     if (!type || type === 'events') {
@@ -33,9 +100,9 @@ router.get('/', async (req, res) => {
           type: 'event',
           id: event._id,
           title: event.title,
-          excerpt: event.description.substring(0, 150) + '...',
+          excerpt: event.description?.substring(0, 150) || '',
           date: event.date,
-          url: `/events/${event._id}`
+          url: `/events`
         });
       });
     }
@@ -79,82 +146,19 @@ router.get('/', async (req, res) => {
           type: 'gallery',
           id: item._id,
           title: item.title,
-          excerpt: item.description?.substring(0, 150) + '...' || '',
+          excerpt: item.description?.substring(0, 150) || '',
           image: item.imageUrl,
           url: `/gallery/${item._id}`
         });
       });
     }
 
-    // Search Directory
-    if (!type || type === 'directory') {
-      const members = await DirectoryMember.find({
-        approved: true,
-        isPublic: true,
-        $or: [
-          { fullName: searchRegex },
-          { city: searchRegex },
-          { country: searchRegex },
-          { bio: searchRegex }
-        ]
-      }).select('-email').limit(parseInt(limit));
-      
-      members.forEach(member => {
-        results.push({
-          type: 'directory',
-          id: member._id,
-          title: member.fullName,
-          excerpt: `${member.city}, ${member.country}`,
-          url: `/diaspora#${member._id}`
-        });
-      });
-    }
-
-    // Search Environment Reports
-    if (!type || type === 'environment') {
-      const reports = await EnvironmentReport.find({
-        $or: [
-          { title: searchRegex },
-          { description: searchRegex },
-          { location: searchRegex }
-        ]
-      }).limit(parseInt(limit));
-      
-      reports.forEach(report => {
-        results.push({
-          type: 'environment',
-          id: report._id,
-          title: report.title,
-          excerpt: report.description.substring(0, 150) + '...',
-          date: report.createdAt,
-          url: `/environment#${report._id}`
-        });
-      });
-    }
-
-    // Search Projects
-    if (!type || type === 'projects') {
-      const projects = await Project.find({
-        $or: [
-          { title: searchRegex },
-          { description: searchRegex }
-        ]
-      }).limit(parseInt(limit));
-      
-      projects.forEach(project => {
-        results.push({
-          type: 'project',
-          id: project._id,
-          title: project.title,
-          excerpt: project.description.substring(0, 150) + '...',
-          status: project.status,
-          url: `/diaspora#projects`
-        });
-      });
-    }
-
-    // Sort by relevance (title matches first)
+    // Sort by relevance (users/groups first, then title matches)
     results.sort((a, b) => {
+      const typeOrder = { user: 0, group: 1, post: 2, event: 3, news: 4, gallery: 5 };
+      const aType = typeOrder[a.type as keyof typeof typeOrder] ?? 10;
+      const bType = typeOrder[b.type as keyof typeof typeOrder] ?? 10;
+      if (aType !== bType) return aType - bType;
       const aTitle = a.title.toLowerCase().includes(q.toLowerCase()) ? 1 : 0;
       const bTitle = b.title.toLowerCase().includes(q.toLowerCase()) ? 1 : 0;
       return bTitle - aTitle;
@@ -182,21 +186,22 @@ router.get('/suggestions', async (req, res) => {
     const searchRegex = new RegExp(q.trim(), 'i');
     const suggestions = [];
 
-    // Get title suggestions from various collections
-    const [events, news, gallery] = await Promise.all([
-      Event.find({ title: searchRegex }).select('title').limit(5),
-      News.find({ title: searchRegex, published: true }).select('title').limit(5),
-      GalleryItem.find({ title: searchRegex, approved: true }).select('title').limit(5)
+    // Get suggestions from various collections
+    const [events, news, gallery, users, groups] = await Promise.all([
+      Event.find({ title: searchRegex }).select('title').limit(3),
+      News.find({ title: searchRegex, published: true }).select('title').limit(3),
+      GalleryItem.find({ title: searchRegex, approved: true }).select('title').limit(3),
+      User.find({ fullName: searchRegex }).select('fullName').limit(3),
+      Group.find({ name: searchRegex, isActive: true }).select('name').limit(3)
     ]);
 
     events.forEach(e => suggestions.push({ text: e.title, type: 'event' }));
     news.forEach(n => suggestions.push({ text: n.title, type: 'news' }));
     gallery.forEach(g => suggestions.push({ text: g.title, type: 'gallery' }));
+    users.forEach(u => suggestions.push({ text: u.fullName, type: 'user' }));
+    groups.forEach(g => suggestions.push({ text: g.name, type: 'group' }));
 
-    // Remove duplicates and limit
-    const uniqueSuggestions = [...new Map(suggestions.map(item => [item.text, item])).values()];
-    
-    res.json(uniqueSuggestions.slice(0, 10));
+    res.json(suggestions.slice(0, 10));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

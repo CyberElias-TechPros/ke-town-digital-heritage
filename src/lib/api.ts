@@ -164,38 +164,6 @@ class ApiClient {
     }) as Promise<{ user: User }>;
   }
 
-  // Events
-  async getEvents() {
-    return this.request('/events');
-  }
-
-  async getEvent(id: string) {
-    return this.request(`/events/${id}`);
-  }
-
-  async createEvent(token: string, data: Record<string, unknown>) {
-    return this.request('/events', {
-      method: 'POST',
-      body: data,
-      token,
-    });
-  }
-
-  async updateEvent(token: string, id: string, data: Record<string, unknown>) {
-    return this.request(`/events/${id}`, {
-      method: 'PUT',
-      body: data,
-      token,
-    });
-  }
-
-  async deleteEvent(token: string, id: string) {
-    return this.request(`/events/${id}`, {
-      method: 'DELETE',
-      token,
-    });
-  }
-
   // News
   async getNews() {
     return this.request('/news');
@@ -601,20 +569,28 @@ class ApiClient {
     return this.request('/mentorship/my', { token });
   }
 
-  // Posts
+  // Posts / Social Feed
+  async getFeed(token: string) {
+    return this.request('/posts/feed', { token });
+  }
+
   async getPosts() {
     return this.request('/posts');
   }
 
+  async getPost(id: string) {
+    return this.request(`/posts/${id}`);
+  }
+
   async getMyPosts(token: string) {
-    return this.request('/posts/my', { token });
+    return this.request('/posts/user/my', { token });
   }
 
-  async getUserPosts(token: string, userId: string) {
-    return this.request(`/posts/user/${userId}`, { token });
+  async getUserPosts(userId: string) {
+    return this.request(`/posts/user/${userId}`);
   }
 
-  async createPost(token: string, data: { content: string; imageUrl?: string; isPublic?: boolean }) {
+  async createPost(token: string, data: { content: string; media?: unknown; location?: unknown; feeling?: string; privacy?: string; visibility?: string }) {
     return this.request('/posts', {
       method: 'POST',
       body: data,
@@ -633,6 +609,29 @@ class ApiClient {
   async deletePost(token: string, id: string) {
     return this.request(`/posts/${id}`, {
       method: 'DELETE',
+      token,
+    });
+  }
+
+  async reactToPost(token: string, id: string, reactionType: string) {
+    return this.request(`/posts/${id}/reaction`, {
+      method: 'POST',
+      body: { reactionType },
+      token,
+    });
+  }
+
+  async removeReaction(token: string, id: string) {
+    return this.request(`/posts/${id}/reaction`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  async addComment(token: string, postId: string, content: string, parentCommentId?: string) {
+    return this.request(`/posts/${postId}/comment`, {
+      method: 'POST',
+      body: { content, parentCommentId },
       token,
     });
   }
@@ -724,8 +723,8 @@ class ApiClient {
   }
 
   // Marketplace
-  async getProducts(category?: string, search?: string, featured?: boolean) {
-    const params = new URLSearchParams();
+  async getProducts(category?: string, search?: string, featured?: boolean, page = 1, limit = 20) {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
     if (category) params.append('category', category);
     if (search) params.append('search', search);
     if (featured) params.append('featured', 'true');
@@ -736,7 +735,7 @@ class ApiClient {
     return this.request(`/marketplace/${id}`);
   }
 
-  async createProduct(token: string, data: Record<string, unknown>) {
+  async createProduct(token: string, data: { title: string; description: string; category: string; condition: string; price: number; negotiable?: boolean; images?: string[]; video?: string; brand?: string; model?: string; location?: unknown; contact?: string; tags?: string[]; quantity?: number }) {
     return this.request('/marketplace', {
       method: 'POST',
       body: data,
@@ -755,6 +754,13 @@ class ApiClient {
   async deleteProduct(token: string, id: string) {
     return this.request(`/marketplace/${id}`, {
       method: 'DELETE',
+      token,
+    });
+  }
+
+  async likeProduct(token: string, id: string) {
+    return this.request(`/marketplace/${id}/like`, {
+      method: 'POST',
       token,
     });
   }
@@ -910,6 +916,143 @@ class ApiClient {
   async markNotificationRead(token: string, notificationId: string) {
     return this.request(`/notifications/${notificationId}/read`, {
       method: 'PUT',
+      token,
+    });
+  }
+
+  // Groups
+  async getGroups(category?: string, search?: string, limit = 20, page = 1) {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+    if (category) params.append('category', category);
+    if (search) params.append('search', search);
+    return this.request(`/groups?${params.toString()}`);
+  }
+
+  async getMyGroups(token: string) {
+    return this.request('/groups/my', { token });
+  }
+
+  async getGroup(id: string) {
+    return this.request(`/groups/${id}`);
+  }
+
+  async createGroup(token: string, data: { name: string; description?: string; privacy?: string; category?: string; coverImage?: string; joinMethod?: string }) {
+    return this.request('/groups', {
+      method: 'POST',
+      body: data,
+      token,
+    });
+  }
+
+  async updateGroup(token: string, id: string, data: Record<string, unknown>) {
+    return this.request(`/groups/${id}`, {
+      method: 'PUT',
+      body: data,
+      token,
+    });
+  }
+
+  async deleteGroup(token: string, id: string) {
+    return this.request(`/groups/${id}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  async joinGroup(token: string, groupId: string) {
+    return this.request(`/groups/${groupId}/join`, {
+      method: 'POST',
+      token,
+    });
+  }
+
+  async leaveGroup(token: string, groupId: string) {
+    return this.request(`/groups/${groupId}/leave`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  async getGroupPosts(groupId: string, page = 1, limit = 20) {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+    return this.request(`/groups/${groupId}/posts?${params.toString()}`);
+  }
+
+  async postToGroup(token: string, groupId: string, content: string, media?: unknown[]) {
+    return this.request(`/groups/${groupId}/posts`, {
+      method: 'POST',
+      body: { content, media },
+      token,
+    });
+  }
+
+  async getGroupMembers(groupId: string) {
+    return this.request(`/groups/${groupId}/members`);
+  }
+
+  async getGroupRequests(token: string, groupId: string) {
+    return this.request(`/groups/${groupId}/requests`, { token });
+  }
+
+  async approveGroupMember(token: string, groupId: string, userId: string) {
+    return this.request(`/groups/${groupId}/approve`, {
+      method: 'POST',
+      body: { userId },
+      token,
+    });
+  }
+
+  async rejectGroupMember(token: string, groupId: string, userId: string) {
+    return this.request(`/groups/${groupId}/reject`, {
+      method: 'POST',
+      body: { userId },
+      token,
+    });
+  }
+
+  // Events
+  async getEvents(token?: string, page = 1, limit = 20) {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+    return this.request(`/events?${params.toString()}`, token ? { token } : {});
+  }
+
+  async getEvent(id: string) {
+    return this.request(`/events/${id}`);
+  }
+
+  async createEvent(token: string, data: { title: string; description: string; startDate: string; endDate?: string; location?: string; isVirtual?: boolean; virtualLink?: string; maxAttendees?: number; category?: string }) {
+    return this.request('/events', {
+      method: 'POST',
+      body: data,
+      token,
+    });
+  }
+
+  async updateEvent(token: string, id: string, data: Record<string, unknown>) {
+    return this.request(`/events/${id}`, {
+      method: 'PUT',
+      body: data,
+      token,
+    });
+  }
+
+  async deleteEvent(token: string, id: string) {
+    return this.request(`/events/${id}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  async rsvpEvent(token: string, eventId: string) {
+    return this.request(`/events/${eventId}/rsvp`, {
+      method: 'POST',
+      token,
+    });
+  }
+
+  async cancelRsvp(token: string, eventId: string) {
+    return this.request(`/events/${eventId}/rsvp`, {
+      method: 'DELETE',
       token,
     });
   }
