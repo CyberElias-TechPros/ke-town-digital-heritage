@@ -184,4 +184,137 @@ router.get('/user/:userId', async (req, res) => {
   }
 });
 
+// Block a user
+router.post('/block/:userId', authenticate, async (req, res) => {
+  try {
+    if (req.params.userId === req.user.id) {
+      return res.status(400).json({ error: 'Cannot block yourself' });
+    }
+    
+    const targetUser = await User.findById(req.params.userId);
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+    
+    const user = await User.findById(req.user.id);
+    user.blockedUsers = user.blockedUsers || [];
+    
+    if (!user.blockedUsers.includes(req.params.userId)) {
+      user.blockedUsers.push(req.params.userId);
+      
+      // Remove from following
+      user.following = user.following.filter(id => id.toString() !== req.params.userId);
+      targetUser.followers = (targetUser.followers || []).filter(id => id.toString() !== req.user.id);
+      
+      await user.save();
+      await targetUser.save();
+    }
+    
+    res.json({ blocked: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Unblock a user
+router.post('/unblock/:userId', authenticate, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    user.blockedUsers = user.blockedUsers || [];
+    user.blockedUsers = user.blockedUsers.filter(id => id.toString() !== req.params.userId);
+    
+    await user.save();
+    res.json({ blocked: false });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Get blocked users
+router.get('/blocked', authenticate, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const blocked = await User.find({ _id: { $in: user.blockedUsers || [] } })
+      .select('fullName avatar bio location');
+    res.json(blocked);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Trending hashtags
+router.get('/trending', async (req, res) => {
+  try {
+    const Post = require('../models/Post');
+    
+    // Get hashtags from last 7 days
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    
+    const hashtags = await Post.aggregate([
+      { $match: { createdAt: { $gte: sevenDaysAgo }, hashtags: { $exists: true, $ne: [] } } },
+      { $unwind: '$hashtags' },
+      { $group: { _id: '$hashtags', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+    
+    res.json(hashtags.map(h => ({ hashtag: h._id, count: h.count })));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Verify a user (admin)
+router.post('/verify/:userId', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin only' });
+    }
+    
+    const targetUser = await User.findById(req.params.userId);
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+    
+    targetUser.verified = true;
+    targetUser.verifiedAt = new Date();
+    targetUser.verifiedBy = req.user.id;
+    
+    await targetUser.save();
+    res.json({ verified: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Unverify a user (admin)
+router.post('/unverify/:userId', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin only' });
+    }
+    
+    const targetUser = await User.findById(req.params.userId);
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+    
+    targetUser.verified = false;
+    targetUser.verifiedAt = undefined;
+    targetUser.verifiedBy = undefined;
+    
+    await targetUser.save();
+    res.json({ verified: false });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Get verified users
+router.get('/verified', async (req, res) => {
+  try {
+    const { limit = 20 } = req.query;
+    const verified = await User.find({ verified: true })
+      .select('fullName avatar bio location')
+      .limit(parseInt(limit));
+    res.json(verified);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;

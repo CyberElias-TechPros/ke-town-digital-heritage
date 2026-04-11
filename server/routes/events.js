@@ -80,7 +80,7 @@ router.get('/:id', async (req, res) => {
     if (event.rsvps && event.rsvps.length > 0) {
       const rsvpUsers = await User.find({ _id: { $in: event.rsvps } })
         .select('fullName avatar');
-      (event as any).rsvpUsers = rsvpUsers;
+      event.rsvpUsers = rsvpUsers;
     }
     
     res.json(event);

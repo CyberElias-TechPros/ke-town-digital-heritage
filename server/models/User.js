@@ -46,7 +46,11 @@ const UserSchema = new mongoose.Schema({
   // Privacy & Social Settings
   profileVisibility: { type: String, enum: ['public', 'followers', 'private'], default: 'public' },
   allowMessages: { type: Boolean, default: true },
-  showOnlineStatus: { type: Boolean, default: true }
+  showOnlineStatus: { type: Boolean, default: true },
+  blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  verified: { type: Boolean, default: false },
+  verifiedAt: { type: Date },
+  verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 
 // Hash password before saving

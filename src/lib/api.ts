@@ -786,308 +786,164 @@ class ApiClient {
     });
   }
 
-  async removeFromCart(token: string, productId: string) {
+async removeFromCart(token: string, productId: string) {
     return this.request(`/cart/remove/${productId}`, {
       method: 'DELETE',
       token,
     });
   }
 
-  async clearCart(token: string) {
-    return this.request('/cart/clear', {
-      method: 'DELETE',
-      token,
-    });
+  // Addresses
+  async getAddresses(token: string) {
+    return this.request('/addresses', { token });
   }
 
-  // Orders
-  async createOrder(token: string, data: { items: Array<{ product: string; quantity: number }>; shippingAddress: Record<string, string>; paymentMethod?: string; notes?: string }) {
-    return this.request('/orders', {
+  async addAddress(token: string, data: { fullName: string; phone: string; address: string; city: string; state: string; isDefault?: boolean }) {
+    return this.request('/addresses', {
       method: 'POST',
       body: data,
       token,
     });
   }
 
-  async getMyOrders(token: string) {
-    return this.request('/orders/my-orders', { token });
-  }
-
-  async getMySales(token: string) {
-    return this.request('/orders/my-sales', { token });
-  }
-
-  async getOrder(token: string, id: string) {
-    return this.request(`/orders/${id}`, { token });
-  }
-
-  async updateOrderStatus(token: string, id: string, status: string) {
-    return this.request(`/orders/${id}/status`, {
+  async updateAddress(token: string, id: string, data: Record<string, unknown>) {
+    return this.request(`/addresses/${id}`, {
       method: 'PUT',
-      body: { status },
+      body: data,
       token,
     });
   }
 
-  // Shop
-  async getShopProfile(token: string) {
-    return this.request('/shop/profile', { token });
+  async deleteAddress(token: string, id: string) {
+    return this.request(`/addresses/${id}`, {
+      method: 'DELETE',
+      token,
+    });
   }
 
-  async becomeSeller(token: string, shopName: string, shopDescription?: string) {
-    return this.request('/shop/become-seller', {
+  // Additional functions for new pages
+  async getConversation(token: string, id: string) {
+    return this.request(`/messages/conversations/${id}`, { token });
+  }
+
+  async createListing(token: string, data: { name: string; description: string; category: string; condition: string; price: number; negotiable?: boolean; quantity?: number; location?: string; images?: string[] }) {
+    return this.request('/marketplace', {
       method: 'POST',
-      body: { shopName, shopDescription },
+      body: data,
       token,
     });
+  }
+
+  async getSavedPosts(token: string) {
+    return this.request('/posts/saved', { token });
+  }
+
+  async savePost(token: string, postId: string) {
+    return this.request(`/posts/${postId}/save`, {
+      method: 'POST',
+      token,
+    });
+  }
+
+  async unsavePost(token: string, postId: string) {
+    return this.request(`/posts/${postId}/unsave`, {
+      method: 'POST',
+      token,
+    });
+  }
+
+  async likeProduct(token: string, productId: string) {
+    return this.request(`/marketplace/${productId}/like`, {
+      method: 'POST',
+      token,
+    });
+  }
+
+  async unlikeProduct(token: string, productId: string) {
+    return this.request(`/marketplace/${productId}/unlike`, {
+      method: 'POST',
+      token,
+    });
+  }
+
+  async addToCart(token: string, productId: string, quantity: number) {
+    return this.request('/cart', {
+      method: 'POST',
+      body: { productId, quantity },
+      token,
+    });
+  }
+
+  async removeFromCart(token: string, itemId: string) {
+    return this.request(`/cart/${itemId}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  async getTrendingPosts() {
+    return this.request('/posts/trending');
+  }
+
+  async getSuggestedUsers() {
+    return this.request('/users/suggested');
+  }
+
+  async getTrendingEvents() {
+    return this.request('/events/trending');
+  }
+
+  async getTrendingProducts() {
+    return this.request('/marketplace/trending');
+  }
+
+  async getOrders(token: string) {
+    return this.request('/orders', { token });
+  }
+
+  async getOrder(token: string, orderId: string) {
+    return this.request(`/orders/${orderId}`, { token });
+  }
+
+  async createCheckout(token: string, data: { addressId?: string; deliveryMethod?: string; paymentMethod?: string }) {
+    return this.request('/orders/checkout', {
+      method: 'POST',
+      body: data,
+      token,
+    });
+  }
+
+  async getShop(token: string) {
+    return this.request('/shop/me', { token });
   }
 
   async updateShop(token: string, data: Record<string, unknown>) {
-    return this.request('/shop/update-shop', {
+    return this.request('/shop', {
       method: 'PUT',
       body: data,
       token,
     });
   }
 
-  async getMyProducts(token: string) {
-    return this.request('/shop/my-products', { token });
-  }
-
-  async closeShop(token: string) {
-    return this.request('/shop/close-shop', {
-      method: 'DELETE',
-      token,
-    });
-  }
-
-  // Messages
-  async getConversations(token: string) {
-    return this.request('/messages/conversations', { token });
-  }
-
-  async getMessages(token: string, conversationId: string) {
-    return this.request(`/messages/conversations/${conversationId}`, { token });
-  }
-
-  async startConversation(token: string, recipientId: string, productId?: string, initialMessage?: string) {
-    return this.request('/messages/conversations', {
-      method: 'POST',
-      body: { recipientId, productId, initialMessage },
-      token,
-    });
-  }
-
-  async sendMessage(token: string, conversationId: string, content: string) {
-    return this.request(`/messages/${conversationId}`, {
-      method: 'POST',
-      body: { content },
-      token,
-    });
-  }
-
-  async markMessageRead(token: string, messageId: string) {
-    return this.request(`/messages/${messageId}/read`, {
-      method: 'PUT',
-      token,
-    });
-  }
-
-  async getUnreadMessageCount(token: string) {
-    return this.request('/messages/unread/count', { token });
-  }
-
-  // Notifications
-  async getNotifications(token: string) {
-    return this.request('/notifications', { token });
-  }
-
-  async getUnreadNotificationCount(token: string) {
-    return this.request('/notifications/unread-count', { token });
-  }
-
-  async markAllNotificationsRead(token: string) {
-    return this.request('/notifications/mark-read', {
-      method: 'PUT',
-      token,
-    });
-  }
-
-  async markNotificationRead(token: string, notificationId: string) {
-    return this.request(`/notifications/${notificationId}/read`, {
-      method: 'PUT',
-      token,
-    });
-  }
-
-  // Groups
-  async getGroups(category?: string, search?: string, limit = 20, page = 1) {
-    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
-    if (category) params.append('category', category);
-    if (search) params.append('search', search);
-    return this.request(`/groups?${params.toString()}`);
-  }
-
-  async getMyGroups(token: string) {
-    return this.request('/groups/my', { token });
-  }
-
-  async getGroup(id: string) {
-    return this.request(`/groups/${id}`);
-  }
-
-  async createGroup(token: string, data: { name: string; description?: string; privacy?: string; category?: string; coverImage?: string; joinMethod?: string }) {
-    return this.request('/groups', {
-      method: 'POST',
-      body: data,
-      token,
-    });
-  }
-
-  async updateGroup(token: string, id: string, data: Record<string, unknown>) {
-    return this.request(`/groups/${id}`, {
-      method: 'PUT',
-      body: data,
-      token,
-    });
-  }
-
-  async deleteGroup(token: string, id: string) {
-    return this.request(`/groups/${id}`, {
-      method: 'DELETE',
-      token,
-    });
-  }
-
-  async joinGroup(token: string, groupId: string) {
-    return this.request(`/groups/${groupId}/join`, {
+  async followUser(token: string, userId: string) {
+    return this.request(`/users/${userId}/follow`, {
       method: 'POST',
       token,
     });
   }
 
-  async leaveGroup(token: string, groupId: string) {
-    return this.request(`/groups/${groupId}/leave`, {
-      method: 'DELETE',
-      token,
-    });
-  }
-
-  async getGroupPosts(groupId: string, page = 1, limit = 20) {
-    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
-    return this.request(`/groups/${groupId}/posts?${params.toString()}`);
-  }
-
-  async postToGroup(token: string, groupId: string, content: string, media?: unknown[]) {
-    return this.request(`/groups/${groupId}/posts`, {
-      method: 'POST',
-      body: { content, media },
-      token,
-    });
-  }
-
-  async getGroupMembers(groupId: string) {
-    return this.request(`/groups/${groupId}/members`);
-  }
-
-  async getGroupRequests(token: string, groupId: string) {
-    return this.request(`/groups/${groupId}/requests`, { token });
-  }
-
-  async approveGroupMember(token: string, groupId: string, userId: string) {
-    return this.request(`/groups/${groupId}/approve`, {
-      method: 'POST',
-      body: { userId },
-      token,
-    });
-  }
-
-  async rejectGroupMember(token: string, groupId: string, userId: string) {
-    return this.request(`/groups/${groupId}/reject`, {
-      method: 'POST',
-      body: { userId },
-      token,
-    });
-  }
-
-  // Events
-  async getEvents(token?: string, page = 1, limit = 20) {
-    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
-    return this.request(`/events?${params.toString()}`, token ? { token } : {});
-  }
-
-  async getEvent(id: string) {
-    return this.request(`/events/${id}`);
-  }
-
-  async createEvent(token: string, data: { title: string; description: string; startDate: string; endDate?: string; location?: string; isVirtual?: boolean; virtualLink?: string; maxAttendees?: number; category?: string }) {
-    return this.request('/events', {
-      method: 'POST',
-      body: data,
-      token,
-    });
-  }
-
-  async updateEvent(token: string, id: string, data: Record<string, unknown>) {
-    return this.request(`/events/${id}`, {
-      method: 'PUT',
-      body: data,
-      token,
-    });
-  }
-
-  async deleteEvent(token: string, id: string) {
-    return this.request(`/events/${id}`, {
-      method: 'DELETE',
-      token,
-    });
-  }
-
-  async rsvpEvent(token: string, eventId: string) {
-    return this.request(`/events/${eventId}/rsvp`, {
+  async unfollowUser(token: string, userId: string) {
+    return this.request(`/users/${userId}/unfollow`, {
       method: 'POST',
       token,
     });
   }
 
-  async cancelRsvp(token: string, eventId: string) {
+  async removeRsvp(token: string, eventId: string) {
     return this.request(`/events/${eventId}/rsvp`, {
       method: 'DELETE',
       token,
     });
-  }
-
-  // Search suggestions (enhanced)
-  async getAllSuggestions(query: string) {
-    const suggestions: Array<{text: string, type: string}> = [];
-    try {
-      const searchResults = await this.getSearchSuggestions(query);
-      if (Array.isArray(searchResults)) {
-        suggestions.push(...searchResults.slice(0, 5));
-      }
-    } catch {}
-    
-    // Add calendar events
-    try {
-      const events = await this.getUpcomingEvents(3) as { upcoming?: Array<{ title: string }> };
-      if (events?.upcoming) {
-        events.upcoming.forEach((e) => {
-          suggestions.push({ text: e.title, type: 'event' });
-        });
-      }
-    } catch {}
-
-    // Add jobs
-    try {
-      const jobs = await this.getJobs(undefined, undefined, undefined, query, 3) as { jobs?: Array<{ title: string }> };
-      if (jobs?.jobs) {
-        jobs.jobs.forEach((j) => {
-          suggestions.push({ text: j.title, type: 'job' });
-        });
-      }
-    } catch {}
-
-    return suggestions.slice(0, 10);
   }
 }
 

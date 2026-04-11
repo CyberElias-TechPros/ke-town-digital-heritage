@@ -10,10 +10,19 @@ const dotenv = require('dotenv');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
 
 dotenv.config();
 
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
 
 // Security middleware with custom CSP
 app.use(helmet({
@@ -136,6 +145,55 @@ connectDB().then(() => {
   app.use('/api/messages', require('./routes/messages'));
   app.use('/api/notifications', require('./routes/notifications'));
   app.use('/api/groups', require('./routes/groups'));
+  app.use('/api/reports', require('./routes/reports'));
+  app.use('/api/reviews', require('./routes/reviews'));
+  app.use('/api/stories', require('./routes/stories'));
+  app.use('/api/polls', require('./routes/polls'));
+  app.use('/api/campaigns', require('./routes/campaigns'));
+  app.use('/api/petitions', require('./routes/petitions'));
+  app.use('/api/volunteer', require('./routes/volunteer'));
+  app.use('/api/payments', require('./routes/payments'));
+  app.use('/api/analytics', require('./routes/analytics'));
+  
+  // Socket.io for real-time features
+  const onlineUsers = new Map();
+  
+  io.on('connection', (socket) => {
+    console.log('User connected:', socket.id);
+    
+    socket.on('authenticate', (userId) => {
+      onlineUsers.set(userId, socket.id);
+      socket.userId = userId;
+      io.emit('userOnline', { userId });
+    });
+    
+    socket.on('joinConversation', (conversationId) => {
+      socket.join(`conversation:${conversationId}`);
+    });
+    
+    socket.on('leaveConversation', (conversationId) => {
+      socket.leave(`conversation:${conversationId}`);
+    });
+    
+    socket.on('typing', ({ conversationId, userId }) => {
+      socket.to(`conversation:${conversationId}`).emit('userTyping', { userId });
+    });
+    
+    socket.on('sendMessage', ({ conversationId, message }) => {
+      io.to(`conversation:${conversationId}`).emit('newMessage', message);
+    });
+    
+    socket.on('disconnect', () => {
+      if (socket.userId) {
+        onlineUsers.delete(socket.userId);
+        io.emit('userOffline', { userId: socket.userId });
+      }
+      console.log('User disconnected:', socket.id);
+    });
+  });
+  
+  // Make io accessible in routes
+  app.set('io', io);
 
   app.get('/api/health', (req, res) => res.json({ 
     status: 'ok', 
@@ -150,5 +208,5 @@ connectDB().then(() => {
   }));
 
   const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => console.log(`KE Kingdom API running on port ${PORT}`));
+  httpServer.listen(PORT, () => console.log(`KE Kingdom API running on port ${PORT}`));
 });
