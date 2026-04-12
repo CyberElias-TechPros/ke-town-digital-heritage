@@ -156,8 +156,8 @@ router.get('/', async (req, res) => {
     // Sort by relevance (users/groups first, then title matches)
     results.sort((a, b) => {
       const typeOrder = { user: 0, group: 1, post: 2, event: 3, news: 4, gallery: 5 };
-      const aType = typeOrder[a.type as keyof typeof typeOrder] ?? 10;
-      const bType = typeOrder[b.type as keyof typeof typeOrder] ?? 10;
+      const aType = typeOrder[a.type] !== undefined ? typeOrder[a.type] : 10;
+      const bType = typeOrder[b.type] !== undefined ? typeOrder[b.type] : 10;
       if (aType !== bType) return aType - bType;
       const aTitle = a.title.toLowerCase().includes(q.toLowerCase()) ? 1 : 0;
       const bTitle = b.title.toLowerCase().includes(q.toLowerCase()) ? 1 : 0;
