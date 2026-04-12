@@ -172,6 +172,13 @@ class ApiClient {
     });
   }
 
+  async deleteAccount(token: string) {
+    return this.request('/auth/account', {
+      method: 'DELETE',
+      token,
+    });
+  }
+
   // News
   async getNews() {
     return this.request('/news');
@@ -950,6 +957,29 @@ async removeFromCart(token: string, productId: string) {
       body: data,
       token,
     });
+  }
+
+  async getMyProducts(token: string) {
+    return this.request('/marketplace/my-products', { token });
+  }
+
+  async deleteProduct(token: string, productId: string) {
+    return this.request(`/marketplace/${productId}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  async updateProductStatus(token: string, productId: string, status: string) {
+    return this.request(`/marketplace/${productId}/status`, {
+      method: 'PUT',
+      body: { status },
+      token,
+    });
+  }
+
+  async getShopOrders(token: string) {
+    return this.request('/orders/seller', { token });
   }
 
   async followUser(token: string, userId: string) {

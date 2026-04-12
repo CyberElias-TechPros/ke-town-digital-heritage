@@ -37,6 +37,7 @@ import CreateEvent from "./pages/CreateEvent.tsx";
 import Cart from "./pages/Cart.tsx";
 import Checkout from "./pages/Checkout.tsx";
 import Orders from "./pages/Orders.tsx";
+import OrderDetail from "./pages/OrderDetail.tsx";
 import Seller from "./pages/Seller.tsx";
 import Settings from "./pages/Settings.tsx";
 import Notifications from "./pages/Notifications.tsx";
@@ -113,6 +114,7 @@ const App = () => {
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/orders" element={<Orders />} />
+            <Route path="/orders/:id" element={<OrderDetail />} />
             <Route path="/seller" element={<Seller />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/notifications" element={<Notifications />} />

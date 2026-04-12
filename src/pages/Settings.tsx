@@ -44,6 +44,8 @@ export default function SettingsPage() {
     confirmPassword: ""
   });
 
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -74,6 +76,28 @@ export default function SettingsPage() {
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!token) return;
+    
+    const confirmDelete = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
+    if (!confirmDelete) return;
+    
+    setLoading(true);
+    setError("");
+    setSuccess("");
+    
+    try {
+      await api.deleteAccount(token);
+      logout();
+      navigate('/');
+    } catch (err: any) {
+      setError(err.message || "Failed to delete account");
+    } finally {
+      setLoading(false);
+      setShowDeleteConfirm(false);
+    }
   };
 
   const handleChangePassword = async () => {
@@ -393,8 +417,12 @@ export default function SettingsPage() {
                       <div className="border-t border-border pt-6">
                         <h3 className="font-display text-lg font-semibold text-foreground mb-4 text-destructive">Danger Zone</h3>
                         <p className="text-muted-foreground mb-4">Once you delete your account, there is no going back. Please be certain.</p>
-                        <button className="px-4 py-2 border border-destructive text-destructive rounded-lg font-ui text-sm hover:bg-destructive/10 transition-colors">
-                          Delete Account
+                        <button 
+                          onClick={handleDeleteAccount}
+                          disabled={loading}
+                          className="px-4 py-2 border border-destructive text-destructive rounded-lg font-ui text-sm hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                        >
+                          {loading ? "Deleting..." : "Delete Account"}
                         </button>
                       </div>
                     </div>
