@@ -1,29 +1,32 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { 
   User, Mail, MapPin, Globe, Calendar, Edit, Camera, 
   Save, X, Check, Clock, FileText, MessageCircle, ShoppingBag,
-  Store, Package, DollarSign, TrendingUp, Users, Settings
+  Store, Package, DollarSign, TrendingUp, Users, Settings, ArrowLeft
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 
 const Profile = () => {
-  const { user, token, isAuthenticated, updateUser } = useAuth();
+  const { user: currentUser, token, isAuthenticated, updateUser } = useAuth();
+  const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [viewUser, setViewUser] = useState<any>(null);
+  const [isOwnProfile, setIsOwnProfile] = useState(true);
   
   const [formData, setFormData] = useState({
-    fullName: user?.fullName || "",
-    bio: user?.bio || "",
-    location: user?.location || "",
-    avatar: user?.avatar || ""
+    fullName: currentUser?.fullName || "",
+    bio: currentUser?.bio || "",
+    location: currentUser?.location || "",
+    avatar: currentUser?.avatar || ""
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -45,6 +48,36 @@ const Profile = () => {
       navigate("/login");
     }
   }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (username && username !== currentUser?.fullName?.toLowerCase().replace(/\s+/g, '-')) {
+      loadOtherUserProfile();
+    } else {
+      setIsOwnProfile(true);
+      setViewUser(null);
+      setFormData({
+        fullName: currentUser?.fullName || "",
+        bio: currentUser?.bio || "",
+        location: currentUser?.location || "",
+        avatar: currentUser?.avatar || ""
+      });
+    }
+  }, [username, currentUser]);
+
+  const loadOtherUserProfile = async () => {
+    if (!username) return;
+    setIsLoading(true);
+    try {
+      const userData = await api.getUserProfile(username);
+      setViewUser(userData.user || userData);
+      setIsOwnProfile(false);
+    } catch (err) {
+      console.error("Failed to load user profile:", err);
+      navigate("/feed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (token && activeTab === "shop") {

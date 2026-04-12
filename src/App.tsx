@@ -102,6 +102,7 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:username" element={<Profile />} />
             <Route path="/feed" element={<Feed />} />
             <Route path="/groups" element={<Groups />} />
             <Route path="/groups/create" element={<CreateGroup />} />

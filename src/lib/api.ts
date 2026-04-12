@@ -164,6 +164,14 @@ class ApiClient {
     }) as Promise<{ user: User }>;
   }
 
+  async updatePassword(token: string, currentPassword: string, newPassword: string) {
+    return this.request('/auth/password', {
+      method: 'PUT',
+      body: { currentPassword, newPassword },
+      token,
+    });
+  }
+
   // News
   async getNews() {
     return this.request('/news');
@@ -685,6 +693,25 @@ class ApiClient {
 
   async getUserProfile(userId: string) {
     return this.request(`/auth/user/${userId}`);
+  }
+
+  async getUserByUsername(username: string) {
+    return this.request(`/users/${username}`);
+  }
+
+  async getUserPosts(userId: string, page = 1, limit = 20) {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+    return this.request(`/users/${userId}/posts?${params.toString()}`);
+  }
+
+  async getUserFollowers(userId: string, page = 1, limit = 20) {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+    return this.request(`/users/${userId}/followers?${params.toString()}`);
+  }
+
+  async getUserFollowing(userId: string, page = 1, limit = 20) {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+    return this.request(`/users/${userId}/following?${params.toString()}`);
   }
 
   // Elder Stories

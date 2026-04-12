@@ -38,6 +38,12 @@ export default function SettingsPage() {
     messageNotifications: true
   });
 
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -68,6 +74,34 @@ export default function SettingsPage() {
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleChangePassword = async () => {
+    if (!token) return;
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setError("New passwords do not match");
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      await api.updatePassword(token, passwordData.currentPassword, passwordData.newPassword);
+      setSuccess("Password changed successfully!");
+      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    } catch (err: any) {
+      setError(err.message || "Failed to change password");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isAuthenticated) return null;
@@ -289,14 +323,54 @@ export default function SettingsPage() {
                   {activeTab === "security" && (
                     <div className="space-y-6">
                       <div>
-                        <h3 className="font-display text-lg font-semibold text-foreground mb-4">Password & Security</h3>
-                        <p className="text-muted-foreground mb-4">Manage your password and security settings from your profile page.</p>
-                        <a
-                          href="/profile"
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg font-ui text-sm hover:bg-secondary/90 transition-all"
-                        >
-                          Go to Profile
-                        </a>
+                        <h3 className="font-display text-lg font-semibold text-foreground mb-4">Change Password</h3>
+                        <div className="space-y-4 max-w-md">
+                          <div>
+                            <label className="block text-sm font-medium text-foreground mb-1">Current Password</label>
+                            <input
+                              type="password"
+                              value={passwordData.currentPassword}
+                              onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                              className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-secondary"
+                              placeholder="Enter current password"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-foreground mb-1">New Password</label>
+                            <input
+                              type="password"
+                              value={passwordData.newPassword}
+                              onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                              className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-secondary"
+                              placeholder="Enter new password"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-foreground mb-1">Confirm New Password</label>
+                            <input
+                              type="password"
+                              value={passwordData.confirmPassword}
+                              onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                              className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-secondary"
+                              placeholder="Confirm new password"
+                            />
+                          </div>
+                          <button
+                            onClick={handleChangePassword}
+                            disabled={loading || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+                            className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg font-ui text-sm hover:bg-secondary/90 transition-all disabled:opacity-50"
+                          >
+                            {loading ? "Updating..." : "Update Password"}
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="border-t border-border pt-6">
+                        <h3 className="font-display text-lg font-semibold text-foreground mb-4">Two-Factor Authentication</h3>
+                        <p className="text-muted-foreground mb-4">Add an extra layer of security to your account.</p>
+                        <button className="px-4 py-2 border border-secondary text-secondary rounded-lg font-ui text-sm hover:bg-secondary/10 transition-all">
+                          Enable 2FA
+                        </button>
                       </div>
                     </div>
                   )}
