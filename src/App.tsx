@@ -41,11 +41,23 @@ import OrderDetail from "./pages/OrderDetail.tsx";
 import Seller from "./pages/Seller.tsx";
 import Settings from "./pages/Settings.tsx";
 import Notifications from "./pages/Notifications.tsx";
-import Search from "./pages/Search.tsx";
 import Explore from "./pages/Explore.tsx";
 import SavedPosts from "./pages/SavedPosts.tsx";
 import Product from "./pages/Product.tsx";
 import CreateListing from "./pages/CreateListing.tsx";
+import Search from "./pages/Search.tsx";
+import SocialMediaLayout from "./components/SocialMediaLayout.tsx";
+import keicon from "./assets/keicon.png";
+import Messages from "./pages/Messages.tsx";
+import Chat from "./pages/Chat.tsx";
+import DigitalSkills from "./pages/DigitalSkills.tsx";
+import FeedPage from "./pages/FeedPage.tsx";
+import Explore from "./pages/Explore.tsx";
+import SavedPosts from "./pages/SavedPosts.tsx";
+import Product from "./pages/Product.tsx";
+import CreateListing from "./pages/CreateListing.tsx";
+import Search from "./pages/Search.tsx";
+import SocialMediaLayout from "./components/SocialMediaLayout.tsx";
 import keicon from "./assets/keicon.png";
 
 const queryClient = new QueryClient();
@@ -92,6 +104,7 @@ const App = () => {
           <Sonner />
           <ScrollToTop />
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<Index />} />
             <Route path="/history" element={<History />} />
             <Route path="/culture" element={<Culture />} />
@@ -102,37 +115,43 @@ const App = () => {
             <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/timeline" element={<Timeline />} />
+            <Route path="/elder-stories" element={<ElderStories />} />
+            <Route path="/virtual-tours" element={<VirtualTours />} />
+            <Route path="/digital-skills" element={<DigitalSkills />} />
+
+            {/* Unified Social Media Layout - wraps authenticated social routes */}
+            <Route element={<SocialMediaLayout />}>
+              <Route path="/feed" element={<Feed />} />
+              <Route path="/explore" element={<Explore />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/messages/:id" element={<Chat />} />
+              <Route path="/groups" element={<Groups />} />
+              <Route path="/groups/create" element={<CreateGroup />} />
+              <Route path="/groups/:id" element={<GroupDetail />} />
+              <Route path="/events" element={<Events />} />
+              <Route path="/events/create" element={<CreateEvent />} />
+              <Route path="/events/:id" element={<EventDetail />} />
+              <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/marketplace/create" element={<CreateListing />} />
+              <Route path="/product/:id" element={<Product />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/saved" element={<SavedPosts />} />
+              <Route path="/activity" element={<Activity />} />
+              <Route path="/posts" element={<Posts />} />
+            </Route>
+
+            {/* Standalone Routes (outside layout) */}
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:username" element={<Profile />} />
-            <Route path="/feed" element={<Feed />} />
-            <Route path="/groups" element={<Groups />} />
-            <Route path="/groups/create" element={<CreateGroup />} />
-            <Route path="/groups/:id" element={<GroupDetail />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/events/create" element={<CreateEvent />} />
-            <Route path="/events/:id" element={<EventDetail />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/orders/:id" element={<OrderDetail />} />
             <Route path="/seller" element={<Seller />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/posts" element={<Posts />} />
-            <Route path="/activity" element={<Activity />} />
-            <Route path="/timeline" element={<Timeline />} />
-            <Route path="/elder-stories" element={<ElderStories />} />
-            <Route path="/marketplace" element={<Marketplace />} />
-            <Route path="/marketplace/create" element={<CreateListing />} />
-            <Route path="/product/:id" element={<Product />} />
-            <Route path="/virtual-tours" element={<VirtualTours />} />
             <Route path="/admin" element={<Admin />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/messages/:id" element={<Chat />} />
-            <Route path="/digital-skills" element={<DigitalSkills />} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/explore" element={<Explore />} />
-            <Route path="/saved" element={<SavedPosts />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>
