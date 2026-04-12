@@ -19,11 +19,10 @@ ReviewSchema.index({ product: 1 });
 ReviewSchema.index({ buyer: 1 });
 ReviewSchema.index({ product: 1, buyer: 1 }, { unique: true });
 
-// Virtual for average rating
 ReviewSchema.statics.getAverageRating = async function(productId) {
   const result = await this.aggregate([
     { $match: { product: new mongoose.Types.ObjectId(productId) } },
-    { $group: { _id: '$product', avgRating: { $avg: '$rating' }, count: { $sum: 1 } }
+    { $group: { _id: '$product', avgRating: { $avg: '$rating' }, count: { $sum: 1 } } }
   ]);
   return result[0] ? { avgRating: result[0].avgRating.toFixed(1), count: result[0].count } : { avgRating: 0, count: 0 };
 };
