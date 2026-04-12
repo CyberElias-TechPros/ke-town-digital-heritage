@@ -55,7 +55,8 @@ const Index = () => {
     const fetchNews = async () => {
       try {
         const data = await api.getNews();
-        setNews(data.slice(0, 3));
+        const newsArray = Array.isArray(data) ? data : (data as any)?.news || [];
+        setNews(newsArray.slice(0, 3));
       } catch (error) {
         console.error("Failed to fetch news:", error);
       } finally {
@@ -66,7 +67,8 @@ const Index = () => {
     const fetchEvents = async () => {
       try {
         const data = await api.getEvents();
-        setEvents(data.slice(0, 3));
+        const eventsArray = Array.isArray(data) ? data : (data as any)?.events || [];
+        setEvents(eventsArray.slice(0, 3));
       } catch (error) {
         console.error("Failed to fetch events:", error);
       } finally {

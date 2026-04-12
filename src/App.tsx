@@ -48,17 +48,6 @@ import CreateListing from "./pages/CreateListing.tsx";
 import Search from "./pages/Search.tsx";
 import SocialMediaLayout from "./components/SocialMediaLayout.tsx";
 import keicon from "./assets/keicon.png";
-import Messages from "./pages/Messages.tsx";
-import Chat from "./pages/Chat.tsx";
-import DigitalSkills from "./pages/DigitalSkills.tsx";
-import FeedPage from "./pages/FeedPage.tsx";
-import Explore from "./pages/Explore.tsx";
-import SavedPosts from "./pages/SavedPosts.tsx";
-import Product from "./pages/Product.tsx";
-import CreateListing from "./pages/CreateListing.tsx";
-import Search from "./pages/Search.tsx";
-import SocialMediaLayout from "./components/SocialMediaLayout.tsx";
-import keicon from "./assets/keicon.png";
 
 const queryClient = new QueryClient();
 

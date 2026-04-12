@@ -211,6 +211,38 @@ class ApiClient {
     });
   }
 
+  // Events
+  async getEvents(token?: string) {
+    return this.request('/events', { token });
+  }
+
+  async getEvent(id: string) {
+    return this.request(`/events/${id}`);
+  }
+
+  async createEvent(token: string, data: Record<string, unknown>) {
+    return this.request('/events', {
+      method: 'POST',
+      body: data,
+      token,
+    });
+  }
+
+  async updateEvent(token: string, id: string, data: Record<string, unknown>) {
+    return this.request(`/events/${id}`, {
+      method: 'PUT',
+      body: data,
+      token,
+    });
+  }
+
+  async deleteEvent(token: string, id: string) {
+    return this.request(`/events/${id}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
   // Gallery
   async getGallery(category?: string) {
     const query = category ? `?category=${category}` : '';

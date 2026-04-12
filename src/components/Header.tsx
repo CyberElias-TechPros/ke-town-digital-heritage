@@ -143,11 +143,11 @@ const Header = () => {
                     className="absolute top-full left-0 mt-1 min-w-[180px] bg-card rounded-lg border border-border shadow-lg overflow-hidden z-50"
                     onMouseLeave={() => setActiveDropdown(null)}
                   >
-                    {group.items.map((item) => (
-                      (item.auth && !isAuthenticated) ? null : (
-                        item.external ? (
-                          <a
-                            key={item.url}
+                      {group.items.map((item, itemIdx) => (
+                        (item.auth && !isAuthenticated) ? null : (
+                          item.external ? (
+                            <a
+                              key={`${item.url}-${itemIdx}`}
                             href={item.url}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -280,7 +280,7 @@ const Header = () => {
                       {group.items.map((item, ii) => (
                         (item.auth && !isAuthenticated) ? null : (
                           <motion.div
-                            key={item.external ? item.url : item.path}
+                            key={item.external ? `${item.url}-${ii}` : item.path}
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: (gi * 3 + ii) * 0.05 }}

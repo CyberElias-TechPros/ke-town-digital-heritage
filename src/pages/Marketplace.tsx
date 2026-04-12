@@ -53,7 +53,8 @@ export default function Marketplace() {
     try {
       const category = selectedCategory === "all" ? undefined : selectedCategory;
       const data = await api.getProducts(category);
-      setProducts(data as Product[]);
+      const productsArray = Array.isArray(data) ? data : (data as any)?.products || [];
+      setProducts(productsArray as Product[]);
     } catch (err: any) {
       console.error("Failed to load products:", err);
       setError(err.message || "Unable to load products");
