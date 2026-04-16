@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 
 const Profile = () => {
-  const { user: currentUser, token, isAuthenticated, updateUser } = useAuth();
+  const { user: currentUser, token, isAuthenticated, isLoading: authLoading, updateUser } = useAuth();
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   
@@ -44,10 +44,11 @@ const Profile = () => {
   const [showBecomeSeller, setShowBecomeSeller] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated) {
       navigate("/login");
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, authLoading]);
 
   useEffect(() => {
     if (username && username !== currentUser?.fullName?.toLowerCase().replace(/\s+/g, '-')) {

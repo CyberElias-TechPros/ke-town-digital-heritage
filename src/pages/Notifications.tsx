@@ -17,19 +17,20 @@ interface Notification {
 }
 
 export default function Notifications() {
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, token, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
   useEffect(() => {
+    if (isLoading) return;
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
     loadNotifications();
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated, token, isLoading]);
 
   const loadNotifications = async () => {
     if (!token) return;

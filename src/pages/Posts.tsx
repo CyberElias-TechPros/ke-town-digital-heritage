@@ -23,7 +23,7 @@ interface Post {
 }
 
 export default function Posts() {
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, token, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const [posts, setPosts] = useState<Post[]>([]);
   const [myPosts, setMyPosts] = useState<Post[]>([]);
@@ -36,13 +36,14 @@ export default function Posts() {
   const [showCommentId, setShowCommentId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isLoading) return;
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
     loadPosts();
     loadMyPosts();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isLoading]);
 
   const loadPosts = async () => {
     try {

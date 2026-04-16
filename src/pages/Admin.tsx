@@ -65,7 +65,7 @@ interface ContactMessage {
 }
 
 const Admin = () => {
-  const { user, token, isAuthenticated, isAdmin, logout } = useAuth();
+  const { user, token, isAuthenticated, isAdmin, isLoading: authLoading, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -78,12 +78,13 @@ const Admin = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !isAdmin) {
       navigate("/login");
       return;
     }
     loadDashboardData();
-  }, [isAuthenticated, isAdmin, navigate]);
+  }, [isAuthenticated, isAdmin, navigate, authLoading, token]);
 
   const loadDashboardData = async () => {
     if (!token) return;

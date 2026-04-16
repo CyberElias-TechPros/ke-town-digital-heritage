@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 
 const Messages = () => {
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, token, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   
   const [conversations, setConversations] = useState<any[]>([]);
@@ -17,12 +17,13 @@ const Messages = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated) {
       navigate("/login");
     } else if (token) {
       loadConversations();
     }
-  }, [isAuthenticated, token, navigate]);
+  }, [isAuthenticated, token, navigate, authLoading]);
 
   const loadConversations = async () => {
     if (!token) return;

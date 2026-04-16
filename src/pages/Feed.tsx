@@ -26,7 +26,7 @@ interface User {
 }
 
 export default function Feed() {
-  const { user, token } = useAuth() as { user: User | null; token: string | null };
+  const { user, token, isLoading } = useAuth() as { user: User | null; token: string | null; isLoading: boolean };
   const navigate = useNavigate();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,12 +35,13 @@ export default function Feed() {
   const [activeReaction, setActiveReaction] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isLoading) return;
     if (!token) {
       navigate('/login');
       return;
     }
     loadFeed();
-  }, [token, navigate]);
+  }, [token, navigate, isLoading]);
 
   const loadFeed = async () => {
     try {

@@ -13,6 +13,14 @@ const path = require('path');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 
+// Import models to ensure they're registered
+require('./models/User');
+require('./models/AuditLog');
+require('./models/Event');
+require('./models/News');
+require('./models/Group');
+require('./models/Post');
+
 dotenv.config();
 
 const app = express();

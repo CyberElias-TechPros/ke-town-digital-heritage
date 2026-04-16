@@ -2,7 +2,10 @@ export interface User {
   id: string;
   fullName: string;
   email: string;
-  role: 'user' | 'admin';
+  username?: string;
+  role: 'user' | 'moderator' | 'content_manager' | 'seller_manager' | 'admin';
+  accountStatus?: 'active' | 'suspended' | 'deactivated';
+  emailVerified?: boolean;
   avatar?: string;
   bio?: string;
   location?: string;
@@ -13,9 +16,12 @@ export interface User {
   totalSales?: number;
   followers?: string[];
   following?: string[];
+  blockedUsers?: string[];
+  mutedUsers?: string[];
   profileVisibility?: 'public' | 'followers' | 'private';
   allowMessages?: boolean;
   showOnlineStatus?: boolean;
+  verified?: boolean;
 }
 
 const API_SERVERS = import.meta.env.VITE_API_SERVERS || 
@@ -70,6 +76,7 @@ interface RequestOptions {
   body?: unknown;
   headers?: Record<string, string>;
   token?: string | null;
+  timeout?: number;
 }
 
 class ApiClient {
@@ -82,6 +89,7 @@ class ApiClient {
   private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const servers = API_SERVERS.split(',').map(s => s.trim());
     let lastError: Error | null = null;
+    const timeout = options.timeout || 10000;
 
     for (let i = 0; i < servers.length; i++) {
       const server = servers[i];
@@ -93,6 +101,7 @@ class ApiClient {
           'Content-Type': 'application/json',
           ...headers,
         },
+        signal: AbortSignal.timeout(timeout),
       };
 
       if (token) {
@@ -153,7 +162,7 @@ class ApiClient {
   }
 
   async getProfile(token: string): Promise<{ user: User }> {
-    return this.request('/auth/me', { token }) as Promise<{ user: User }>;
+    return this.request('/auth/me', { token, timeout: 5000 }) as Promise<{ user: User }>;
   }
 
   async updateProfile(token: string, data: Record<string, unknown>): Promise<{ user: User }> {
@@ -177,6 +186,68 @@ class ApiClient {
       method: 'DELETE',
       token,
     });
+  }
+
+  async forgotPassword(email: string) {
+    return this.request('/auth/forgot-password', {
+      method: 'POST',
+      body: { email },
+    });
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    return this.request('/auth/reset-password', {
+      method: 'POST',
+      body: { token, newPassword },
+    });
+  }
+
+  async verifyEmail(token: string) {
+    return this.request('/auth/verify-email', {
+      method: 'POST',
+      body: { token },
+    });
+  }
+
+  async getPermissions(token: string) {
+    return this.request('/auth/permissions', { token });
+  }
+
+  async getUsers(token: string, page?: number, limit?: number, role?: string, status?: string, search?: string) {
+    const params = new URLSearchParams();
+    if (page) params.append('page', page.toString());
+    if (limit) params.append('limit', limit.toString());
+    if (role) params.append('role', role);
+    if (status) params.append('status', status);
+    if (search) params.append('search', search);
+    return this.request(`/auth/users?${params.toString()}`, { token });
+  }
+
+  async updateUserRole(token: string, userId: string, role: string) {
+    return this.request(`/auth/users/${userId}/role`, {
+      method: 'PUT',
+      body: { role },
+      token,
+    });
+  }
+
+  async updateUserStatus(token: string, userId: string, accountStatus: string) {
+    return this.request(`/auth/users/${userId}/status`, {
+      method: 'PUT',
+      body: { accountStatus },
+      token,
+    });
+  }
+
+  async getUserActivity(token: string, userId: string, page?: number, limit?: number) {
+    const params = new URLSearchParams();
+    if (page) params.append('page', page.toString());
+    if (limit) params.append('limit', limit.toString());
+    return this.request(`/auth/users/${userId}/activity?${params.toString()}`, { token });
+  }
+
+  async getUserByUsername(username: string) {
+    return this.request(`/auth/users/${username}`);
   }
 
   // News
@@ -1033,6 +1104,16 @@ async removeFromCart(token: string, productId: string) {
       method: 'DELETE',
       token,
     });
+  }
+
+  async getUnreadMessageCount(token: string): Promise<number> {
+    const response = await this.request<{ count: number }>('/messages/unread/count', { token });
+    return response?.count || 0;
+  }
+
+  async getUnreadNotificationCount(token: string): Promise<number> {
+    const response = await this.request<{ count: number }>('/notifications/unread-count', { token });
+    return response?.count || 0;
   }
 }
 

@@ -23,7 +23,7 @@ interface SavedPost {
 }
 
 export default function SavedPosts() {
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, token, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   
   const [savedPosts, setSavedPosts] = useState<SavedPost[]>([]);
@@ -31,12 +31,13 @@ export default function SavedPosts() {
   const [activeReaction, setActiveReaction] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isLoading) return;
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
     loadSavedPosts();
-  }, [isAuthenticated, token, navigate]);
+  }, [isAuthenticated, token, navigate, isLoading]);
 
   const loadSavedPosts = async () => {
     if (!token) return;

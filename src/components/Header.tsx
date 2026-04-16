@@ -157,7 +157,7 @@ const Header = () => {
                           </a>
                         ) : (
                           <Link
-                            key={item.path}
+                            key={`${item.path}-${itemIdx}`}
                             to={item.path || "#"}
                             className={`block px-4 py-2.5 text-sm font-ui transition-all ${
                               location.pathname === item.path

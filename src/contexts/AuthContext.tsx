@@ -1,24 +1,40 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { api, User } from '../lib/api';
 
+interface ExtendedUser extends User {
+  username?: string;
+  accountStatus?: 'active' | 'suspended' | 'deactivated';
+  emailVerified?: boolean;
+  canManageUsers?: boolean;
+  canManageContent?: boolean;
+  canManageSellers?: boolean;
+  blockedUsers?: string[];
+  mutedUsers?: string[];
+}
+
 interface AuthContextType {
-  user: User | null;
+  user: ExtendedUser | null;
   token: string | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isModerator: boolean;
+  isContentManager: boolean;
+  isSellerManager: boolean;
   isSeller: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (fullName: string, email: string, password: string) => Promise<void>;
+  register: (fullName: string, email: string, password: string, username?: string) => Promise<void>;
   logout: () => void;
-  updateUser: (data: User) => void;
+  updateUser: (data: ExtendedUser) => void;
   updateProfile: (data: Partial<User>) => Promise<void>;
+  forgotPassword: (email: string) => Promise<string>;
+  resetPassword: (token: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<ExtendedUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,37 +46,78 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
-      // Verify token is still valid
-      fetchUserProfile(storedToken);
+      // Verify token is still valid (async - don't block loading)
+      fetchUserProfile(storedToken).finally(() => {
+        setIsLoading(false);
+      });
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   const fetchUserProfile = async (authToken: string) => {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
       const data = await api.getProfile(authToken);
+      clearTimeout(timeoutId);
       setUser(data.user);
       localStorage.setItem('keKingdom_user', JSON.stringify(data.user));
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      logout();
+      // Keep existing user data from localStorage on network error
+      const storedUser = localStorage.getItem('keKingdom_user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
     }
   };
 
   const login = async (email: string, password: string) => {
     const data = await api.login(email, password);
-    setUser(data.user);
+    const userData: ExtendedUser = {
+      id: data.user.id,
+      fullName: data.user.fullName,
+      email: data.user.email,
+      username: data.user.username,
+      role: data.user.role,
+      accountStatus: data.user.accountStatus,
+      avatar: data.user.avatar,
+      isSeller: data.user.isSeller,
+      shopName: data.user.shopName,
+      shopVerified: data.user.shopVerified
+    };
+    setUser(userData);
     setToken(data.token);
     localStorage.setItem('keKingdom_token', data.token);
-    localStorage.setItem('keKingdom_user', JSON.stringify(data.user));
+    localStorage.setItem('keKingdom_user', JSON.stringify(userData));
   };
 
-  const register = async (fullName: string, email: string, password: string) => {
+  const register = async (fullName: string, email: string, password: string, username?: string) => {
     const data = await api.register(fullName, email, password);
-    setUser(data.user);
+    const userData: ExtendedUser = {
+      id: data.user.id,
+      fullName: data.user.fullName,
+      email: data.user.email,
+      username: data.user.username,
+      role: data.user.role
+    };
+    setUser(userData);
     setToken(data.token);
     localStorage.setItem('keKingdom_token', data.token);
-    localStorage.setItem('keKingdom_user', JSON.stringify(data.user));
+    localStorage.setItem('keKingdom_user', JSON.stringify(userData));
+  };
+
+  const forgotPassword = async (email: string): Promise<string> => {
+    const data = await api.forgotPassword(email);
+    return data.message;
+  };
+
+  const resetPassword = async (resetToken: string, newPassword: string) => {
+    const data = await api.resetPassword(resetToken, newPassword);
+    setToken(data.token);
+    localStorage.setItem('keKingdom_token', data.token);
   };
 
   const logout = () => {
@@ -79,21 +136,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('keKingdom_user', JSON.stringify(data.user));
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     token,
     isAuthenticated: !!token,
     isAdmin: user?.role === 'admin',
+    isModerator: user?.role === 'moderator',
+    isContentManager: user?.role === 'content_manager',
+    isSellerManager: user?.role === 'seller_manager',
     isSeller: user?.isSeller || false,
     isLoading,
     login,
     register,
     logout,
-    updateUser: (data: User) => {
+    updateUser: (data: ExtendedUser) => {
       setUser(data);
       localStorage.setItem('keKingdom_user', JSON.stringify(data));
     },
-    updateProfile
+    updateProfile,
+    forgotPassword,
+    resetPassword
   };
 
   return (

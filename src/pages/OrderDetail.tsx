@@ -31,13 +31,14 @@ interface OrderDetail {
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, token, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isLoading) return;
     if (!isAuthenticated) {
       navigate("/login");
       return;
@@ -45,7 +46,7 @@ export default function OrderDetail() {
     if (id) {
       loadOrder(id);
     }
-  }, [isAuthenticated, id, navigate]);
+  }, [isAuthenticated, id, navigate, isLoading]);
 
   const loadOrder = async (orderId: string) => {
     if (!token) return;

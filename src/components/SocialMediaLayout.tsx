@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { 
   Home, Compass, Bell, MessageCircle, Users, Calendar, ShoppingBag, 
-  Search, Settings, LogOut, Plus, Image, Video, Bookmark, Shield, ShoppingCart
+  Search, Settings, LogOut, Plus, Image, Video, Bookmark, Shield, ShoppingCart, Star, X
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
@@ -348,7 +348,7 @@ const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
 export default function SocialMediaLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, token, isAuthenticated, isLoading } = useAuth();
   
   const [activeTab, setActiveTab] = useState("feed");
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -356,6 +356,7 @@ export default function SocialMediaLayout() {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useEffect(() => {
+    if (isLoading) return;
     if (!isAuthenticated) {
       navigate("/login");
       return;
@@ -377,7 +378,7 @@ export default function SocialMediaLayout() {
     };
     
     loadUnreadCounts();
-  }, [isAuthenticated, token, navigate]);
+  }, [isAuthenticated, token, navigate, isLoading]);
 
   // Determine active tab from current route
   useEffect(() => {

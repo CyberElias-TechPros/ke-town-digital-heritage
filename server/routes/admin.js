@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { authenticate, requireAdmin } = require('../middleware/auth');
+const { authenticate, requireAdmin, requireUserManager, requireContentManager } = require('../middleware/auth');
 const Event = require('../models/Event');
 const News = require('../models/News');
 const GalleryItem = require('../models/GalleryItem');
@@ -8,6 +8,7 @@ const ContactMessage = require('../models/ContactMessage');
 const EnvironmentReport = require('../models/EnvironmentReport');
 const Project = require('../models/Project');
 const User = require('../models/User');
+const AuditLog = require('../models/AuditLog');
 
 // Dashboard statistics
 router.get('/dashboard', authenticate, requireAdmin, async (req, res) => {
@@ -243,6 +244,66 @@ router.post('/projects/:id/updates', authenticate, requireAdmin, async (req, res
     res.json({ message: 'Update added', project });
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+// Get audit logs (admin only)
+router.get('/audit-logs', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { page = 1, limit = 50, userId, action } = req.query;
+    const filter = {};
+    if (userId) filter.user = userId;
+    if (action) filter.action = action;
+    
+    const skip = (page - 1) * limit;
+    const logs = await AuditLog.find(filter)
+      .populate('user', 'fullName email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+    
+    const total = await AuditLog.countDocuments(filter);
+    
+    res.json({
+      logs,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / limit)
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get system stats (admin only)
+router.get('/system-stats', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const [
+      activeUsers,
+      inactiveUsers,
+      suspendedUsers,
+      recentRegistrations,
+      recentLogins,
+      activeSellers
+    ] = await Promise.all([
+      User.countDocuments({ accountStatus: 'active' }),
+      User.countDocuments({ isActive: false }),
+      User.countDocuments({ accountStatus: 'suspended' }),
+      User.countDocuments({ createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }),
+      User.countDocuments({ lastLogin: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }),
+      User.countDocuments({ isSeller: true, shopVerified: true })
+    ]);
+
+    res.json({
+      activeUsers,
+      inactiveUsers,
+      suspendedUsers,
+      recentRegistrations,
+      recentLogins,
+      activeSellers
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 

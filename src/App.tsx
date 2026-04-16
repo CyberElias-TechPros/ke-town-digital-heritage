@@ -15,6 +15,7 @@ import Environment from "./pages/Environment.tsx";
 import Contact from "./pages/Contact.tsx";
 import Login from "./pages/Login.tsx";
 import Register from "./pages/Register.tsx";
+import ForgotPassword from "./pages/ForgotPassword.tsx";
 import Profile from "./pages/Profile.tsx";
 import Posts from "./pages/Posts.tsx";
 import Activity from "./pages/Activity.tsx";
@@ -104,6 +105,7 @@ const App = () => {
             <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/timeline" element={<Timeline />} />
             <Route path="/elder-stories" element={<ElderStories />} />
             <Route path="/virtual-tours" element={<VirtualTours />} />

@@ -19,19 +19,20 @@ interface Activity {
 }
 
 export default function ActivityPage() {
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, token, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"following" | "global" | "me">("following");
 
   useEffect(() => {
+    if (isLoading) return;
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
     loadActivities();
-  }, [isAuthenticated, activeTab]);
+  }, [isAuthenticated, activeTab, isLoading]);
 
   const loadActivities = async () => {
     setLoading(true);

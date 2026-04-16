@@ -27,7 +27,7 @@ interface ShippingAddress {
 }
 
 export default function Cart() {
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, token, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,12 +42,13 @@ export default function Cart() {
   });
 
   useEffect(() => {
+    if (isLoading) return;
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
     loadCart();
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated, token, isLoading]);
 
   const loadCart = async () => {
     if (!token) return;

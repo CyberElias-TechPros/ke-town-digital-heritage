@@ -1,33 +1,72 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff, LogIn } from "lucide-react";
+import { Mail, ArrowLeft, Send } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 
-const Login = () => {
+const ForgotPassword = () => {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
+  const { forgotPassword } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setMessage("");
     setIsLoading(true);
 
     try {
-      await login(email, password);
-      navigate("/");
+      const result = await forgotPassword(email);
+      setMessage(result);
+      setEmailSent(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : "Failed to process request");
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (emailSent) {
+    return (
+      <Layout>
+        <section className="relative pt-32 pb-20 overflow-hidden">
+          <div className="absolute inset-0" style={{ background: "var(--gradient-hero)" }} />
+          <div className="relative z-10 container-narrow px-4 md:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="max-w-md mx-auto"
+            >
+              <div className="bg-card rounded-xl border border-border p-8 shadow-[var(--shadow-elevated)] text-center">
+                <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Mail className="w-8 h-8 text-secondary" />
+                </div>
+                <h1 className="font-display text-2xl font-bold text-foreground mb-4">
+                  Check Your Email
+                </h1>
+                <p className="text-muted-foreground font-body mb-6">
+                  If an account with this email exists, we've sent password reset instructions.
+                </p>
+                <Link 
+                  to="/login" 
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-secondary text-secondary-foreground rounded-lg font-ui font-semibold text-sm hover:bg-secondary/90 transition-all"
+                >
+                  <ArrowLeft size={18} />
+                  Back to Login
+                </Link>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -42,13 +81,13 @@ const Login = () => {
           >
             <div className="text-center mb-8">
               <span className="tag-ke bg-secondary/20 text-secondary border border-secondary/30 mb-4 inline-block">
-                Welcome Back
+                Password Reset
               </span>
               <h1 className="font-display text-4xl font-bold text-primary-foreground mb-4">
-                Sign In
+                Forgot Password?
               </h1>
               <p className="text-primary-foreground/70 font-body">
-                Access your KE Kingdom community account
+                Enter your email to receive reset instructions
               </p>
             </div>
 
@@ -81,33 +120,6 @@ const Login = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <label className="block text-sm font-ui font-medium text-foreground mb-1.5">
-                    Password
-                  </label>
-                  <Link to="/forgot-password" className="text-xs text-secondary font-ui hover:underline">
-                    Forgot password?
-                  </Link>
-                  <div className="relative">
-                    <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your password"
-                      className="w-full pl-10 pr-12 py-3 rounded-lg border border-border bg-background text-foreground font-ui text-sm focus:outline-none focus:ring-2 focus:ring-secondary transition-all"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                </div>
-
                 <button
                   type="submit"
                   disabled={isLoading}
@@ -117,8 +129,8 @@ const Login = () => {
                     <span className="animate-spin">⏳</span>
                   ) : (
                     <>
-                      <LogIn size={18} />
-                      Sign In
+                      <Send size={18} />
+                      Send Reset Link
                     </>
                   )}
                 </button>
@@ -126,22 +138,11 @@ const Login = () => {
 
               <div className="mt-6 text-center">
                 <p className="text-sm text-muted-foreground font-ui">
-                  Don't have an account?{" "}
-                  <Link to="/register" className="text-secondary font-medium hover:underline">
-                    Sign Up
+                  Remember your password?{" "}
+                  <Link to="/login" className="text-secondary font-medium hover:underline">
+                    Sign In
                   </Link>
                 </p>
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-border/50 text-center">
-                <a 
-                  href="https://cybereliasacademy.com.ng" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-xs text-muted-foreground/60 hover:text-secondary/80 font-ui transition-colors"
-                >
-                  Need tech skills? Visit Cyber Elias Academy →
-                </a>
               </div>
             </div>
           </motion.div>
@@ -151,4 +152,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default ForgotPassword;

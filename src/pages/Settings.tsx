@@ -19,7 +19,7 @@ interface SettingsData {
 }
 
 export default function SettingsPage() {
-  const { user, token, isAuthenticated, logout } = useAuth();
+  const { user, token, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("privacy");
   const [loading, setLoading] = useState(false);
@@ -47,10 +47,11 @@ export default function SettingsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated) {
       navigate('/login');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, authLoading]);
 
   const handleSaveSettings = async () => {
     if (!token) return;

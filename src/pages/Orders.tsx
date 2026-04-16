@@ -23,7 +23,7 @@ interface Order {
 }
 
 export default function Orders() {
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, token, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   
   const [orders, setOrders] = useState<Order[]>([]);
@@ -31,12 +31,13 @@ export default function Orders() {
   const [activeTab, setActiveTab] = useState("all");
 
   useEffect(() => {
+    if (isLoading) return;
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
     loadOrders();
-  }, [isAuthenticated, token, navigate]);
+  }, [isAuthenticated, token, navigate, isLoading]);
 
   const loadOrders = async () => {
     if (!token) return;

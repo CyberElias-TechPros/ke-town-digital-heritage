@@ -25,7 +25,7 @@ interface Conversation {
 
 export default function Chat() {
   const { id } = useParams<{ id: string }>();
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, token, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
@@ -37,6 +37,7 @@ export default function Chat() {
   const [typing, setTyping] = useState(false);
 
   useEffect(() => {
+    if (isLoading) return;
     if (!isAuthenticated) {
       navigate("/login");
       return;
@@ -44,7 +45,7 @@ export default function Chat() {
     if (id && token) {
       loadConversation(id);
     }
-  }, [isAuthenticated, id, token, navigate]);
+  }, [isAuthenticated, id, token, navigate, isLoading]);
 
   useEffect(() => {
     scrollToBottom();

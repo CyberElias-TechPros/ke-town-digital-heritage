@@ -24,7 +24,7 @@ interface RecentOrder {
 }
 
 export default function Seller() {
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, token, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   
   const [loading, setLoading] = useState(true);
@@ -33,12 +33,13 @@ export default function Seller() {
   const [activeTab, setActiveTab] = useState("dashboard");
 
   useEffect(() => {
+    if (isLoading) return;
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
     loadSellerData();
-  }, [isAuthenticated, token, navigate]);
+  }, [isAuthenticated, token, navigate, isLoading]);
 
   const loadSellerData = async () => {
     if (!token) return;

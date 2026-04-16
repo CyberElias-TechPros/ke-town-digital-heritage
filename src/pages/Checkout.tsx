@@ -23,7 +23,7 @@ interface Address {
 }
 
 export default function Checkout() {
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, token, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   
   const [step, setStep] = useState(1);
@@ -35,12 +35,13 @@ export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState("card");
 
   useEffect(() => {
+    if (isLoading) return;
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
     loadCheckoutData();
-  }, [isAuthenticated, token, navigate]);
+  }, [isAuthenticated, token, navigate, isLoading]);
 
   const loadCheckoutData = async () => {
     if (!token) return;

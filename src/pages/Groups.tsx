@@ -32,7 +32,7 @@ const groupCategories = [
 ];
 
 export default function Groups() {
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, token, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const [groups, setGroups] = useState<Group[]>(myGroups as Group[]);
   const [loading, setLoading] = useState(true);
@@ -43,13 +43,14 @@ export default function Groups() {
   const [myGroups, setMyGroups] = useState<Group[]>([]);
 
   useEffect(() => {
+    if (isLoading) return;
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
     loadGroups();
     loadMyGroups();
-  }, [isAuthenticated, selectedCategory]);
+  }, [isAuthenticated, selectedCategory, isLoading]);
 
   const loadGroups = async () => {
     setLoading(true);
