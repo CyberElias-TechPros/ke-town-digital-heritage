@@ -1,23 +1,7 @@
 const router = require('express').Router();
 const { authenticate, requireAdmin } = require('../middleware/auth');
-
-// Donation schema (inline for simplicity)
-const mongoose = require('mongoose');
-const DonationSchema = new mongoose.Schema({
-  donorName: { type: String, required: true },
-  donorEmail: { type: String, required: true },
-  amount: { type: Number, required: true, min: 100 }, // Minimum 100 Naira
-  currency: { type: String, default: 'NGN' },
-  projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
-  paystackReference: { type: String, unique: true },
-  paystackAccessCode: { type: String },
-  status: { type: String, enum: ['pending', 'success', 'failed'], default: 'pending' },
-  message: { type: String },
-  isAnonymous: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const Donation = mongoose.model('Donation', DonationSchema);
+const Donation = require('../models/Donation');
+const Project = require('../models/Project');
 
 // Initialize Paystack payment
 router.post('/initialize', async (req, res) => {
@@ -124,14 +108,11 @@ router.post('/verify', async (req, res) => {
 router.get('/stats', async (req, res) => {
   try {
     const totalDonations = await Donation.countDocuments({ status: 'success' });
-    const totalAmount = await Donation.aggregate([
-      { $match: { status: 'success' } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
-    ]);
+    const totalAmount = await Donation.sum('amount', { where: { status: 'success' } }) || 0;
 
     res.json({
       totalDonations,
-      totalAmount: totalAmount[0]?.total || 0
+      totalAmount
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -197,33 +178,28 @@ router.get('/admin/stats', authenticate, requireAdmin, async (req, res) => {
     const pendingDonations = await Donation.countDocuments({ status: 'pending' });
     const failedDonations = await Donation.countDocuments({ status: 'failed' });
 
-    const totalAmount = await Donation.aggregate([
-      { $match: { status: 'success' } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
-    ]);
+    const totalAmount = await Donation.sum('amount', { where: { status: 'success' } }) || 0;
 
-    const monthlyStats = await Donation.aggregate([
-      { $match: { status: 'success' } },
-      {
-        $group: {
-          _id: {
-            year: { $year: '$createdAt' },
-            month: { $month: '$createdAt' }
-          },
-          count: { $sum: 1 },
-          total: { $sum: '$amount' }
-        }
-      },
-      { $sort: { '_id.year': -1, '_id.month': -1 } },
-      { $limit: 12 }
-    ]);
+    // Monthly stats for successful donations
+    const { QueryTypes } = require('sequelize');
+    const sequelize = Donation.sequelize;
+    const [monthlyRows] = await sequelize.query(
+      `SELECT YEAR(createdAt) AS year, MONTH(createdAt) AS month, COUNT(*) AS count, SUM(amount) AS total
+       FROM donations
+       WHERE status = 'success'
+       GROUP BY year, month
+       ORDER BY year DESC, month DESC
+       LIMIT 12`,
+      { type: QueryTypes.SELECT }
+    );
+    const monthlyStats = monthlyRows;
 
     res.json({
       totalDonations,
       successfulDonations,
       pendingDonations,
       failedDonations,
-      totalAmount: totalAmount[0]?.total || 0,
+      totalAmount,
       monthlyStats
     });
   } catch (error) {

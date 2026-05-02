@@ -246,10 +246,7 @@ class ApiClient {
     return this.request(`/auth/users/${userId}/activity?${params.toString()}`, { token });
   }
 
-  async getUserByUsername(username: string) {
-    return this.request(`/auth/users/${username}`);
-  }
-
+  
   // News
   async getNews() {
     return this.request('/news');
@@ -410,17 +407,7 @@ class ApiClient {
     });
   }
 
-  // Search
-  async search(query: string, type?: string) {
-    const params = new URLSearchParams({ q: query });
-    if (type) params.append('type', type);
-    return this.request(`/search?${params.toString()}`);
-  }
-
-  async getSearchSuggestions(query: string) {
-    return this.request(`/search/suggestions?q=${encodeURIComponent(query)}`);
-  }
-
+  
   // Upload
   async uploadFile(token: string, file: File) {
     const formData = new FormData();
@@ -704,10 +691,7 @@ class ApiClient {
     return this.request('/posts/user/my', { token });
   }
 
-  async getUserPosts(userId: string) {
-    return this.request(`/posts/user/${userId}`);
-  }
-
+  
   async createPost(token: string, data: { content: string; media?: unknown; location?: unknown; feeling?: string; privacy?: string; visibility?: string }) {
     return this.request('/posts', {
       method: 'POST',
@@ -794,21 +778,9 @@ class ApiClient {
     return this.request('/social/global');
   }
 
-  async followUser(token: string, userId: string) {
-    return this.request(`/social/follow/${userId}`, {
-      method: 'POST',
-      token,
-    });
-  }
-
-  async getUserProfile(userId: string) {
-    return this.request(`/auth/user/${userId}`);
-  }
-
-  async getUserByUsername(username: string) {
-    return this.request(`/users/${username}`);
-  }
-
+  
+  
+  
   async getUserPosts(userId: string, page = 1, limit = 20) {
     const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
     return this.request(`/users/${userId}/posts?${params.toString()}`);
@@ -824,50 +796,9 @@ class ApiClient {
     return this.request(`/users/${userId}/following?${params.toString()}`);
   }
 
-  // Elder Stories
-  async getElderStories(category?: string, featured?: boolean) {
-    const params = new URLSearchParams();
-    if (category) params.append('category', category);
-    if (featured) params.append('featured', 'true');
-    return this.request(`/elder-stories?${params.toString()}`);
-  }
-
-  async getElderStory(id: string) {
-    return this.request(`/elder-stories/${id}`);
-  }
-
-  async createElderStory(token: string, data: Record<string, unknown>) {
-    return this.request('/elder-stories', {
-      method: 'POST',
-      body: data,
-      token,
-    });
-  }
-
-  async updateElderStory(token: string, id: string, data: Record<string, unknown>) {
-    return this.request(`/elder-stories/${id}`, {
-      method: 'PUT',
-      body: data,
-      token,
-    });
-  }
-
-  async deleteElderStory(token: string, id: string) {
-    return this.request(`/elder-stories/${id}`, {
-      method: 'DELETE',
-      token,
-    });
-  }
-
-  // Marketplace
-  async getProducts(category?: string, search?: string, featured?: boolean, page = 1, limit = 20) {
-    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
-    if (category) params.append('category', category);
-    if (search) params.append('search', search);
-    if (featured) params.append('featured', 'true');
-    return this.request(`/marketplace?${params.toString()}`);
-  }
-
+  
+  
+  
   async getProduct(id: string) {
     return this.request(`/marketplace/${id}`);
   }
@@ -907,14 +838,7 @@ class ApiClient {
     return this.request('/cart', { token });
   }
 
-  async addToCart(token: string, productId: string, quantity = 1) {
-    return this.request('/cart/add', {
-      method: 'POST',
-      body: { productId, quantity },
-      token,
-    });
-  }
-
+  
   async updateCartItem(token: string, productId: string, quantity: number) {
     return this.request(`/cart/update/${productId}`, {
       method: 'PUT',
@@ -923,12 +847,6 @@ class ApiClient {
     });
   }
 
-async removeFromCart(token: string, productId: string) {
-    return this.request(`/cart/remove/${productId}`, {
-      method: 'DELETE',
-      token,
-    });
-  }
 
   // Addresses
   async getAddresses(token: string) {
@@ -959,65 +877,6 @@ async removeFromCart(token: string, productId: string) {
   }
 
   // Additional functions for new pages
-  async getConversation(token: string, id: string) {
-    return this.request(`/messages/conversations/${id}`, { token });
-  }
-
-  async createListing(token: string, data: { name: string; description: string; category: string; condition: string; price: number; negotiable?: boolean; quantity?: number; location?: string; images?: string[] }) {
-    return this.request('/marketplace', {
-      method: 'POST',
-      body: data,
-      token,
-    });
-  }
-
-  async getSavedPosts(token: string) {
-    return this.request('/posts/saved', { token });
-  }
-
-  async savePost(token: string, postId: string) {
-    return this.request(`/posts/${postId}/save`, {
-      method: 'POST',
-      token,
-    });
-  }
-
-  async unsavePost(token: string, postId: string) {
-    return this.request(`/posts/${postId}/unsave`, {
-      method: 'POST',
-      token,
-    });
-  }
-
-  async likeProduct(token: string, productId: string) {
-    return this.request(`/marketplace/${productId}/like`, {
-      method: 'POST',
-      token,
-    });
-  }
-
-  async unlikeProduct(token: string, productId: string) {
-    return this.request(`/marketplace/${productId}/unlike`, {
-      method: 'POST',
-      token,
-    });
-  }
-
-  async addToCart(token: string, productId: string, quantity: number) {
-    return this.request('/cart', {
-      method: 'POST',
-      body: { productId, quantity },
-      token,
-    });
-  }
-
-  async removeFromCart(token: string, itemId: string) {
-    return this.request(`/cart/${itemId}`, {
-      method: 'DELETE',
-      token,
-    });
-  }
-
   async getTrendingPosts() {
     return this.request('/posts/trending');
   }
@@ -1066,12 +925,12 @@ async removeFromCart(token: string, productId: string) {
     return this.request('/marketplace/my-products', { token });
   }
 
-  async deleteProduct(token: string, productId: string) {
-    return this.request(`/marketplace/${productId}`, {
-      method: 'DELETE',
-      token,
-    });
-  }
+    // async deleteProduct(token: string, productId: string) {
+    //   return this.request(`/marketplace/${productId}`, {
+    //     method: 'DELETE',
+    //     token,
+    //   });
+    // }
 
   async updateProductStatus(token: string, productId: string, status: string) {
     return this.request(`/marketplace/${productId}/status`, {
@@ -1114,6 +973,369 @@ async removeFromCart(token: string, productId: string) {
   async getUnreadNotificationCount(token: string): Promise<number> {
     const response = await this.request<{ count: number }>('/notifications/unread-count', { token });
     return response?.count || 0;
+  }
+
+  // Conversation and messaging methods
+  async getConversations(token: string) {
+    return this.request('/conversations', { token });
+  }
+
+  async getConversation(token: string, conversationId: string) {
+    return this.request(`/conversations/${conversationId}`, { token });
+  }
+
+  async getMessages(token: string, conversationId: string) {
+    return this.request(`/conversations/${conversationId}/messages`, { token });
+  }
+
+  async sendMessage(token: string, conversationId: string, content: string, media?: any[]) {
+    return this.request(`/conversations/${conversationId}/messages`, {
+      method: 'POST',
+      body: { content, media },
+      token,
+    });
+  }
+
+  async createConversation(token: string, participantId: string) {
+    return this.request('/conversations', {
+      method: 'POST',
+      body: { participantId },
+      token,
+    });
+  }
+
+  async markMessagesAsRead(token: string, conversationId: string, messageIds: string[]) {
+    return this.request(`/conversations/${conversationId}/read`, {
+      method: 'POST',
+      body: { messageIds },
+      token,
+    });
+  }
+
+  async deleteMessage(token: string, conversationId: string, messageId: string) {
+    return this.request(`/conversations/${conversationId}/messages/${messageId}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  async typingIndicator(token: string, conversationId: string, isTyping: boolean) {
+    return this.request(`/conversations/${conversationId}/typing`, {
+      method: 'POST',
+      body: { isTyping },
+      token,
+    });
+  }
+
+  // Elder Stories API methods
+  async getElderStories() {
+    return this.request('/elder-stories');
+  }
+
+  async getElderStory(id: string) {
+    return this.request(`/elder-stories/${id}`);
+  }
+
+  async createElderStory(token: string, data: any) {
+    return this.request('/elder-stories', {
+      method: 'POST',
+      body: data,
+      token,
+    });
+  }
+
+  async updateElderStory(token: string, id: string, data: any) {
+    return this.request(`/elder-stories/${id}`, {
+      method: 'PUT',
+      body: data,
+      token,
+    });
+  }
+
+  async deleteElderStory(token: string, id: string) {
+    return this.request(`/elder-stories/${id}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  // Search API methods
+  async search(query: string, type?: string) {
+    const params = new URLSearchParams();
+    params.set('q', query);
+    if (type && type !== 'all') params.set('type', type);
+    
+    return this.request(`/search?${params.toString()}`);
+  }
+
+  async getSearchSuggestions(query: string) {
+    return this.request(`/search/suggestions?q=${encodeURIComponent(query)}`);
+  }
+
+  // Payment System API methods
+  async getPaymentMethods(token: string) {
+    return this.request('/payments/methods', { token });
+  }
+
+  async addPaymentMethod(token: string, paymentData: any) {
+    return this.request('/payments/methods', {
+      method: 'POST',
+      body: paymentData,
+      token,
+    });
+  }
+
+  async removePaymentMethod(token: string, methodId: string) {
+    return this.request(`/payments/methods/${methodId}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  async setDefaultPaymentMethod(token: string, methodId: string) {
+    return this.request(`/payments/methods/${methodId}/default`, {
+      method: 'PUT',
+      token,
+    });
+  }
+
+  async getTransactions(token: string) {
+    return this.request('/payments/transactions', { token });
+  }
+
+  async createPaymentIntent(token: string, paymentData: any) {
+    return this.request('/payments/intent', {
+      method: 'POST',
+      body: paymentData,
+      token,
+    });
+  }
+
+  async confirmPayment(token: string, paymentIntentId: string) {
+    return this.request(`/payments/confirm`, {
+      method: 'POST',
+      body: { paymentIntentId },
+      token,
+    });
+  }
+
+  async requestWithdrawal(token: string, withdrawalData: any) {
+    return this.request('/payments/withdrawal', {
+      method: 'POST',
+      body: withdrawalData,
+      token,
+    });
+  }
+
+  async getBalance(token: string) {
+    return this.request('/payments/balance', { token });
+  }
+
+  async getPaymentHistory(token: string, page = 1, limit = 20) {
+    return this.request(`/payments/history?page=${page}&limit=${limit}`, { token });
+  }
+
+  // Analytics API methods
+  async getAnalytics(token: string, timeRange: string = '30d') {
+    return this.request(`/analytics?timeRange=${timeRange}`, { token });
+  }
+
+  async getAnalyticsOverview(token: string) {
+    return this.request('/analytics/overview', { token });
+  }
+
+  async getUserAnalytics(token: string, timeRange: string = '30d') {
+    return this.request(`/analytics/users?timeRange=${timeRange}`, { token });
+  }
+
+  async getContentAnalytics(token: string, timeRange: string = '30d') {
+    return this.request(`/analytics/content?timeRange=${timeRange}`, { token });
+  }
+
+  async getMarketplaceAnalytics(token: string, timeRange: string = '30d') {
+    return this.request(`/analytics/marketplace?timeRange=${timeRange}`, { token });
+  }
+
+  async getEventsAnalytics(token: string, timeRange: string = '30d') {
+    return this.request(`/analytics/events?timeRange=${timeRange}`, { token });
+  }
+
+  async getCulturalAnalytics(token: string, timeRange: string = '30d') {
+    return this.request(`/analytics/cultural?timeRange=${timeRange}`, { token });
+  }
+
+  async exportAnalytics(token: string, timeRange: string, format: 'csv' | 'json' | 'pdf') {
+    return this.request(`/analytics/export?timeRange=${timeRange}&format=${format}`, { token });
+  }
+
+  async getRealTimeMetrics(token: string) {
+    return this.request('/analytics/realtime', { token });
+  }
+
+  async getCustomReport(token: string, reportConfig: any) {
+    return this.request('/analytics/custom', {
+      method: 'POST',
+      body: reportConfig,
+      token,
+    });
+  }
+
+  // AI Recommendation API methods
+  async getAIRecommendations(token: string, type: string = 'all') {
+    return this.request(`/ai/recommendations?type=${type}`, { token });
+  }
+
+  async getRecommendationProfile(token: string) {
+    return this.request('/ai/profile', { token });
+  }
+
+  async updateRecommendationProfile(token: string, profile: any) {
+    return this.request('/ai/profile', {
+      method: 'PUT',
+      body: profile,
+      token,
+    });
+  }
+
+  async trackRecommendationInteraction(token: string, recommendationId: string, type: string) {
+    return this.request('/ai/track', {
+      method: 'POST',
+      body: { recommendationId, type },
+      token,
+    });
+  }
+
+  async dismissRecommendation(token: string, recommendationId: string) {
+    return this.request(`/ai/recommendations/${recommendationId}/dismiss`, {
+      method: 'POST',
+      token,
+    });
+  }
+
+  async getRecommendationFeedback(token: string, recommendationId: string, feedback: 'like' | 'dislike' | 'not_interested') {
+    return this.request(`/ai/recommendations/${recommendationId}/feedback`, {
+      method: 'POST',
+      body: { feedback },
+      token,
+    });
+  }
+
+  async getSimilarContent(token: string, contentId: string, type: string) {
+    return this.request(`/ai/similar/${type}/${contentId}`, { token });
+  }
+
+  async getTrendingContent(token: string, category?: string) {
+    const params = category ? `?category=${category}` : '';
+    return this.request(`/ai/trending${params}`, { token });
+  }
+
+  async getPersonalizedFeed(token: string, limit: number = 20) {
+    return this.request(`/ai/feed?limit=${limit}`, { token });
+  }
+
+  // Genealogy API methods
+  async getFamilyTrees(token: string) {
+    return this.request('/genealogy/trees', { token });
+  }
+
+  async getFamilyTree(token: string, treeId: string) {
+    return this.request(`/genealogy/trees/${treeId}`, { token });
+  }
+
+  async createFamilyTree(token: string, treeData: any) {
+    return this.request('/genealogy/trees', {
+      method: 'POST',
+      body: treeData,
+      token,
+    });
+  }
+
+  async updateFamilyTree(token: string, treeId: string, treeData: any) {
+    return this.request(`/genealogy/trees/${treeId}`, {
+      method: 'PUT',
+      body: treeData,
+      token,
+    });
+  }
+
+  async deleteFamilyTree(token: string, treeId: string) {
+    return this.request(`/genealogy/trees/${treeId}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  async addFamilyMember(token: string, treeId: string, memberData: any) {
+    return this.request(`/genealogy/trees/${treeId}/members`, {
+      method: 'POST',
+      body: memberData,
+      token,
+    });
+  }
+
+  async updateFamilyMember(token: string, treeId: string, memberId: string, memberData: any) {
+    return this.request(`/genealogy/trees/${treeId}/members/${memberId}`, {
+      method: 'PUT',
+      body: memberData,
+      token,
+    });
+  }
+
+  async deleteFamilyMember(token: string, treeId: string, memberId: string) {
+    return this.request(`/genealogy/trees/${treeId}/members/${memberId}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  async getFamilyMember(token: string, treeId: string, memberId: string) {
+    return this.request(`/genealogy/trees/${treeId}/members/${memberId}`, { token });
+  }
+
+  async searchFamilyMembers(token: string, treeId: string, query: string) {
+    return this.request(`/genealogy/trees/${treeId}/members/search?q=${encodeURIComponent(query)}`, { token });
+  }
+
+  async exportFamilyTree(token: string, treeId: string, format: 'json' | 'pdf' | 'png') {
+    return this.request(`/genealogy/trees/${treeId}/export?format=${format}`, { token });
+  }
+
+  async importFamilyTree(token: string, file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${this.baseUrl}/genealogy/import`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Import failed');
+    }
+
+    return response.json();
+  }
+
+  async getFamilyTreeStats(token: string, treeId: string) {
+    return this.request(`/genealogy/trees/${treeId}/stats`, { token });
+  }
+
+  async addRelationship(token: string, treeId: string, relationshipData: any) {
+    return this.request(`/genealogy/trees/${treeId}/relationships`, {
+      method: 'POST',
+      body: relationshipData,
+      token,
+    });
+  }
+
+  async removeRelationship(token: string, treeId: string, relationshipId: string) {
+    return this.request(`/genealogy/trees/${treeId}/relationships/${relationshipId}`, {
+      method: 'DELETE',
+      token,
+    });
   }
 }
 

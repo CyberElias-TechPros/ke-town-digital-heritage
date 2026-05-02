@@ -5,16 +5,20 @@ import { MessageCircle, Send, User, Search, ArrowLeft } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
+import { useWebSocket, useConversationWebSocket } from "@/hooks/useWebSocket";
 
 const Messages = () => {
   const { user, token, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { isConnected, sendTyping, sendMessage, markAsRead, typingUsers } = useWebSocket();
   
   const [conversations, setConversations] = useState<any[]>([]);
-  const [messages, setMessages] = useState<any[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<any>(null);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Use WebSocket for selected conversation
+  const { messages: wsMessages, typingIndicator } = useConversationWebSocket(selectedConversation?._id || '');
 
   useEffect(() => {
     if (authLoading) return;
@@ -39,7 +43,8 @@ const Messages = () => {
     if (!token) return;
     try {
       const data = await api.getMessages(token, conversationId);
-      setMessages(data as any[]);
+      // Note: wsMessages is managed by WebSocket hook
+      // This API call is for initial load only
     } catch (err) {
       console.error(err);
     }
@@ -51,17 +56,37 @@ const Messages = () => {
   };
 
   const handleSendMessage = async () => {
-    if (!token || !newMessage.trim() || !selectedConversation) return;
+    if (!newMessage.trim() || !selectedConversation) return;
     
     setIsLoading(true);
     try {
-      await api.sendMessage(token, selectedConversation._id, newMessage);
+      const messageData = {
+        conversationId: selectedConversation._id,
+        content: newMessage,
+        media: [] // TODO: Add media upload
+      };
+      
+      // Send via WebSocket for real-time delivery
+      sendMessage(messageData);
       setNewMessage("");
-      loadMessages(selectedConversation._id);
+      
+      // Note: wsMessages is managed by WebSocket hook
+      // No need to optimistically update local state
     } catch (err) {
-      console.error(err);
+      console.error("Failed to send message:", err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleTyping = () => {
+    if (selectedConversation) {
+      sendTyping(selectedConversation._id, true);
+      
+      // Clear typing indicator after 3 seconds
+      setTimeout(() => {
+        sendTyping(selectedConversation._id, false);
+      }, 3000);
     }
   };
 
@@ -169,7 +194,7 @@ const Messages = () => {
                       </div>
                       
                       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                        {messages.map((msg: any) => (
+                        {wsMessages.map((msg: any) => (
                           <div
                             key={msg._id}
                             className={`flex ${msg.sender._id === user?.id ? 'justify-end' : 'justify-start'}`}
@@ -197,6 +222,7 @@ const Messages = () => {
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                            onInput={handleTyping}
                             placeholder="Type a message..."
                             className="flex-1 px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary"
                           />
@@ -210,10 +236,23 @@ const Messages = () => {
                         </div>
                       </div>
                     </div>
+                  
+                  {/* Typing Indicator */}
+                  {typingIndicator && selectedConversation && typingUsers.get(selectedConversation._id) && (
+                    <div className="px-4 py-2 bg-muted/50 border-t border-border">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-secondary rounded-full animate-pulse" />
+                        <span className="text-sm text-muted-foreground">
+                          Someone is typing...
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
                   ) : (
                     <div className="flex items-center justify-center h-full text-muted-foreground">
                       <div className="text-center">
-                        <MessageCircle size={48} className="mx-auto mb-2 opacity-50" />
+                        <MessageCircle size={48} className="mx-auto mb-4 text-muted-foreground" />
                         <p>Select a conversation to start messaging</p>
                       </div>
                     </div>

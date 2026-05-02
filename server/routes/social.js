@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const { Op } = require('sequelize');
 const { authenticate } = require('../middleware/auth');
 const User = require('../models/User');
 const Activity = require('../models/Activity');
@@ -244,19 +245,29 @@ router.get('/blocked', authenticate, async (req, res) => {
 router.get('/trending', async (req, res) => {
   try {
     const Post = require('../models/Post');
-    
+
     // Get hashtags from last 7 days
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    
-    const hashtags = await Post.aggregate([
-      { $match: { createdAt: { $gte: sevenDaysAgo }, hashtags: { $exists: true, $ne: [] } } },
-      { $unwind: '$hashtags' },
-      { $group: { _id: '$hashtags', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 10 }
-    ]);
-    
-    res.json(hashtags.map(h => ({ hashtag: h._id, count: h.count })));
+
+    const posts = await Post.find({
+      createdAt: { $gte: sevenDaysAgo },
+      hashtags: { [Op.ne]: [] }
+    }).select('hashtags').lean();
+
+    const counts = {};
+    posts.forEach(p => {
+      const tags = p.hashtags || [];
+      tags.forEach(tag => {
+        if (tag) counts[tag] = (counts[tag] || 0) + 1;
+      });
+    });
+
+    const sorted = Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([hashtag, count]) => ({ hashtag, count }));
+
+    res.json(sorted);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

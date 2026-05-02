@@ -5,6 +5,7 @@ import { Search as SearchIcon, X, Loader2, User, MessageCircle, Store, Calendar,
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "../lib/api";
+import { AdvancedSearch } from "@/components/AdvancedSearch";
 
 interface SearchResult {
   type: "user" | "post" | "product" | "event" | "group";
@@ -141,32 +142,26 @@ export default function Search() {
           animate={{ opacity: 1 }}
           className="max-w-4xl mx-auto px-4 py-8"
         >
-          {/* Search Header */}
+          {/* Advanced Search */}
           <div className="mb-6">
-            <form onSubmit={handleSearch} className="relative">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search KE Town..."
-                className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary"
-                autoFocus
-              />
-              <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              {query && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setQuery("");
-                    setResults([]);
-                    setSearchParams({});
-                  }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </form>
+            <AdvancedSearch 
+              onResults={(searchResults) => {
+                // Transform AdvancedSearch results to local SearchResult format
+                const transformedResults = searchResults.map(result => ({
+                  type: result.type as SearchResult["type"],
+                  _id: result.id,
+                  fullName: result.author?.fullName,
+                  name: result.title,
+                  content: result.content,
+                  description: result.description,
+                  avatar: result.author?.avatar,
+                  images: result.metadata?.images,
+                  price: result.metadata?.price,
+                  date: result.createdAt,
+                }));
+                setResults(transformedResults);
+              }}
+            />
           </div>
 
           {/* Filters */}

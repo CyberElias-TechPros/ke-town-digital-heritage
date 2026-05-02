@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const { authenticate } = require('../middleware/auth');
+const { QueryTypes } = require('sequelize');
 const Report = require('../models/Report');
 const User = require('../models/User');
 const Post = require('../models/Post');
@@ -95,17 +96,20 @@ router.get('/stats', authenticate, async (req, res) => {
     if (req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Admin only' });
     }
-    
+
     const stats = {
       pending: await Report.countDocuments({ status: 'pending' }),
       reviewed: await Report.countDocuments({ status: 'reviewed' }),
       actioned: await Report.countDocuments({ status: 'actioned' }),
-      dismissed: await Report.countDocuments({ status: 'dismissed' }),
-      byReason: await Report.aggregate([
-        { $group: { _id: '$reason', count: { $sum: 1 } } }
-      ])
+      dismissed: await Report.countDocuments({ status: 'dismissed' })
     };
-    
+
+    const [byReasonRows] = await Report.sequelize.query(
+      `SELECT reason as _id, COUNT(*) as count FROM reports GROUP BY reason`,
+      { type: QueryTypes.SELECT }
+    );
+    stats.byReason = byReasonRows;
+
     res.json(stats);
   } catch (err) {
     res.status(500).json({ error: err.message });

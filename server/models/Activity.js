@@ -1,14 +1,8 @@
-const mongoose = require('mongoose');
+const DB_TYPE = process.env.DB_TYPE || 'mongo';
 
-const ActivitySchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  type: { type: String, enum: ['post', 'like', 'comment', 'follow', 'galleryUpload'], required: true },
-  targetId: { type: mongoose.Schema.Types.ObjectId },
-  targetType: { type: String },
-  description: { type: String },
-}, { timestamps: true });
-
-ActivitySchema.index({ createdAt: -1 });
-ActivitySchema.index({ user: 1, createdAt: -1 });
-
-module.exports = mongoose.model('Activity', ActivitySchema);
+if (DB_TYPE === 'mysql') {
+  const models = require('./sequelize');
+  module.exports = models.Activity;
+} else {
+  module.exports = require('./mongoose/Activity');
+}

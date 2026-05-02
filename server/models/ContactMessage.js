@@ -1,13 +1,8 @@
-const mongoose = require('mongoose');
+const DB_TYPE = process.env.DB_TYPE || 'mongo';
 
-const ContactMessageSchema = new mongoose.Schema({
-  name: { type: String, required: true, trim: true },
-  email: { type: String, required: true, trim: true, lowercase: true },
-  subject: { type: String, required: true },
-  message: { type: String, required: true },
-  type: { type: String, enum: ['general', 'story', 'photo', 'event', 'feedback', 'partnership'], default: 'general' },
-  read: { type: Boolean, default: false },
-  replied: { type: Boolean, default: false },
-}, { timestamps: true });
-
-module.exports = mongoose.model('ContactMessage', ContactMessageSchema);
+if (DB_TYPE === 'mysql') {
+  const models = require('./sequelize');
+  module.exports = models.ContactMessage;
+} else {
+  module.exports = require('./mongoose/ContactMessage');
+}

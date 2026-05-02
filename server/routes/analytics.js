@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const { authenticate, requireAdmin } = require('../middleware/auth');
+const { Op, fn, col, literal, QueryTypes } = require('sequelize');
 const User = require('../models/User');
 const Post = require('../models/Post');
 const Product = require('../models/Product');
@@ -17,7 +18,7 @@ router.use(requireAdmin);
 router.get('/dashboard', async (req, res) => {
   try {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    
+
     const [
       totalUsers,
       newUsers,
@@ -26,7 +27,6 @@ router.get('/dashboard', async (req, res) => {
       totalProducts,
       newProducts,
       totalOrders,
-      revenue,
       activeEvents,
       activeCampaigns,
       activePetitions
@@ -38,22 +38,25 @@ router.get('/dashboard', async (req, res) => {
       Product.countDocuments(),
       Product.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
       Order.countDocuments(),
-      Order.aggregate([
-        { $match: { createdAt: { $gte: thirtyDaysAgo }, status: { $in: ['delivered', 'completed'] } } },
-        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-      ]),
       Event.countDocuments({ status: 'upcoming' }),
       Campaign.countDocuments({ status: 'active' }),
       Petition.countDocuments({ status: 'active' })
     ]);
-    
+
+    const revenue = await Order.sum('total', {
+      where: {
+        createdAt: { [Op.gte]: thirtyDaysAgo },
+        status: { [Op.in]: ['delivered', 'completed'] }
+      }
+    }) || 0;
+
     res.json({
       users: { total: totalUsers, new: newUsers },
       posts: { total: totalPosts, new: newPosts },
       products: { total: totalProducts, new: newProducts },
-      orders: { 
-        total: totalOrders, 
-        revenue: revenue[0]?.total || 0 
+      orders: {
+        total: totalOrders,
+        revenue
       },
       activeEvents,
       activeCampaigns,
@@ -98,7 +101,7 @@ router.get('/revenue', async (req, res) => {
   try {
     const { period = '30d' } = req.query;
     let startDate;
-    
+
     switch (period) {
       case '7d':
         startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -113,26 +116,21 @@ router.get('/revenue', async (req, res) => {
       default:
         startDate = new Date(0);
     }
-    
-    const revenue = await Order.aggregate([
-      { 
-        $match: { 
-          createdAt: { $gte: startDate }, 
-          status: { $in: ['delivered', 'completed'] } 
-        } 
-      },
-      { 
-        $group: { 
-          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, 
-          amount: { $sum: '$totalAmount' },
-          count: { $sum: 1 }
-        } 
-      },
-      { $sort: { _id: 1 } }
-    ]);
-    
-    const total = revenue.reduce((sum, day) => sum + day.amount, 0);
-    res.json({ revenue, total });
+
+    const [rows] = await Order.sequelize.query(
+      `SELECT DATE(createdAt) as date, SUM(total) as amount, COUNT(*) as count
+       FROM orders
+       WHERE createdAt >= ? AND status IN ('delivered', 'completed')
+       GROUP BY DATE(createdAt)
+       ORDER BY date ASC`,
+      {
+        replacements: [startDate],
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const total = rows.reduce((sum, day) => sum + (day.amount || 0), 0);
+    res.json({ revenue: rows, total });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

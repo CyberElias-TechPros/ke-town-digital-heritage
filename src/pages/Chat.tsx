@@ -5,6 +5,7 @@ import { Send, ArrowLeft, MoreVertical, Phone, Video, Image, Smile, Paperclip, C
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "../lib/api";
+import { websocketClient, useWebSocket, WebSocketMessage, TypingIndicator } from "../lib/websocket";
 import { formatDistanceToNow } from "date-fns";
 
 interface Message {
@@ -28,13 +29,16 @@ export default function Chat() {
   const { user, token, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { client: wsClient } = useWebSocket();
   
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [typing, setTyping] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const [isTyping, setIsTyping] = useState(false);
+  const [wsConnected, setWsConnected] = useState(false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -44,12 +48,56 @@ export default function Chat() {
     }
     if (id && token) {
       loadConversation(id);
+      // Connect to WebSocket
+      wsClient.connect(token, user).then(() => {
+        setWsConnected(true);
+        wsClient.joinConversation(id);
+      }).catch(console.error);
     }
-  }, [isAuthenticated, id, token, navigate, isLoading]);
+  }, [isAuthenticated, id, token, navigate, isLoading, user, wsClient]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // WebSocket event listeners
+  useEffect(() => {
+    if (!wsConnected || !id) return;
+
+    // Listen for new messages
+    wsClient.onNewMessage((message: WebSocketMessage) => {
+      if (message.conversationId === id) {
+        setMessages(prev => [...prev, message]);
+        // Mark as read if it's not our message
+        if (message.sender._id !== user?.id) {
+          wsClient.markAsRead(id, [message._id]);
+        }
+      }
+    });
+
+    // Listen for typing indicators
+    wsClient.onUserTyping(({ userId, isTyping: typing, typingUsers: users }: TypingIndicator) => {
+      if (userId !== user?.id) {
+        setTypingUsers(users.filter(id => id !== user?.id));
+      }
+    });
+
+    // Listen for read receipts
+    wsClient.onMessagesRead(({ messageIds, readBy }) => {
+      if (readBy !== user?.id) {
+        setMessages(prev => prev.map(msg => 
+          messageIds.includes(msg._id) 
+            ? { ...msg, readAt: new Date().toISOString() }
+            : msg
+        ));
+      }
+    });
+
+    return () => {
+      // Cleanup listeners when component unmounts
+      wsClient.leaveConversation(id);
+    };
+  }, [wsConnected, id, user, wsClient]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -76,18 +124,38 @@ export default function Chat() {
     
     setSending(true);
     try {
-      await api.sendMessage(token, id, newMessage);
+      // Send via WebSocket for real-time delivery
+      wsClient.sendMessage(id, newMessage);
       setNewMessage("");
-      loadConversation(id);
+      // Stop typing indicator
+      wsClient.sendTyping(id, false);
+      setIsTyping(false);
     } catch (err) {
       console.error("Failed to send message:", err);
+      // Fallback to HTTP API
+      try {
+        await api.sendMessage(token, id, newMessage);
+        setNewMessage("");
+        loadConversation(id);
+      } catch (httpErr) {
+        console.error("HTTP fallback failed:", httpErr);
+      }
     } finally {
       setSending(false);
     }
   };
 
-  const handleTyping = () => {
-    // Socket.io typing indicator would go here
+  const handleTyping = (value: string) => {
+    setNewMessage(value);
+    
+    // Send typing indicator via WebSocket
+    if (wsConnected && id) {
+      const shouldIndicateTyping = value.trim().length > 0;
+      if (shouldIndicateTyping !== isTyping) {
+        wsClient.sendTyping(id, shouldIndicateTyping);
+        setIsTyping(shouldIndicateTyping);
+      }
+    }
   };
 
   const getOtherParticipant = () => {
@@ -165,55 +233,70 @@ export default function Chat() {
                 <p className="text-sm">Send a message to start the conversation</p>
               </div>
             ) : (
-              messages.map((message) => {
-                const isOwn = message.sender._id === user?.id;
-                return (
-                  <motion.div
-                    key={message._id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`max-w-[70%] rounded-2xl px-4 py-2 ${
-                        isOwn
-                          ? "bg-primary text-white rounded-br-sm"
-                          : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-bl-sm shadow-sm"
-                      }`}
+              <>
+                {messages.map((message) => {
+                  const isOwn = message.sender._id === user?.id;
+                  return (
+                    <motion.div
+                      key={message._id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
                     >
-                      {message.media && message.media.length > 0 && (
-                        <div className="mb-2">
-                          {message.media.map((m, i) => (
-                            <img
-                              key={i}
-                              src={m.url}
-                              alt="attachment"
-                              className="max-w-full rounded-lg"
-                            />
-                          ))}
-                        </div>
-                      )}
-                      <p className="whitespace-pre-wrap break-words">{message.content}</p>
                       <div
-                        className={`flex items-center justify-end gap-1 mt-1 text-xs ${
-                          isOwn ? "text-white/70" : "text-gray-400"
+                        className={`max-w-[70%] rounded-2xl px-4 py-2 ${
+                          isOwn
+                            ? "bg-primary text-white rounded-br-sm"
+                            : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-bl-sm shadow-sm"
                         }`}
                       >
-                        <span>
-                          {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
-                        </span>
-                        {isOwn && (
-                          message.readAt ? (
-                            <CheckCheck className="w-3.5 h-3.5" />
-                          ) : (
-                            <Check className="w-3.5 h-3.5" />
-                          )
+                        {message.media && message.media.length > 0 && (
+                          <div className="mb-2">
+                            {message.media.map((m, i) => (
+                              <img
+                                key={i}
+                                src={m.url}
+                                alt="attachment"
+                                className="max-w-full rounded-lg"
+                              />
+                            ))}
+                          </div>
                         )}
+                        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                        <div
+                          className={`flex items-center justify-end gap-1 mt-1 text-xs ${
+                            isOwn ? "text-white/70" : "text-gray-400"
+                          }`}
+                        >
+                          <span>
+                            {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                          </span>
+                          {isOwn && (
+                            message.readAt ? (
+                              <CheckCheck className="w-3.5 h-3.5" />
+                            ) : (
+                              <Check className="w-3.5 h-3.5" />
+                            )
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+                
+                {/* Typing indicator */}
+                {typingUsers.length > 0 && (
+                  <div className="flex justify-start">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl rounded-bl-sm px-4 py-2 shadow-sm">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                       </div>
                     </div>
-                  </motion.div>
-                );
-              })
+                  </div>
+                )}
+              </>
             )}
             <div ref={messagesEndRef} />
           </div>
@@ -224,28 +307,28 @@ export default function Chat() {
               <button
                 type="button"
                 className="p-2 text-gray-500 hover:text-primary transition-colors"
+                onClick={() => console.log('Attach file')}
               >
                 <Paperclip className="w-5 h-5" />
               </button>
               <button
                 type="button"
                 className="p-2 text-gray-500 hover:text-primary transition-colors"
+                onClick={() => console.log('Add image')}
               >
                 <Image className="w-5 h-5" />
               </button>
               <input
                 type="text"
                 value={newMessage}
-                onChange={(e) => {
-                  setNewMessage(e.target.value);
-                  handleTyping();
-                }}
+                onChange={(e) => handleTyping(e.target.value)}
                 placeholder="Type a message..."
                 className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary"
               />
               <button
                 type="button"
                 className="p-2 text-gray-500 hover:text-primary transition-colors"
+                onClick={() => console.log('Open emoji picker')}
               >
                 <Smile className="w-5 h-5" />
               </button>
