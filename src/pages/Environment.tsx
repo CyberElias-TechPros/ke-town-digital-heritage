@@ -16,9 +16,9 @@ const impactStats = [
 ];
 
 const resources = [
-  { name: "NDDC", full: "Niger Delta Development Commission", desc: "Federal agency for Niger Delta development and remediation", url: "#" },
-  { name: "HYPREP", full: "Hydrocarbon Pollution Remediation Project", desc: "UNEP-backed program for environmental cleanup in Ogoniland and surrounding areas", url: "#" },
-  { name: "NOSDRA", full: "National Oil Spill Detection & Response Agency", desc: "Nigerian agency responsible for oil spill detection, monitoring, and response", url: "#" },
+  { name: "NDDC", full: "Niger Delta Development Commission", desc: "Federal agency for Niger Delta development and remediation", url: "https://www.nddc.gov.ng" },
+  { name: "HYPREP", full: "Hydrocarbon Pollution Remediation Project", desc: "UNEP-backed program for environmental cleanup in Ogoniland and surrounding areas", url: "https://hyprep.gov.ng" },
+  { name: "NOSDRA", full: "National Oil Spill Detection & Response Agency", desc: "Nigerian agency responsible for oil spill detection, monitoring, and response", url: "https://www.nosdra.gov.ng" },
 ];
 
 interface EnvironmentReport {

@@ -46,6 +46,7 @@ export default function Explore() {
   const [trendingEvents, setTrendingEvents] = useState<TrendingEvent[]>([]);
   const [trendingProducts, setTrendingProducts] = useState<TrendingProduct[]>([]);
   const [activeTab, setActiveTab] = useState<"all" | "people" | "posts" | "events" | "products">("all");
+  const [followingUsers, setFollowingUsers] = useState<string[]>([]);
 
   useEffect(() => {
     loadExploreData();
@@ -77,11 +78,34 @@ export default function Explore() {
       navigate("/login");
       return;
     }
+    setActionError('');
     try {
       await api.followUser(token, userId);
-      loadExploreData();
+      setFollowingUsers([...followingUsers, userId]);
     } catch (err) {
       console.error("Failed to follow:", err);
+    }
+  };
+
+  const handleUnfollow = async (userId: string) => {
+    if (!token || !isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+    setActionError('');
+    try {
+      await api.unfollowUser(token, userId);
+      setFollowingUsers(followingUsers.filter(id => id !== userId));
+    } catch (err) {
+      console.error("Failed to unfollow:", err);
+    }
+  };
+
+  const handleToggleFollow = (userId: string) => {
+    if (followingUsers.includes(userId)) {
+      handleUnfollow(userId);
+    } else {
+      handleFollow(userId);
     }
   };
 
@@ -168,11 +192,15 @@ export default function Explore() {
                             {suggestedUser.followers?.length || 0} followers
                           </p>
                           <button
-                            onClick={() => handleFollow(suggestedUser._id)}
-                            className="mt-3 w-full py-1.5 bg-primary text-white text-sm rounded-full hover:bg-primary/90 transition-colors flex items-center justify-center gap-1"
+                            onClick={() => handleToggleFollow(suggestedUser._id)}
+                            className={`mt-3 w-full py-1.5 rounded-full text-sm transition-colors flex items-center justify-center gap-1 ${
+                              followingUsers.includes(suggestedUser._id)
+                                ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                : "bg-primary text-white hover:bg-primary/90"
+                            }`}
                           >
                             <UserPlus className="w-4 h-4" />
-                            Follow
+                            {followingUsers.includes(suggestedUser._id) ? "Following" : "Follow"}
                           </button>
                         </div>
                       </motion.div>

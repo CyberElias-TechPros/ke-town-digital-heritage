@@ -24,12 +24,13 @@ export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  
+
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [activeFilter, setActiveFilter] = useState<string>("all");
+  const [searchError, setSearchError] = useState('');
 
   useEffect(() => {
     const saved = localStorage.getItem("recentSearches");
@@ -46,18 +47,27 @@ export default function Search() {
     }
   }, [searchParams]);
 
-  const performSearch = async (searchQuery: string) => {
-    if (!searchQuery.trim()) {
+  useEffect(() => {
+    if (query.trim()) {
+      performSearch(query);
+    }
+  }, [activeFilter]);
+
+  const performSearch = async (searchQuery?: string) => {
+    const q = searchQuery || query;
+    setSearchError('');
+    if (!q.trim()) {
       setResults([]);
       return;
     }
 
     setLoading(true);
     try {
-      const data = await api.search(searchQuery, activeFilter === "all" ? undefined : activeFilter);
+      const data = await api.search(q, activeFilter === "all" ? undefined : activeFilter);
       setResults(data as SearchResult[]);
     } catch (err) {
       console.error("Search failed:", err);
+      setSearchError('Search failed. Please try again.');
       setResults([]);
     } finally {
       setLoading(false);

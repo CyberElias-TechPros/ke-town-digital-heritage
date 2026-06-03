@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../lib/api';
 import { formatDistanceToNow } from 'date-fns';
+import { Image, Smile } from 'lucide-react';
 
 interface Post {
   _id: string;
@@ -28,11 +29,14 @@ interface User {
 export default function Feed() {
   const { user, token, isLoading } = useAuth() as { user: User | null; token: string | null; isLoading: boolean };
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [newPost, setNewPost] = useState('');
   const [posting, setPosting] = useState(false);
   const [activeReaction, setActiveReaction] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
   useEffect(() => {
     if (isLoading) return;
@@ -57,12 +61,12 @@ export default function Feed() {
   const handlePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPost.trim() || !token) return;
-    
+
     setPosting(true);
     try {
-      const post = await api.createPost(token, { 
-        content: newPost, 
-        visibility: 'community' 
+      const post = await api.createPost(token, {
+        content: newPost,
+        visibility: 'community'
       }) as Post;
       setPosts([post, ...posts]);
       setNewPost('');
@@ -73,9 +77,41 @@ export default function Feed() {
     }
   };
 
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !token) return;
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setUploading(true);
+    setUploadError('');
+    try {
+      const uploaded = await api.uploadMultipleFiles(token, files);
+      const urls = (uploaded as { urls: string[] }).urls;
+      const post = await api.createPost(token, {
+        content: newPost || 'Shared a photo',
+        media: urls,
+        visibility: 'community'
+      }) as Post;
+      setPosts([post, ...posts]);
+      setNewPost('');
+    } catch (err) {
+      setUploadError('Failed to upload images. Please try again.');
+      setTimeout(() => setUploadError(''), 5000);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   const handleReaction = async (postId: string, reactionType: string) => {
     if (!token) return;
-    
+
     setActiveReaction(reactionType);
     try {
       if (reactionType === activeReaction) {
@@ -127,6 +163,11 @@ export default function Feed() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6">
+        {uploadError && (
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm">
+            {uploadError}
+          </div>
+        )}
         {/* Create Post */}
         <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
           <div className="flex gap-3">
@@ -143,15 +184,16 @@ export default function Feed() {
               />
               <div className="flex justify-between items-center mt-3 pt-3 border-t">
                 <div className="flex gap-2">
-                  <button type="button" className="text-gray-400 hover:text-secondary">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+                  <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+                  <button type="button" onClick={triggerFileUpload} disabled={uploading} className="text-gray-400 hover:text-secondary disabled:opacity-50">
+                    {uploading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Image className="w-5 h-5" />
+                    )}
                   </button>
                   <button type="button" className="text-gray-400 hover:text-secondary">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828l-4.686 4.686a2 2 0 01-2.828 0L6 18m6-6l6 6m-6-6h.01M6 6h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+                    <Smile className="w-5 h-5" />
                   </button>
                 </div>
                 <button

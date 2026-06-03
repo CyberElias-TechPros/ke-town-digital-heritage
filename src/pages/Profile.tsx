@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { 
   User, Mail, MapPin, Globe, Calendar, Edit, Camera, 
   Save, X, Check, Clock, FileText, MessageCircle, ShoppingBag,
@@ -593,7 +593,7 @@ const Profile = () => {
                               <div className="text-center py-8 text-muted-foreground">
                                 <Package size={40} className="mx-auto mb-2 opacity-50" />
                                 <p>No products yet</p>
-                                <a href="/marketplace" className="text-secondary hover:underline text-sm">Add your first product</a>
+                                <Link to="/marketplace" className="text-secondary hover:underline text-sm">Add your first product</Link>
                               </div>
                             ) : (
                               <div className="grid md:grid-cols-3 gap-4">
@@ -631,7 +631,7 @@ const Profile = () => {
                         <div className="text-center py-8 text-muted-foreground">
                           <ShoppingBag size={40} className="mx-auto mb-2 opacity-50" />
                           <p>No orders yet</p>
-                          <a href="/marketplace" className="text-secondary hover:underline text-sm">Start shopping</a>
+                           <Link to="/marketplace" className="text-secondary hover:underline text-sm">Start shopping</Link>
                         </div>
                       ) : (
                         <div className="space-y-3">

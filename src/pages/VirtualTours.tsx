@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Navigation, Info, ExternalLink, ChevronRight, Compass, Camera, Eye } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { MapPin, Navigation, Info, ExternalLink, ChevronRight, Compass, Camera, Eye, Heart, AlertCircle } from "lucide-react";
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
 import SEO from "@/components/PageSEO";
+import { useAuth } from "@/contexts/AuthContext";
+import { api } from "../lib/api";
 
 interface TourLocation {
   id: string;
@@ -115,13 +118,52 @@ const tourLocations: TourLocation[] = [
 const categories = ["All", "Historic", "Cultural", "Natural", "Spiritual"];
 
 export default function VirtualTours() {
+  const { user, token, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [selectedLocation, setSelectedLocation] = useState<TourLocation | null>(null);
   const [activeCategory, setActiveCategory] = useState("All");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [actionError, setActionError] = useState('');
+  const [favoriting, setFavoriting] = useState(false);
 
-  const filteredLocations = activeCategory === "All" 
-    ? tourLocations 
+  const filteredLocations = activeCategory === "All"
+    ? tourLocations
     : tourLocations.filter(l => l.category === activeCategory);
+
+  const handleToggleFavorite = async (locationId: string) => {
+    if (!token || !isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+    setFavoriting(true);
+    setActionError('');
+    try {
+      const isFav = favorites.includes(locationId);
+      if (isFav) {
+        setFavorites(favorites.filter(id => id !== locationId));
+      } else {
+        setFavorites([...favorites, locationId]);
+      }
+    } catch (err) {
+      setActionError('Failed to update favorites. Please try again.');
+      setTimeout(() => setActionError(''), 5000);
+    } finally {
+      setFavoriting(false);
+    }
+  };
+
+  const handleGetDirections = () => {
+    if (!selectedLocation?.coordinates) {
+      setActionError('Directions not available for this location.');
+      setTimeout(() => setActionError(''), 5000);
+      return;
+    }
+    const { lat, lng } = selectedLocation.coordinates;
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const isFavorite = (locationId: string) => favorites.includes(locationId);
 
   return (
     <Layout>
@@ -130,10 +172,10 @@ export default function VirtualTours() {
       <section className="relative pt-32 pb-16 overflow-hidden">
         <div className="absolute inset-0" style={{ background: "var(--gradient-hero)" }} />
         <div className="absolute inset-0 opacity-20">
-          <img 
-            src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920" 
-            alt="Ke Kingdom" 
-            className="w-full h-full object-cover" 
+          <img
+            src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920"
+            alt="Ke Kingdom"
+            className="w-full h-full object-cover"
           />
         </div>
         <div className="relative z-10 container-narrow px-4 md:px-8 text-center">
@@ -185,12 +227,13 @@ export default function VirtualTours() {
                 onClick={() => {
                   setSelectedLocation(location);
                   setCurrentImageIndex(0);
+                  setActionError('');
                 }}
               >
                 <div className="relative h-48 overflow-hidden">
-                  <img 
-                    src={location.image} 
-                    alt={location.name} 
+                  <img
+                    src={location.image}
+                    alt={location.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent" />
@@ -243,13 +286,13 @@ export default function VirtualTours() {
               >
                 {/* Image Gallery */}
                 <div className="relative h-80 md:h-96 bg-muted">
-                  <img 
-                    src={selectedLocation.images[currentImageIndex]} 
-                    alt={selectedLocation.name} 
+                  <img
+                    src={selectedLocation.images[currentImageIndex]}
+                    alt={selectedLocation.name}
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent" />
-                  
+
                   {/* Navigation */}
                   <button
                     onClick={(e) => {
@@ -292,6 +335,13 @@ export default function VirtualTours() {
                 </div>
 
                 <div className="p-6 md:p-8">
+                  {actionError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 flex items-center gap-2">
+                      <AlertCircle size={18} />
+                      <span className="text-sm">{actionError}</span>
+                    </div>
+                  )}
+
                   <h2 className="font-display text-3xl font-bold text-foreground mb-4">{selectedLocation.name}</h2>
                   <p className="text-muted-foreground font-body text-lg mb-6">{selectedLocation.fullDescription}</p>
 
@@ -338,10 +388,22 @@ export default function VirtualTours() {
 
                   {/* Actions */}
                   <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-border">
-                    <button className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-secondary text-secondary-foreground rounded-lg font-ui font-semibold hover:bg-secondary/90 transition-colors">
-                      <Camera size={18} /> Save to Favorites
+                    <button
+                      onClick={() => handleToggleFavorite(selectedLocation.id)}
+                      disabled={favoriting}
+                      className={`flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-ui font-semibold transition-colors disabled:opacity-50 ${
+                        isFavorite(selectedLocation.id)
+                          ? "bg-primary/10 text-primary"
+                          : "bg-secondary text-secondary-foreground hover:bg-secondary/90"
+                      }`}
+                    >
+                      <Heart size={18} className={isFavorite(selectedLocation.id) ? "fill-current" : ""} />
+                      {isFavorite(selectedLocation.id) ? "Saved to Favorites" : "Save to Favorites"}
                     </button>
-                    <button className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-muted text-muted-foreground rounded-lg font-ui font-semibold hover:bg-muted/80 transition-colors">
+                    <button
+                      onClick={handleGetDirections}
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-muted text-muted-foreground rounded-lg font-ui font-semibold hover:bg-muted/80 transition-colors"
+                    >
                       <MapPin size={18} /> Get Directions
                     </button>
                   </div>
@@ -367,12 +429,12 @@ export default function VirtualTours() {
             <p className="text-primary-foreground/70 font-body text-lg max-w-xl mx-auto mb-8">
               Experience the beauty and culture of Ke Kingdom in person. Contact us to arrange your visit.
             </p>
-            <a
-              href="/visit"
+            <Link
+              to="/visit"
               className="inline-flex items-center gap-2 px-6 py-3 bg-secondary text-secondary-foreground rounded-lg font-ui font-semibold text-sm hover:bg-secondary/90 transition-all shadow-[var(--shadow-gold)]"
             >
               Plan Your Trip <ChevronRight size={16} />
-            </a>
+            </Link>
           </motion.div>
         </div>
       </section>

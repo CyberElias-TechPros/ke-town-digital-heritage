@@ -16,6 +16,7 @@ const quickCards = [
   { icon: Camera, title: "Culture & Traditions", desc: "Masquerades, festivals, cuisine, and language", path: "/culture", color: "bg-ke-water/10 text-ke-water" },
   { icon: MapPin, title: "Visit Ke Kingdom", desc: "Travel guide to the Niger Delta waterways", path: "/visit", color: "bg-ke-deep/10 text-ke-deep" },
   { icon: Users, title: "Diaspora Connect", desc: "Join the global Ke Kingdom community", path: "/diaspora", color: "bg-secondary/10 text-secondary" },
+  { icon: BookOpen, title: "Marketplace", desc: "Browse artisan products and traditional crafts", path: "/marketplace", color: "bg-ke-gold/10 text-ke-gold" },
 ];
 
 const stats = [
@@ -189,9 +190,9 @@ const Index = () => {
       {/* Cyber Elias Academy Promo - Subtle Banner */}
       <section className="bg-secondary/5 border-y border-secondary/10 py-3">
         <div className="container-narrow px-4">
-          <a 
-            href="https://cybereliasacademy.com.ng" 
-            target="_blank" 
+          <a
+            href="https://cybereliasacademy.com.ng"
+            target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-between group hover:bg-secondary/10 rounded-lg px-4 py-2 transition-all"
           >
@@ -251,11 +252,11 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Quick Cards */}
+      {/* Quick Cards - with Marketplace added */}
       <section className="section-padding bg-muted/50">
         <div className="container-narrow">
           <SectionHeading title="Explore KE Kingdom" subtitle="Discover the many facets of our community" />
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
             {quickCards.map((card, i) => (
               <AnimatedCard key={card.path} delay={i * 0.1}>
                 <Link to={card.path} className="block p-6 group">
@@ -327,20 +328,22 @@ const Index = () => {
                   </div>
                 ) : events.length > 0 ? (
                   events.map((event, i) => (
-                    <AnimatedCard key={event._id} delay={i * 0.1}>
-                      <div className="p-5 flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-lg bg-accent/10 flex flex-col items-center justify-center flex-shrink-0">
-                          <Clock size={18} className="text-accent" />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-display text-base font-semibold text-foreground">{event.title}</h4>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="tag-ke bg-accent/10 text-accent">{event.type}</span>
-                            <span className="text-xs text-muted-foreground font-ui">{formatDate(event.date)}</span>
+                    <Link to={`/events/${event._id}`} key={event._id} className="block group">
+                      <AnimatedCard delay={i * 0.1}>
+                        <div className="p-5 flex items-center gap-4">
+                          <div className="w-14 h-14 rounded-lg bg-accent/10 flex flex-col items-center justify-center flex-shrink-0">
+                            <Clock size={18} className="text-accent" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-display text-base font-semibold text-foreground group-hover:text-secondary transition-colors">{event.title}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="tag-ke bg-accent/10 text-accent">{event.type}</span>
+                              <span className="text-xs text-muted-foreground font-ui">{formatDate(event.date)}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </AnimatedCard>
+                      </AnimatedCard>
+                    </Link>
                   ))
                 ) : (
                   <div className="p-5 text-center text-muted-foreground font-body">
@@ -372,11 +375,7 @@ const Index = () => {
       <section className="relative py-20 overflow-hidden">
         <div className="absolute inset-0" style={{ background: "var(--gradient-hero)" }} />
         <div className="relative z-10 container-narrow px-4 md:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
               Join the KE Kingdom Community
             </h2>

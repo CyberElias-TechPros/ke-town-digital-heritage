@@ -130,6 +130,20 @@ const Admin = () => {
     }
   };
 
+  const handleRejectGallery = async (id: string) => {
+    if (!token) return;
+    if (!window.confirm("Are you sure you want to reject and delete this gallery item?")) return;
+    try {
+      await api.deleteGalleryItem(token, id);
+      setGallery(gallery.filter(item => item._id !== id));
+      if (stats) {
+        setStats({ ...stats, pendingGallery: stats.pendingGallery - 1 });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reject gallery item");
+    }
+  };
+
   const handleApproveDirectory = async (id: string) => {
     if (!token) return;
     try {
@@ -142,6 +156,30 @@ const Admin = () => {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to approve directory member");
+    }
+  };
+
+  const handleDeleteEvent = async (id: string) => {
+    if (!token) return;
+    if (!window.confirm("Are you sure you want to delete this event?")) return;
+    try {
+      await api.deleteEvent(token, id);
+      setEvents(events.filter(e => e._id !== id));
+      if (stats) setStats({ ...stats, totalEvents: stats.totalEvents - 1 });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete event");
+    }
+  };
+
+  const handleDeleteNews = async (id: string) => {
+    if (!token) return;
+    if (!window.confirm("Are you sure you want to delete this news item?")) return;
+    try {
+      await api.deleteNews(token, id);
+      setNews(news.filter(n => n._id !== id));
+      if (stats) setStats({ ...stats, totalNews: stats.totalNews - 1 });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete news item");
     }
   };
 
@@ -305,45 +343,45 @@ const Admin = () => {
                 )}
 
                 {activeTab === "events" && (
-                  <div>
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="font-display text-2xl font-bold text-foreground">Events</h2>
-                      <button className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg font-ui text-sm hover:bg-secondary/90 transition-all">
-                        <Plus size={16} />
-                        Add Event
-                      </button>
-                    </div>
-                    <div className="space-y-4">
-                      {events.map((event) => (
-                        <div key={event._id} className="bg-background rounded-lg p-4 border border-border flex items-center justify-between">
-                          <div>
-                            <h3 className="font-display font-semibold text-foreground">{event.title}</h3>
-                            <p className="text-sm text-muted-foreground font-ui">
-                              {new Date(event.date).toLocaleDateString()} • {event.type}
-                            </p>
+                    <div>
+                      <div className="flex items-center justify-between mb-6">
+                        <h2 className="font-display text-2xl font-bold text-foreground">Events</h2>
+                        <Link to="/events/create" className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg font-ui text-sm hover:bg-secondary/90 transition-all">
+                          <Plus size={16} />
+                          Add Event
+                        </Link>
+                      </div>
+                      <div className="space-y-4">
+                        {events.map((event) => (
+                          <div key={event._id} className="bg-background rounded-lg p-4 border border-border flex items-center justify-between">
+                            <div>
+                              <h3 className="font-display font-semibold text-foreground">{event.title}</h3>
+                              <p className="text-sm text-muted-foreground font-ui">
+                                {new Date(event.date).toLocaleDateString()} • {event.type}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button onClick={() => navigate(`/events/create`)} className="p-2 text-muted-foreground hover:text-foreground transition-colors" title="Edit event">
+                                <Edit size={16} />
+                              </button>
+                              <button onClick={() => handleDeleteEvent(event._id)} className="p-2 text-muted-foreground hover:text-destructive transition-colors" title="Delete event">
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <button className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                              <Edit size={16} />
-                            </button>
-                            <button className="p-2 text-muted-foreground hover:text-destructive transition-colors">
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
                 )}
 
                 {activeTab === "news" && (
                   <div>
                     <div className="flex items-center justify-between mb-6">
                       <h2 className="font-display text-2xl font-bold text-foreground">News</h2>
-                      <button className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg font-ui text-sm hover:bg-secondary/90 transition-all">
+                      <Link to="/news/create" className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg font-ui text-sm hover:bg-secondary/90 transition-all">
                         <Plus size={16} />
                         Add News
-                      </button>
+                      </Link>
                     </div>
                     <div className="space-y-4">
                       {news.map((item) => (
@@ -355,10 +393,10 @@ const Admin = () => {
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <button className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+                            <button onClick={() => navigate(`/news/create?id=${item._id}`)} className="p-2 text-muted-foreground hover:text-foreground transition-colors" title="Edit news">
                               <Edit size={16} />
                             </button>
-                            <button className="p-2 text-muted-foreground hover:text-destructive transition-colors">
+                            <button onClick={() => handleDeleteNews(item._id)} className="p-2 text-muted-foreground hover:text-destructive transition-colors" title="Delete news">
                               <Trash2 size={16} />
                             </button>
                           </div>
@@ -387,9 +425,9 @@ const Admin = () => {
                                   <Check size={14} />
                                   Approve
                                 </button>
-                                <button className="p-2 text-muted-foreground hover:text-destructive transition-colors">
-                                  <X size={16} />
-                                </button>
+                              <button onClick={() => handleRejectGallery(item._id)} className="p-2 text-muted-foreground hover:text-destructive transition-colors" title="Reject & delete">
+                                <X size={16} />
+                              </button>
                               </div>
                             )}
                             {item.approved && (

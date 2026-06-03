@@ -45,6 +45,7 @@ export default function Product() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [shareError, setShareError] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -75,6 +76,29 @@ export default function Product() {
       setIsLiked(!isLiked);
     } catch (err) {
       console.error("Failed to like product:", err);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!product) return;
+    setShareError('');
+    const shareData = {
+      title: product.name,
+      text: `Check out ${product.name} on KE Town Marketplace`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name !== 'AbortError') {
+        setShareError('Failed to share. Please try again.');
+        setTimeout(() => setShareError(''), 5000);
+      }
     }
   };
 
@@ -176,11 +200,20 @@ export default function Product() {
               >
                 <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
               </button>
-              <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+              <button
+                onClick={handleShare}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+              >
                 <Share2 className="w-5 h-5" />
               </button>
             </div>
           </div>
+
+          {shareError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm">
+              {shareError}
+            </div>
+          )}
 
           {/* Image Gallery */}
           <div className="relative bg-gray-100 dark:bg-gray-800">

@@ -3,10 +3,11 @@ import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { 
   Home, Compass, Bell, MessageCircle, Users, Calendar, ShoppingBag, 
-  Search, Settings, LogOut, Plus, Image, Video, Bookmark, Shield, ShoppingCart, Star, X
+  Search, Settings, LogOut, Plus, Image, Video, Bookmark, Shield, ShoppingCart, Star, X, Globe, CalendarDays
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface SocialSidebarProps {
   activeTab: string;
@@ -243,8 +244,13 @@ interface CreatePostModalProps {
 
 const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
   const { user, token } = useAuth();
-  const [content, setContent] = useState("");
-  const [posting, setPosting] = useState(false);
+  const queryClient = useQueryClient();
+  const [toast, setToast] = useState<{ text: string; type: "info" | "error" } | null>(null);
+
+  const showToast = (text: string, type: "info" | "error" = "info") => {
+    setToast({ text, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const handlePost = async () => {
     if (!content.trim() || !token) return;
@@ -253,7 +259,7 @@ const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
       await api.createPost(token, { content, visibility: "community" });
       setContent("");
       onClose();
-      window.location.reload();
+      queryClient.invalidateQueries({ queryKey: ['/posts'] });
     } catch (err) {
       console.error("Failed to post:", err);
     } finally {

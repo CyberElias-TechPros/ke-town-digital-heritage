@@ -110,7 +110,7 @@ export default function Cart() {
       await api.clearCart(token);
       setCartItems([]);
       setShowCheckout(false);
-      navigate('/profile?tab=orders');
+      navigate('/orders');
     } catch (err) {
       console.error("Failed to place order:", err);
     } finally {

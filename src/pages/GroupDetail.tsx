@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Heart, Share2, MessageCircle, MoreHorizontal, Users, Image, Calendar, Files, Settings, Loader2, Plus } from "lucide-react";
+import { ArrowLeft, Share2, Users, Image, Calendar, Settings, Loader2, AlertCircle } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "../lib/api";
@@ -44,11 +44,13 @@ export default function GroupDetail() {
   const { id } = useParams<{ id: string }>();
   const { user, token, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  
+
   const [group, setGroup] = useState<GroupData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"discussion" | "members" | "media" | "events">("discussion");
   const [joining, setJoining] = useState(false);
+  const [actionError, setActionError] = useState('');
+  const [actionSuccess, setActionSuccess] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -58,11 +60,14 @@ export default function GroupDetail() {
 
   const loadGroup = async (groupId: string) => {
     setLoading(true);
+    setActionError('');
+    setActionSuccess('');
     try {
       const data = await api.getGroup(groupId);
       setGroup(data as GroupData);
     } catch (err) {
       console.error("Failed to load group:", err);
+      setActionError('Failed to load group. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -73,13 +78,15 @@ export default function GroupDetail() {
       navigate("/login");
       return;
     }
-    
+
     setJoining(true);
+    setActionError('');
     try {
       await api.joinGroup(token, id);
+      setActionSuccess('Joined group successfully!');
       loadGroup(id);
     } catch (err) {
-      console.error("Failed to join group:", err);
+      setActionError('Failed to join group. Please try again.');
     } finally {
       setJoining(false);
     }
@@ -87,18 +94,41 @@ export default function GroupDetail() {
 
   const handleLeave = async () => {
     if (!token || !id) return;
-    
+
     try {
       await api.leaveGroup(token, id);
+      setActionSuccess('Left group successfully.');
       loadGroup(id);
     } catch (err) {
-      console.error("Failed to leave group:", err);
+      setActionError('Failed to leave group. Please try again.');
     }
   };
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    alert("Link copied to clipboard!");
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: group?.name || 'KE Town Group',
+          text: `Join ${group?.name} on KE Town`,
+          url: window.location.href,
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        setActionSuccess('Group link copied to clipboard!');
+        setTimeout(() => setActionSuccess(''), 3000);
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name !== 'AbortError') {
+        setActionError('Failed to share group link.');
+        setTimeout(() => setActionError(''), 5000);
+      }
+    }
+  };
+
+  const handleSettings = () => {
+    if (group) {
+      navigate(`/groups/${group._id}/settings`);
+    }
   };
 
   const getPrivacyBadge = (privacy: string) => {
@@ -148,6 +178,16 @@ export default function GroupDetail() {
     <Layout>
       <div className="min-h-screen pt-20 pb-20">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          {/* Banner */}
+          {(actionError || actionSuccess) && (
+            <div className={`px-4 py-3 flex items-center gap-2 text-sm ${
+              actionError ? 'bg-red-50 border-b border-red-200 text-red-700' : 'bg-green-50 border-b border-green-200 text-green-700'
+            }`}>
+              {actionError && <AlertCircle size={16} />}
+              <span>{actionError || actionSuccess}</span>
+            </div>
+          )}
+
           {/* Header */}
           <div className="sticky top-20 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -162,11 +202,16 @@ export default function GroupDetail() {
               <button
                 onClick={handleShare}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                aria-label="Share group"
               >
                 <Share2 className="w-5 h-5" />
               </button>
               {group.isAdmin && (
-                <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+                <button
+                  onClick={handleSettings}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                  aria-label="Group settings"
+                >
                   <Settings className="w-5 h-5" />
                 </button>
               )}
@@ -200,12 +245,12 @@ export default function GroupDetail() {
                 </div>
                 <p className="text-sm text-gray-500 capitalize">{group.category}</p>
               </div>
-              
+
               {!group.isMember ? (
                 <button
                   onClick={handleJoin}
                   disabled={joining}
-                  className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                  className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   {joining ? "Joining..." : "Join Group"}
                 </button>
@@ -238,21 +283,20 @@ export default function GroupDetail() {
               <>
                 <div className="flex gap-2 overflow-x-auto pb-4 mb-4 border-b border-gray-200 dark:border-gray-700">
                   {[
-                    { id: "discussion", label: "Discussion", icon: MessageCircle },
-                    { id: "members", label: "Members", icon: Users },
-                    { id: "media", label: "Media", icon: Image },
-                    { id: "events", label: "Events", icon: Calendar },
+                    { id: "discussion", label: "Discussion" },
+                    { id: "members", label: "Members" },
+                    { id: "media", label: "Media" },
+                    { id: "events", label: "Events" },
                   ].map((tab) => (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                      className={`flex items-center gap-2 px-4 py-2 whitespace-nowrap transition-colors ${
+                      className={`px-4 py-2 whitespace-nowrap transition-colors ${
                         activeTab === tab.id
                           ? "text-primary border-b-2 border-primary"
                           : "text-gray-500 hover:text-gray-900"
                       }`}
                     >
-                      <tab.icon className="w-4 h-4" />
                       {tab.label}
                     </button>
                   ))}

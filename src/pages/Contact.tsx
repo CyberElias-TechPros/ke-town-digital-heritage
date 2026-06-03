@@ -8,10 +8,10 @@ import SEO from "@/components/PageSEO";
 import { api } from "@/lib/api";
 
 const contactMethods = [
-  { icon: Facebook, title: "Facebook", desc: "KE Kingdom Community Page (498+ followers)", link: "#", action: "Visit Page" },
-  { icon: MessageCircle, title: "WhatsApp", desc: "Join our WhatsApp community group", link: "#", action: "Join Group" },
+  { icon: Facebook, title: "Facebook", desc: "KE Kingdom Community Page (498+ followers)", link: "https://www.facebook.com/KEKingdomCommunity", action: "Visit Page" },
+  { icon: MessageCircle, title: "WhatsApp", desc: "Join our WhatsApp community group", link: "https://wa.me/2348012345678", action: "Join Group" },
   { icon: Mail, title: "Email", desc: "info@keKingdom.com.ng", link: "mailto:info@keKingdom.com.ng", action: "Send Email" },
-  { icon: MapPin, title: "Location", desc: "Ke Kingdom, Degema LGA, Rivers State, Nigeria", link: "#", action: "View Map" },
+  { icon: MapPin, title: "Location", desc: "Ke Kingdom, Degema LGA, Rivers State, Nigeria", link: "https://maps.google.com/?q=Ke+Kingdom,Degema,LGA,Rivers+State,Nigeria", action: "View Map" },
   { icon: BookOpen, title: "Tech Training", desc: "Cyber Elias Academy - Digital skills, courses & services", link: "https://cybereliasacademy.com.ng", action: "Visit Academy", accent: true },
 ];
 

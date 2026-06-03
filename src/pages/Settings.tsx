@@ -23,8 +23,16 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("privacy");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [banner, setBanner] = useState<{ type: "info" | "success" | "error"; text: string } | null>(null);
+  
+  const showBanner = (type: "info" | "success" | "error", text: string) => {
+    setBanner({ type, text });
+    setTimeout(() => setBanner(null), 4000);
+    if (type === "success") setSuccess(text);
+    if (type === "error") setError(text);
+  };
   
   const [settings, setSettings] = useState<SettingsData>({
     profileVisibility: user?.profileVisibility || 'public',
@@ -57,8 +65,7 @@ export default function SettingsPage() {
     if (!token) return;
     
     setLoading(true);
-    setError("");
-    setSuccess("");
+    setBanner(null);
     
     try {
       await api.updateProfile(token, {
@@ -66,9 +73,9 @@ export default function SettingsPage() {
         allowMessages: settings.allowMessages,
         showOnlineStatus: settings.showOnlineStatus
       });
-      setSuccess("Settings saved successfully!");
+      showBanner("success", "Settings saved successfully!");
     } catch (err: any) {
-      setError(err.message || "Failed to save settings");
+      showBanner("error", err.message || "Failed to save settings");
     } finally {
       setLoading(false);
     }
@@ -86,15 +93,14 @@ export default function SettingsPage() {
     if (!confirmDelete) return;
     
     setLoading(true);
-    setError("");
-    setSuccess("");
+    setBanner(null);
     
     try {
       await api.deleteAccount(token);
       logout();
       navigate('/');
     } catch (err: any) {
-      setError(err.message || "Failed to delete account");
+      showBanner("error", err.message || "Failed to delete account");
     } finally {
       setLoading(false);
       setShowDeleteConfirm(false);
@@ -153,23 +159,20 @@ export default function SettingsPage() {
               <h1 className="font-display text-2xl font-bold text-foreground">Settings</h1>
             </div>
 
-            {/* Error/Success Messages */}
-            {error && (
+            {/* Banner Messages */}
+            {banner && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-destructive/10 border border-destructive/20 text-destructive rounded-lg p-4 mb-6 font-ui text-sm"
+                className={`rounded-lg p-4 mb-6 font-ui text-sm ${
+                  banner.type === "error"
+                    ? "bg-destructive/10 border border-destructive/20 text-destructive"
+                    : banner.type === "success"
+                    ? "bg-secondary/10 border border-secondary/20 text-secondary"
+                    : "bg-blue-50 border border-blue-200 text-blue-700"
+                }`}
               >
-                {error}
-              </motion.div>
-            )}
-            {success && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-secondary/10 border border-secondary/20 text-secondary rounded-lg p-4 mb-6 font-ui text-sm"
-              >
-                {success}
+                {banner.text}
               </motion.div>
             )}
 
@@ -390,13 +393,13 @@ export default function SettingsPage() {
                         </div>
                       </div>
                       
-                      <div className="border-t border-border pt-6">
-                        <h3 className="font-display text-lg font-semibold text-foreground mb-4">Two-Factor Authentication</h3>
-                        <p className="text-muted-foreground mb-4">Add an extra layer of security to your account.</p>
-                        <button className="px-4 py-2 border border-secondary text-secondary rounded-lg font-ui text-sm hover:bg-secondary/10 transition-all">
-                          Enable 2FA
-                        </button>
-                      </div>
+                       <div className="border-t border-border pt-6">
+                         <h3 className="font-display text-lg font-semibold text-foreground mb-4">Two-Factor Authentication</h3>
+                         <p className="text-muted-foreground mb-4">Add an extra layer of security to your account.</p>
+                         <button onClick={() => showBanner("info", "Two-factor authentication coming soon! Contact support for enhanced security.")} className="px-4 py-2 border border-secondary text-secondary rounded-lg font-ui text-sm hover:bg-secondary/10 transition-all">
+                           Enable 2FA
+                         </button>
+                       </div>
                     </div>
                   )}
 

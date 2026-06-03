@@ -25,10 +25,11 @@ interface SavedPost {
 export default function SavedPosts() {
   const { user, token, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
-  
+
   const [savedPosts, setSavedPosts] = useState<SavedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeReaction, setActiveReaction] = useState<string | null>(null);
+  const [banner, setBanner] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     if (isLoading) return;
@@ -57,9 +58,38 @@ export default function SavedPosts() {
     try {
       await api.unsavePost(token, postId);
       setSavedPosts(savedPosts.filter(s => s.post._id !== postId));
+      setBanner({ type: 'success', text: 'Post removed from saved' });
+      setTimeout(() => setBanner(null), 3000);
     } catch (err) {
-      console.error("Failed to unsave post:", err);
+      setBanner({ type: 'error', text: 'Failed to remove saved post' });
+      setTimeout(() => setBanner(null), 5000);
     }
+  };
+
+  const handleShare = async (postId: string) => {
+    const url = `${window.location.origin}/posts/${postId}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Check out this post',
+          text: 'Shared from KE Town',
+          url,
+        });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setBanner({ type: 'success', text: 'Link copied to clipboard' });
+        setTimeout(() => setBanner(null), 3000);
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name !== 'AbortError') {
+        setBanner({ type: 'error', text: 'Failed to share' });
+        setTimeout(() => setBanner(null), 5000);
+      }
+    }
+  };
+
+  const handleMoreOptions = (postId: string) => {
+    navigate(`/posts/${postId}`);
   };
 
   const handleReaction = async (postId: string, reactionType: string) => {
@@ -106,6 +136,14 @@ export default function SavedPosts() {
             <Bookmark className="w-6 h-6 text-primary" />
             <h1 className="text-2xl font-bold">Saved Posts</h1>
           </div>
+
+          {banner && (
+            <div className={`rounded-lg p-3 mb-4 flex items-center gap-2 text-sm ${
+              banner.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'
+            }`}>
+              <span>{banner.text}</span>
+            </div>
+          )}
 
           {loading ? (
             <div className="flex items-center justify-center py-20">
@@ -162,7 +200,11 @@ export default function SavedPosts() {
                         {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
                       </p>
                     </div>
-                    <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+                    <button
+                      onClick={() => handleMoreOptions(post._id)}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                      aria-label="More options"
+                    >
                       <MoreHorizontal className="w-5 h-5" />
                     </button>
                   </div>
@@ -240,7 +282,11 @@ export default function SavedPosts() {
                       >
                         <MessageCircle className="w-5 h-5" />
                       </button>
-                      <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+                      <button
+                        onClick={() => handleShare(post._id)}
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                        aria-label="Share post"
+                      >
                         <Share2 className="w-5 h-5" />
                       </button>
                     </div>
