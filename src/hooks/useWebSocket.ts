@@ -27,9 +27,9 @@ export function useWebSocket(): UseWebSocketReturn {
 
   // Initialize WebSocket connection
   useEffect(() => {
-    if (token) {
+    if (token && user?.id) {
       setConnectionStatus('connecting');
-      websocket.connect();
+      websocket.connect(user.id, token);
       
       // Request notification permission
       websocket.requestNotificationPermission();
@@ -230,6 +230,10 @@ export function useConversationWebSocket(conversationId: string) {
   const [typingIndicator, setTypingIndicator] = useState(false);
 
   useEffect(() => {
+    // Reset messages whenever the active conversation changes so history from a
+    // different conversation is never shown for the current one.
+    setMessages([]);
+
     const handleNewMessage = (message: any) => {
       if (message.conversationId === conversationId) {
         setMessages(prev => [...prev, message]);

@@ -42,7 +42,9 @@ export default function AdUnit({ adSlot, adClient, format = "auto", layout, clas
             clearInterval(checkAd);
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        // Ignore AdSense render errors.
+      }
     }, 500);
 
     return () => {

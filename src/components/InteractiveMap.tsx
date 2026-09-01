@@ -7,7 +7,7 @@ interface MapLocation {
   lat: number;
   lng: number;
   description?: string;
-  type?: "Kingdom" | "landmark" | "waterway" | "festival";
+  type?: "Kingdom" | "town" | "landmark" | "waterway" | "festival";
 }
 
 interface InteractiveMapProps {

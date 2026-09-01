@@ -34,13 +34,13 @@ const groupCategories = [
 export default function Groups() {
   const { user, token, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [groups, setGroups] = useState<Group[]>(myGroups as Group[]);
+  const [myGroups, setMyGroups] = useState<Group[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
-  const [myGroups, setMyGroups] = useState<Group[]>([]);
 
   useEffect(() => {
     if (isLoading) return;

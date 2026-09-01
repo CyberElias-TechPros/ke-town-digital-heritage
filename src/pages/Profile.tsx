@@ -12,6 +12,7 @@ import { api } from "@/lib/api";
 
 const Profile = () => {
   const { user: currentUser, token, isAuthenticated, isLoading: authLoading, updateUser } = useAuth();
+  const user = currentUser; // alias so JSX can reference the signed-in user
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   
@@ -70,7 +71,7 @@ const Profile = () => {
     setIsLoading(true);
     try {
       const userData = await api.getUserProfile(username);
-      setViewUser(userData.user || userData);
+      setViewUser(userData);
       setIsOwnProfile(false);
     } catch (err) {
       console.error("Failed to load user profile:", err);

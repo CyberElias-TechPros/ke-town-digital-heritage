@@ -33,3 +33,7 @@ server/uploads/
 *.njsproj
 *.sln
 *.sw?
+
+# Cloudflare worker local state
+.wrangler
+worker/.wrangler

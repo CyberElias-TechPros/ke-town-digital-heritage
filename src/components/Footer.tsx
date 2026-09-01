@@ -16,7 +16,9 @@ const Footer = () => {
         try {
           (window.adsbygoogle = window.adsbygoogle || []).push({});
           setAdsLoaded(true);
-        } catch (e) {}
+        } catch (e) {
+          // Ignore AdSense errors — the ad just won't load.
+        }
       }
     }, 500);
 
@@ -25,7 +27,9 @@ const Footer = () => {
       try {
         (window.adsbygoogle = window.adsbygoogle || []).push({});
         setAdsLoaded(true);
-      } catch (e) {}
+      } catch (e) {
+        // Ignore AdSense errors — the ad just won't load.
+      }
     }, 2000);
 
     return () => clearInterval(checkAds);

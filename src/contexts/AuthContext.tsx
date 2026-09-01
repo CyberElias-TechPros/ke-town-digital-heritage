@@ -110,14 +110,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const forgotPassword = async (email: string): Promise<string> => {
-    const data = await api.forgotPassword(email);
-    return data.message;
+    const data = (await api.forgotPassword(email)) as { message?: string };
+    return data?.message || 'If an account exists, a reset link has been sent.';
   };
 
   const resetPassword = async (resetToken: string, newPassword: string) => {
-    const data = await api.resetPassword(resetToken, newPassword);
-    setToken(data.token);
-    localStorage.setItem('keKingdom_token', data.token);
+    const data = (await api.resetPassword(resetToken, newPassword)) as { token?: string };
+    if (data.token) {
+      setToken(data.token);
+      localStorage.setItem('keKingdom_token', data.token);
+    }
   };
 
   const logout = () => {

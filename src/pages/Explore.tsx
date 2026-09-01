@@ -47,6 +47,7 @@ export default function Explore() {
   const [trendingProducts, setTrendingProducts] = useState<TrendingProduct[]>([]);
   const [activeTab, setActiveTab] = useState<"all" | "people" | "posts" | "events" | "products">("all");
   const [followingUsers, setFollowingUsers] = useState<string[]>([]);
+  const [actionError, setActionError] = useState("");
 
   useEffect(() => {
     loadExploreData();

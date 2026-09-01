@@ -22,19 +22,48 @@ export interface User {
   allowMessages?: boolean;
   showOnlineStatus?: boolean;
   verified?: boolean;
+  createdAt?: string | number;
 }
 
-const API_SERVERS = import.meta.env.VITE_API_SERVERS || 
-  (import.meta.env.MODE === 'production' 
-    ? 'https://ke-town-digital-heritage-production.up.railway.app,https://kesrv.freegameplay.site'
-    : 'https://ke-town-digital-heritage-production.up.railway.app,https://kesrv.freegameplay.site');
+/**
+ * The backend wraps list responses as `{ key: [...] }`. Pages expect either a
+ * bare array or the wrapped object depending on the call. These helpers
+ * normalize responses so callers get predictable shapes.
+ */
+function unwrapArray(data: unknown): any[] {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === "object") {
+    const v = Object.values(data as Record<string, unknown>).find((x) => Array.isArray(x));
+    return (v as any[]) || [];
+  }
+  return [];
+}
 
-console.log('API Servers:', API_SERVERS);
+function unwrapKey(data: unknown, key: string): unknown {
+  if (data && typeof data === "object") {
+    const obj = data as Record<string, unknown>;
+    if (obj[key] !== undefined) return obj[key];
+  }
+  return data;
+}
+
+// Exported for unit testing.
+export { unwrapArray, unwrapKey };
+
+// Backend (Cloudflare Workers) base URL.
+//   - "self"  => same origin (dev/preview: Vite proxies /api to the Worker)
+//   - otherwise a comma-separated list of Worker origins
+const configuredServers = (import.meta.env.VITE_API_SERVERS || "").trim();
+const API_SERVERS = configuredServers === "self" || !configuredServers
+  ? ""
+  : configuredServers;
+
+console.log('API Servers:', API_SERVERS || "(same-origin)");
 
 const API_BASE = API_SERVERS.split(',')[0] + '/api';
 
 let workingServer: string | null = null;
-let serverHealthStatus: Map<string, boolean> = new Map();
+const serverHealthStatus: Map<string, boolean> = new Map();
 
 async function getWorkingServer(): Promise<string> {
   const servers = API_SERVERS.split(',').map(s => s.trim());
@@ -285,7 +314,7 @@ class ApiClient {
   }
 
   async getEvent(id: string) {
-    return this.request(`/events/${id}`);
+    return this.request(`/events/${id}`).then((d) => unwrapKey(d, 'event'));
   }
 
   async createEvent(token: string, data: Record<string, unknown>) {
@@ -314,7 +343,7 @@ class ApiClient {
   // Gallery
   async getGallery(category?: string) {
     const query = category ? `?category=${category}` : '';
-    return this.request(`/gallery${query}`);
+    return this.request(`/gallery${query}`).then(unwrapArray);
   }
 
   async createGalleryItem(token: string, data: Record<string, unknown>) {
@@ -474,20 +503,20 @@ class ApiClient {
 
   // Admin
   async getAdminDashboard(token: string) {
-    return this.request('/admin/dashboard', { token });
+    return this.request('/admin/dashboard', { token }).then((d) => ({ stats: unwrapKey(d, 'dashboard') }));
   }
 
   async getAdminEvents(token: string) {
-    return this.request('/admin/events', { token });
+    return this.request('/admin/events', { token }).then(unwrapArray);
   }
 
   async getAdminNews(token: string) {
-    return this.request('/admin/news', { token });
+    return this.request('/admin/news', { token }).then(unwrapArray);
   }
 
   async getAdminGallery(token: string, approved?: boolean) {
     const query = approved !== undefined ? `?approved=${approved}` : '';
-    return this.request(`/admin/gallery${query}`, { token });
+    return this.request(`/admin/gallery${query}`, { token }).then(unwrapArray);
   }
 
   async approveGalleryItem(token: string, id: string) {
@@ -499,7 +528,7 @@ class ApiClient {
 
   async getAdminDirectory(token: string, approved?: boolean) {
     const query = approved !== undefined ? `?approved=${approved}` : '';
-    return this.request(`/admin/directory${query}`, { token });
+    return this.request(`/admin/directory${query}`, { token }).then(unwrapArray);
   }
 
   async approveDirectoryMember(token: string, id: string) {
@@ -511,7 +540,7 @@ class ApiClient {
 
   async getAdminContacts(token: string, read?: boolean) {
     const query = read !== undefined ? `?read=${read}` : '';
-    return this.request(`/admin/contacts${query}`, { token });
+    return this.request(`/admin/contacts${query}`, { token }).then(unwrapArray);
   }
 
   async markContactRead(token: string, id: string) {
@@ -676,28 +705,28 @@ class ApiClient {
 
   // Posts / Social Feed
   async getFeed(token: string) {
-    return this.request('/posts/feed', { token });
+    return this.request('/posts/feed', { token }).then(unwrapArray);
   }
 
   async getPosts() {
-    return this.request('/posts');
+    return this.request('/posts').then(unwrapArray);
   }
 
   async getPost(id: string) {
-    return this.request(`/posts/${id}`);
+    return this.request(`/posts/${id}`).then((d) => unwrapKey(d, 'post'));
   }
 
   async getMyPosts(token: string) {
-    return this.request('/posts/user/my', { token });
+    return this.request('/posts/user/my', { token }).then(unwrapArray);
   }
 
   
-  async createPost(token: string, data: { content: string; media?: unknown; location?: unknown; feeling?: string; privacy?: string; visibility?: string }) {
+  async createPost(token: string, data: { content: string; media?: unknown; location?: unknown; feeling?: string; privacy?: string; visibility?: string } & Record<string, unknown>) {
     return this.request('/posts', {
       method: 'POST',
       body: data,
       token,
-    });
+    }).then((d) => unwrapKey(d, 'post') as any);
   }
 
   async updatePost(token: string, id: string, data: Record<string, unknown>) {
@@ -747,7 +776,7 @@ class ApiClient {
 
   // Comments
   async getComments(targetType: string, targetId: string) {
-    return this.request(`/comments/${targetType}/${targetId}`);
+    return this.request(`/comments/${targetType}/${targetId}`).then(unwrapArray);
   }
 
   async createComment(token: string, data: { content: string; targetType: string; targetId: string }) {
@@ -755,7 +784,7 @@ class ApiClient {
       method: 'POST',
       body: data,
       token,
-    });
+    }).then((d) => unwrapKey(d, 'comment') as any);
   }
 
   async deleteComment(token: string, id: string) {
@@ -767,15 +796,15 @@ class ApiClient {
 
   // Social / Activity
   async getFollowingActivity(token: string) {
-    return this.request('/social/following', { token });
+    return this.request('/social/following', { token }).then(unwrapArray);
   }
 
   async getMyActivity(token: string) {
-    return this.request('/social/me', { token });
+    return this.request('/social/me', { token }).then(unwrapArray);
   }
 
   async getGlobalActivity() {
-    return this.request('/social/global');
+    return this.request('/social/global').then(unwrapArray);
   }
 
   
@@ -800,7 +829,7 @@ class ApiClient {
   
   
   async getProduct(id: string) {
-    return this.request(`/marketplace/${id}`);
+    return this.request(`/marketplace/${id}`).then((d) => unwrapKey(d, 'product'));
   }
 
   async createProduct(token: string, data: { title: string; description: string; category: string; condition: string; price: number; negotiable?: boolean; images?: string[]; video?: string; brand?: string; model?: string; location?: unknown; contact?: string; tags?: string[]; quantity?: number }) {
@@ -878,23 +907,23 @@ class ApiClient {
 
   // Additional functions for new pages
   async getTrendingPosts() {
-    return this.request('/posts/trending');
+    return this.request('/posts/trending').then(unwrapArray);
   }
 
   async getSuggestedUsers() {
-    return this.request('/users/suggested');
+    return this.request('/users/suggested').then(unwrapArray);
   }
 
   async getTrendingEvents() {
-    return this.request('/events/trending');
+    return this.request('/events/trending').then(unwrapArray);
   }
 
   async getTrendingProducts() {
-    return this.request('/marketplace/trending');
+    return this.request('/marketplace/trending').then(unwrapArray);
   }
 
   async getOrders(token: string) {
-    return this.request('/orders', { token });
+    return this.request('/orders', { token }).then(unwrapArray);
   }
 
   async getOrder(token: string, orderId: string) {
@@ -922,7 +951,7 @@ class ApiClient {
   }
 
   async getMyProducts(token: string) {
-    return this.request('/marketplace/my-products', { token });
+    return this.request('/marketplace/my-products', { token }).then(unwrapArray);
   }
 
     // async deleteProduct(token: string, productId: string) {
@@ -977,15 +1006,15 @@ class ApiClient {
 
   // Conversation and messaging methods
   async getConversations(token: string) {
-    return this.request('/conversations', { token });
+    return this.request('/conversations', { token }).then(unwrapArray);
   }
 
   async getConversation(token: string, conversationId: string) {
-    return this.request(`/conversations/${conversationId}`, { token });
+    return this.request(`/conversations/${conversationId}`, { token }).then((d) => unwrapKey(d, 'conversation'));
   }
 
   async getMessages(token: string, conversationId: string) {
-    return this.request(`/conversations/${conversationId}/messages`, { token });
+    return this.request(`/conversations/${conversationId}/messages`, { token }).then(unwrapArray);
   }
 
   async sendMessage(token: string, conversationId: string, content: string, media?: any[]) {
@@ -1028,8 +1057,9 @@ class ApiClient {
   }
 
   // Elder Stories API methods
-  async getElderStories() {
-    return this.request('/elder-stories');
+  async getElderStories(category?: string) {
+    const query = category ? `?category=${encodeURIComponent(category)}` : '';
+    return this.request(`/elder-stories${query}`).then(unwrapArray);
   }
 
   async getElderStory(id: string) {
@@ -1336,6 +1366,148 @@ class ApiClient {
       method: 'DELETE',
       token,
     });
+  }
+
+  // ============================================================
+  // Saved posts
+  // ============================================================
+  async getSavedPosts(token: string) {
+    return this.request('/saved-posts', { token }).then(unwrapArray);
+  }
+
+  async savePost(token: string, postId: string) {
+    return this.request(`/posts/${postId}/save`, { method: 'POST', token });
+  }
+
+  async unsavePost(token: string, postId: string) {
+    return this.request(`/posts/${postId}/save`, { method: 'DELETE', token });
+  }
+
+  // ============================================================
+  // Notifications
+  // ============================================================
+  async getNotifications(token: string) {
+    return this.request('/notifications', { token }).then(unwrapArray);
+  }
+
+  async markNotificationRead(token: string, notificationId: string) {
+    return this.request(`/notifications/${notificationId}/read`, { method: 'PUT', token });
+  }
+
+  async markAllNotificationsRead(token: string) {
+    return this.request('/notifications/read-all', { method: 'POST', token });
+  }
+
+  // ============================================================
+  // User / profile / shop
+  // ============================================================
+  async getUserProfile(identifier: string): Promise<User> {
+    return this.request(`/users/profile/${identifier}`).then((d) => unwrapKey(d, 'user') as User);
+  }
+
+  async getShopProfile(token: string) {
+    return this.request('/shop/profile', { token }).then((d) => unwrapKey(d, 'shop') as any);
+  }
+
+  async becomeSeller(token: string, shopName: string, shopDescription?: string) {
+    return this.request('/shop/become-seller', {
+      method: 'POST',
+      body: { shopName, shopDescription },
+      token,
+    }).then((d) => unwrapKey(d, 'shop'));
+  }
+
+  async getMyOrders(token: string) {
+    return this.request('/orders/me', { token }).then(unwrapArray);
+  }
+
+  async getMySales(token: string) {
+    return this.request('/orders/seller', { token }).then(unwrapArray);
+  }
+
+  // ============================================================
+  // Groups
+  // ============================================================
+  async getGroups(category?: string, search?: string) {
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    if (search) params.append('search', search);
+    const qs = params.toString();
+    return this.request(`/groups${qs ? `?${qs}` : ''}`);
+  }
+
+  async getMyGroups(token: string) {
+    return this.request('/groups/mine', { token }).then(unwrapArray);
+  }
+
+  async getGroup(id: string) {
+    return this.request(`/groups/${id}`).then((d) => unwrapKey(d, 'group'));
+  }
+
+  async createGroup(token: string, data: Record<string, unknown>) {
+    return this.request('/groups', { method: 'POST', body: data, token });
+  }
+
+  async joinGroup(token: string, groupId: string) {
+    return this.request(`/groups/${groupId}/join`, { method: 'POST', token });
+  }
+
+  async leaveGroup(token: string, groupId: string) {
+    return this.request(`/groups/${groupId}/leave`, { method: 'POST', token });
+  }
+
+  // ============================================================
+  // Marketplace / cart / orders
+  // ============================================================
+  async getProducts(category?: string) {
+    const query = category ? `?category=${encodeURIComponent(category)}` : '';
+    return this.request(`/marketplace${query}`);
+  }
+
+  async createListing(token: string, data: Record<string, unknown>) {
+    return this.request('/marketplace', { method: 'POST', body: data, token });
+  }
+
+  async addToCart(token: string, productId: string, quantity: number) {
+    return this.request('/cart/add', {
+      method: 'POST',
+      body: { productId, quantity },
+      token,
+    });
+  }
+
+  async removeFromCart(token: string, productId: string) {
+    return this.request(`/cart/remove/${productId}`, { method: 'DELETE', token });
+  }
+
+  async clearCart(token: string) {
+    return this.request('/cart/clear', { method: 'DELETE', token });
+  }
+
+  async createOrder(token: string, data: Record<string, unknown>) {
+    return this.request('/orders', { method: 'POST', body: data, token });
+  }
+
+  // ============================================================
+  // Events / products extras
+  // ============================================================
+  async rsvpEvent(token: string, eventId: string, status = 'going') {
+    return this.request(`/events/${eventId}/rsvp`, {
+      method: 'POST',
+      body: { status },
+      token,
+    });
+  }
+
+  async cancelRsvp(token: string, eventId: string) {
+    return this.request(`/events/${eventId}/rsvp`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  async unlikeProduct(token: string, id: string) {
+    return this.request(`/marketplace/${id}/like`, { method: 'DELETE', token });
   }
 }
 

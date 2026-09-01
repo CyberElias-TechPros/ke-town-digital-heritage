@@ -18,7 +18,7 @@ const Messages = () => {
   const [isLoading, setIsLoading] = useState(false);
   
   // Use WebSocket for selected conversation
-  const { messages: wsMessages, typingIndicator } = useConversationWebSocket(selectedConversation?._id || '');
+  const { messages: wsMessages, typingIndicator, setMessages } = useConversationWebSocket(selectedConversation?._id || '');
 
   useEffect(() => {
     if (authLoading) return;
@@ -43,8 +43,7 @@ const Messages = () => {
     if (!token) return;
     try {
       const data = await api.getMessages(token, conversationId);
-      // Note: wsMessages is managed by WebSocket hook
-      // This API call is for initial load only
+      setMessages(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
     }
@@ -235,20 +234,19 @@ const Messages = () => {
                           </button>
                         </div>
                       </div>
+
+                      {/* Typing Indicator */}
+                      {typingIndicator && selectedConversation && typingUsers.get(selectedConversation._id) && (
+                        <div className="px-4 py-2 bg-muted/50 border-t border-border">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-secondary rounded-full animate-pulse" />
+                            <span className="text-sm text-muted-foreground">
+                              Someone is typing...
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  
-                  {/* Typing Indicator */}
-                  {typingIndicator && selectedConversation && typingUsers.get(selectedConversation._id) && (
-                    <div className="px-4 py-2 bg-muted/50 border-t border-border">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-secondary rounded-full animate-pulse" />
-                        <span className="text-sm text-muted-foreground">
-                          Someone is typing...
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
                   ) : (
                     <div className="flex items-center justify-center h-full text-muted-foreground">
                       <div className="text-center">

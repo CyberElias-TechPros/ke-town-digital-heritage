@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { 
   Users, Calendar, Newspaper, Image, MapPin, Mail, 
   TreePine, FolderKanban, Settings, LogOut, Check, X, 
@@ -102,7 +102,7 @@ const Admin = () => {
         api.getAdminContacts(token)
       ]);
 
-      setStats(dashboardData.stats);
+      setStats((dashboardData as any).stats);
       setEvents(eventsData);
       setNews(newsData);
       setGallery(galleryData);

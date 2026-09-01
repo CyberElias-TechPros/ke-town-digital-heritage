@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../lib/api';
 import { formatDistanceToNow } from 'date-fns';
-import { Image, Smile } from 'lucide-react';
+import { Image, Smile, Loader2 } from 'lucide-react';
 
 interface Post {
   _id: string;

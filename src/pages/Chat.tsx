@@ -71,7 +71,7 @@ export default function Chat() {
 
     wsClient.onNewMessage((message: WebSocketMessage) => {
       if (message.conversationId === id) {
-        setMessages(prev => [...prev, message]);
+        setMessages(prev => [...prev, message as Message]);
         if (message.sender._id !== user?.id) {
           wsClient.markAsRead(id, [message._id]);
         }

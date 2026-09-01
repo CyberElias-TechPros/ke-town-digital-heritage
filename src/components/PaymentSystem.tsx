@@ -142,8 +142,8 @@ export function PaymentSystem() {
 
       // Process payment with Stripe or other provider
       if (selectedProvider === 'stripe') {
-        const { stripe } = await import('@stripe/stripe-js');
-        const stripeInstance = await stripe('pk_test_...');
+        const { loadStripe } = await import('@stripe/stripe-js');
+        const stripeInstance = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_...');
         
         const { error } = await stripeInstance.confirmCardPayment(paymentIntent.clientSecret);
         

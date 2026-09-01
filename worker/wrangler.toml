@@ -1,0 +1,52 @@
+name = "ke-kingdom-api"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ------------------------------------------------------------------
+# Vars / secrets
+# ------------------------------------------------------------------
+# Provide these via `wrangler secret put` in production:
+#   JWT_SECRET  - long random string used to sign sessions
+#   ENVIRONMENT - "production" (leave unset/local in dev)
+[vars]
+ENVIRONMENT = "development"
+
+# ------------------------------------------------------------------
+# D1 database
+# ------------------------------------------------------------------
+[[d1_databases]]
+binding = "DB"
+database_name = "ke_kingdom"
+database_id = "00000000-0000-0000-0000-000000000000" # replace with `wrangler d1 create ke_kingdom` output
+migrations_dir = "migrations"
+
+# ------------------------------------------------------------------
+# R2 object storage (uploads, media, documents)
+# ------------------------------------------------------------------
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "ke-kingdom-media"
+
+# ------------------------------------------------------------------
+# KV (configuration / caching)
+# ------------------------------------------------------------------
+[[kv_namespaces]]
+binding = "CACHE"
+id = "00000000000000000000000000000000" # replace with `wrangler kv namespace create` output
+
+# ------------------------------------------------------------------
+# Durable Object: real-time chat / presence / typing
+# ------------------------------------------------------------------
+[durable_objects]
+bindings = [{ name = "CHAT", class_name = "ChatDurableObject" }]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ChatDurableObject"]
+
+# ------------------------------------------------------------------
+# Scheduled cleanup of expired auth tokens (cron)
+# ------------------------------------------------------------------
+[triggers]
+crons = ["0 3 * * *"]

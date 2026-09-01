@@ -246,6 +246,8 @@ const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
   const { user, token } = useAuth();
   const queryClient = useQueryClient();
   const [toast, setToast] = useState<{ text: string; type: "info" | "error" } | null>(null);
+  const [content, setContent] = useState("");
+  const [posting, setPosting] = useState(false);
 
   const showToast = (text: string, type: "info" | "error" = "info") => {
     setToast({ text, type });
