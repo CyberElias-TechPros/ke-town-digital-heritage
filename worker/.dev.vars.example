@@ -1,0 +1,6 @@
+# Copy to `.dev.vars` for local development. Never commit the real file.
+JWT_SECRET=change-me-to-a-long-random-string
+# Set to 1 to let the e2e suite run back to back on one machine.
+RATE_LIMIT_DISABLED=1
+# Return the password-reset / email-verification token in dev responses.
+EXPOSE_RESET_TOKEN=1

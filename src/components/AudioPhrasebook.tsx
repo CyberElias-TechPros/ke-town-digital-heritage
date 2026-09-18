@@ -7,7 +7,8 @@ interface Phrase {
   kalabari: string;
   english: string;
   pronunciation?: string;
-  context: string;
+  context?: string;
+  desc?: string;
   category: string;
   audioUrl?: string;
 }

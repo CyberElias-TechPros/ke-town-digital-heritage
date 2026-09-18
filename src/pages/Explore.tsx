@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { TrendingUp, Users, Calendar, Store, Hash, UserPlus, Loader2 } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "../lib/api";
+import { api, asList } from "../lib/api";
 
 interface TrendingPost {
   _id: string;
@@ -41,6 +41,7 @@ export default function Explore() {
   const navigate = useNavigate();
   
   const [loading, setLoading] = useState(true);
+  const [actionError, setActionError] = useState("");
   const [trendingPosts, setTrendingPosts] = useState<TrendingPost[]>([]);
   const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([]);
   const [trendingEvents, setTrendingEvents] = useState<TrendingEvent[]>([]);
@@ -62,10 +63,10 @@ export default function Explore() {
         api.getTrendingProducts().catch(() => []),
       ]);
       
-      setTrendingPosts(posts as TrendingPost[]);
-      setSuggestedUsers(users as SuggestedUser[]);
-      setTrendingEvents(events as TrendingEvent[]);
-      setTrendingProducts(products as TrendingProduct[]);
+      setTrendingPosts(asList<TrendingPost>(posts));
+      setSuggestedUsers(asList<SuggestedUser>(users));
+      setTrendingEvents(asList<TrendingEvent>(events));
+      setTrendingProducts(asList<TrendingProduct>(products));
     } catch (err) {
       console.error("Failed to load explore data:", err);
     } finally {
@@ -82,8 +83,8 @@ export default function Explore() {
     try {
       await api.followUser(token, userId);
       setFollowingUsers([...followingUsers, userId]);
-    } catch (err) {
-      console.error("Failed to follow:", err);
+    } catch (err: any) {
+      setActionError(err?.message ?? "Could not follow this person. Please try again.");
     }
   };
 
@@ -96,8 +97,8 @@ export default function Explore() {
     try {
       await api.unfollowUser(token, userId);
       setFollowingUsers(followingUsers.filter(id => id !== userId));
-    } catch (err) {
-      console.error("Failed to unfollow:", err);
+    } catch (err: any) {
+      setActionError(err?.message ?? "Could not unfollow this person. Please try again.");
     }
   };
 

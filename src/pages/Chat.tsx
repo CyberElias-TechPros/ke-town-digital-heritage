@@ -4,11 +4,11 @@ import { motion } from "framer-motion";
 import { Send, ArrowLeft, MoreVertical, Phone, Video, Image as ImageIcon, Smile, Paperclip, Check, CheckCheck } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "../lib/api";
+import { api, resolveApiBase, asList } from "../lib/api";
 import { websocketClient, useWebSocket, WebSocketMessage, TypingIndicator } from "../lib/websocket";
 import { formatDistanceToNow } from "date-fns";
 
-const API_BASE = (import.meta.env.VITE_API_SERVERS || "https://ke-town-digital-heritage-production.up.railway.app").split(",")[0];
+const API_BASE = resolveApiBase();
 
 interface Message {
   _id: string;
@@ -71,7 +71,7 @@ export default function Chat() {
 
     wsClient.onNewMessage((message: WebSocketMessage) => {
       if (message.conversationId === id) {
-        setMessages(prev => [...prev, message]);
+        setMessages(prev => (prev.some((m) => m._id === message._id) ? prev : [...prev, message as unknown as Message]));
         if (message.sender._id !== user?.id) {
           wsClient.markAsRead(id, [message._id]);
         }
@@ -108,7 +108,7 @@ export default function Chat() {
       const convData = await api.getConversation(token!, conversationId);
       setConversation(convData as Conversation);
       const msgData = await api.getMessages(token!, conversationId);
-      setMessages(msgData as Message[]);
+      setMessages(asList<Message>(msgData));
     } catch (err) {
       setBanner({ type: "error", text: "Failed to load conversation. Please try again." });
     } finally {
@@ -156,7 +156,7 @@ export default function Chat() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch(`${API_BASE}/api/upload/single`, {
+      const res = await fetch(`${API_BASE}/upload/single`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -164,7 +164,8 @@ export default function Chat() {
       if (res.ok) {
         const data = await res.json();
         const mediaLabel = mediaType === "image" ? "Image" : "File";
-        wsClient.sendMessage(id, `${mediaLabel} shared`, [{ type: mediaType, url: data.url }]);
+        const url: string = data?.url ?? data?.file?.url;
+        wsClient.sendMessage(id, `${mediaLabel} shared`, [{ type: mediaType, url }]);
         setBanner({ type: "info", text: `${mediaLabel} sent!` });
         setTimeout(() => setBanner(null), 3000);
       }

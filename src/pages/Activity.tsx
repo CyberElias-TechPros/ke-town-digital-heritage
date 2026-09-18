@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Heart, MessageCircle, UserPlus, Image, Send, Activity } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { api, asList } from "@/lib/api";
 
 interface Activity {
   _id: string;
@@ -37,7 +37,7 @@ export default function ActivityPage() {
   const loadActivities = async () => {
     setLoading(true);
     try {
-      let data: Activity[];
+      let data: unknown;
       if (activeTab === "me") {
         if (!token) return;
         data = await api.getMyActivity(token);
@@ -47,7 +47,7 @@ export default function ActivityPage() {
         if (!token) return;
         data = await api.getFollowingActivity(token);
       }
-      setActivities(data);
+      setActivities(asList<Activity>(data));
     } catch (error) {
       console.error('Failed to load activities:', error);
     } finally {

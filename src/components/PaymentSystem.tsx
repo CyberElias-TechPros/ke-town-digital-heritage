@@ -4,7 +4,7 @@ import {
   CreditCard, Smartphone, Wallet, Shield, Check, AlertCircle, 
   Clock, ChevronRight, Star, Lock, Info, ArrowRight, RefreshCw
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, asList } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface PaymentMethod {
@@ -81,8 +81,8 @@ export function PaymentSystem() {
         api.getTransactions(token),
       ]);
       
-      setPaymentMethods(methodsRes as PaymentMethod[]);
-      setTransactions(transactionsRes as Transaction[]);
+      setPaymentMethods(asList<PaymentMethod>(methodsRes));
+      setTransactions(asList<Transaction>(transactionsRes));
     } catch (error) {
       console.error('Failed to load payment data:', error);
     } finally {
@@ -142,8 +142,9 @@ export function PaymentSystem() {
 
       // Process payment with Stripe or other provider
       if (selectedProvider === 'stripe') {
-        const { stripe } = await import('@stripe/stripe-js');
-        const stripeInstance = await stripe('pk_test_...');
+        const { loadStripe } = await import('@stripe/stripe-js');
+        const stripeInstance = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? '');
+        if (!stripeInstance) throw new Error('Payments are not configured on this device.');
         
         const { error } = await stripeInstance.confirmCardPayment(paymentIntent.clientSecret);
         

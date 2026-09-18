@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, Loader2, FileText, Image, MapPin, Calendar, Users, Leaf, User } from "lucide-react";
 import { Link } from "react-router-dom";
-import { api } from "@/lib/api";
+import { api, asList } from "@/lib/api";
 
 interface SearchResult {
   id: string;
@@ -52,7 +52,7 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
 
       try {
         const data = await api.search(query);
-        setResults(data as SearchResult[]);
+        setResults(asList<SearchResult>(data));
       } catch (err: any) {
         setError(err.message || "Search failed");
         setResults([]);

@@ -4,7 +4,9 @@ import { motion } from "framer-motion";
 import { ArrowLeft, CreditCard, Truck, MapPin, Loader2, Check } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "../lib/api";
+import { api, asList } from "../lib/api";
+import InlineNotice from "@/components/InlineNotice";
+import { useNotice } from "@/hooks/useNotice";
 
 interface CartItem {
   _id: string;
@@ -23,6 +25,7 @@ interface Address {
 }
 
 export default function Checkout() {
+  const { notice, notify, clear } = useNotice();
   const { user, token, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   
@@ -51,10 +54,10 @@ export default function Checkout() {
         api.getCart(token),
         api.getAddresses(token).catch(() => []),
       ]);
-      setCartItems(cartData as CartItem[]);
-      setAddresses(addressesData as Address[]);
+      setCartItems(asList<CartItem>(cartData));
+      setAddresses(asList<Address>(addressesData));
       
-      const defaultAddr = (addressesData as Address[]).find((a: Address) => a.isDefault);
+      const defaultAddr = asList<Address>(addressesData).find((a: Address) => a.isDefault);
       if (defaultAddr) setSelectedAddress(defaultAddr._id);
     } catch (err) {
       console.error("Failed to load checkout data:", err);
@@ -73,7 +76,8 @@ export default function Checkout() {
   const handlePlaceOrder = async () => {
     if (!token) return;
     if (!selectedAddress) {
-      alert("Please select a shipping address");
+      notify("Please choose a shipping address before continuing.", "warning");
+      return;
       return;
     }
 
@@ -87,7 +91,7 @@ export default function Checkout() {
       navigate("/orders");
     } catch (err) {
       console.error("Failed to place order:", err);
-      alert("Failed to place order. Please try again.");
+      notify(err?.message ?? "We could not place your order. Please try again.", "error");
     } finally {
       setLoading(false);
     }
@@ -111,6 +115,9 @@ export default function Checkout() {
   return (
     <Layout>
       <div className="min-h-screen pt-20 pb-20">
+        <div className="max-w-3xl mx-auto px-4 pt-4">
+          <InlineNotice notice={notice} onDismiss={clear} />
+        </div>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

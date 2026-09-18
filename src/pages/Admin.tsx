@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { 
   Users, Calendar, Newspaper, Image, MapPin, Mail, 
   TreePine, FolderKanban, Settings, LogOut, Check, X, 

@@ -4,7 +4,7 @@ import { Play, Pause, Volume2, VolumeX, Clock, User, Tag, ChevronRight, Search, 
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
 import SEO from "@/components/PageSEO";
-import { api } from "@/lib/api";
+import { api, asList } from "@/lib/api";
 
 interface ElderStory {
   _id: string;
@@ -57,7 +57,7 @@ export default function ElderStories() {
     try {
       const category = selectedCategory === "all" ? undefined : selectedCategory;
       const data = await api.getElderStories(category);
-      setStories(data as ElderStory[]);
+      setStories(asList<ElderStory>(data));
     } catch (err: any) {
       console.error("Failed to load stories:", err);
       setError(err.message || "Unable to load stories");

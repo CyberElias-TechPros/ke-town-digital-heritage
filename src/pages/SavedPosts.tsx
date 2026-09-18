@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Bookmark, MessageCircle, Heart, Share2, MoreHorizontal, Trash2, Loader2 } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "../lib/api";
+import { api, asList } from "../lib/api";
 import { formatDistanceToNow } from "date-fns";
 
 interface SavedPost {
@@ -45,7 +45,7 @@ export default function SavedPosts() {
     setLoading(true);
     try {
       const data = await api.getSavedPosts(token);
-      setSavedPosts(data as SavedPost[]);
+      setSavedPosts(asList<SavedPost>(data));
     } catch (err) {
       console.error("Failed to load saved posts:", err);
     } finally {

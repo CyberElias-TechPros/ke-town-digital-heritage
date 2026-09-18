@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MessageCircle, Image, Send, MoreHorizontal, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { api, asList } from "@/lib/api";
 import LikeButton from "@/components/LikeButton";
 import CommentSection from "@/components/CommentSection";
 
@@ -48,7 +48,7 @@ export default function Posts() {
   const loadPosts = async () => {
     try {
       const data: Post[] = await api.getPosts();
-      setPosts(data);
+      setPosts(asList(data));
     } catch (error) {
       console.error('Failed to load posts:', error);
     } finally {
@@ -60,7 +60,7 @@ export default function Posts() {
     if (!token) return;
     try {
       const data: Post[] = await api.getMyPosts(token);
-      setMyPosts(data);
+      setMyPosts(asList(data));
     } catch (error) {
       console.error('Failed to load my posts:', error);
     }

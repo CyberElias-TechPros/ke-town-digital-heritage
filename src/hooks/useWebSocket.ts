@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { websocket, WebSocketEvents } from '../lib/websocket';
+import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 
 interface UseWebSocketReturn {
@@ -13,7 +14,7 @@ interface UseWebSocketReturn {
   connectionStatus: 'connecting' | 'connected' | 'disconnected' | 'reconnecting';
   onlineUsers: any[];
   notifications: any[];
-  typingUsers: Map<string, boolean>;
+  typingUsers: Map<string, string>;
 }
 
 export function useWebSocket(): UseWebSocketReturn {
@@ -22,8 +23,8 @@ export function useWebSocket(): UseWebSocketReturn {
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'reconnecting'>('disconnected');
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
-  const [typingUsers, setTypingUsers] = useState<Map<string, boolean>>(new Map());
-  const typingTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
+  const typingTimeouts = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   // Initialize WebSocket connection
   useEffect(() => {
@@ -67,31 +68,31 @@ export function useWebSocket(): UseWebSocketReturn {
     });
 
     websocket.on('typing', (data) => {
-      // Handle typing indicators
-      setTypingUsers(prev => {
-        const newMap = new Map(prev);
-        newMap.set(data.userId, data.isTyping);
-        
-        // Clear typing indicator after 3 seconds
+      // Keyed by conversation so a thread can show *who* is typing, and so two
+      // open threads never clobber each other.
+      setTypingUsers((prev) => {
+        const next = new Map(prev);
         if (data.isTyping) {
-          const existingTimeout = typingTimeouts.current.get(data.userId);
-          if (existingTimeout) {
-            clearTimeout(existingTimeout);
-          }
-          
-          const timeout = setTimeout(() => {
-            setTypingUsers(prev => {
-              const updatedMap = new Map(prev);
-              updatedMap.set(data.userId, false);
-              return updatedMap;
-            });
-          }, 3000);
-          
-          typingTimeouts.current.set(data.userId, timeout);
+          next.set(data.conversationId, data.userId);
+        } else {
+          next.delete(data.conversationId);
         }
-        
-        return newMap;
+        return next;
       });
+
+      if (data.isTyping) {
+        const key = data.conversationId;
+        const existing = typingTimeouts.current.get(key);
+        if (existing) clearTimeout(existing);
+        const timeout = setTimeout(() => {
+          setTypingUsers((prev) => {
+            const next = new Map(prev);
+            next.delete(key);
+            return next;
+          });
+        }, 3500);
+        typingTimeouts.current.set(key, timeout);
+      }
     });
 
     // Notification events
@@ -224,32 +225,61 @@ export function useWebSocket(): UseWebSocketReturn {
   };
 }
 
-// Hook for specific conversation WebSocket events
+// Hook for a specific conversation: loads history over REST, then keeps it
+// live over the Durable Object socket.
 export function useConversationWebSocket(conversationId: string) {
+  const { token, user } = useAuth();
   const [messages, setMessages] = useState<any[]>([]);
   const [typingIndicator, setTypingIndicator] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Load existing thread history whenever the selected conversation changes.
   useEffect(() => {
+    let cancelled = false;
+    if (!token || !conversationId) {
+      setMessages([]);
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    api.getMessages(token, conversationId)
+      .then((data: any) => {
+        if (cancelled) return;
+        const list = Array.isArray(data) ? data : data?.messages ?? [];
+        setMessages(list);
+      })
+      .catch((err: any) => {
+        if (!cancelled) setError(err?.message ?? 'Could not load this conversation');
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, conversationId]);
+
+  // Subscribe to the hub room and apply live frames.
+  useEffect(() => {
+    if (!conversationId) return;
+    websocket.joinRoom(`conversation:${conversationId}`);
+
     const handleNewMessage = (message: any) => {
-      if (message.conversationId === conversationId) {
-        setMessages(prev => [...prev, message]);
-      }
+      if (message.conversationId !== conversationId) return;
+      setMessages((prev) => (prev.some((m) => m._id === message._id) ? prev : [...prev, message]));
     };
 
     const handleMessageRead = (data: any) => {
-      if (data.conversationId === conversationId) {
-        setMessages(prev => prev.map(msg => 
-          msg._id === data.messageId 
-            ? { ...msg, readAt: new Date().toISOString() }
-            : msg
-        ));
-      }
+      if (data.conversationId !== conversationId) return;
+      const ids: string[] = data.messageIds ?? [];
+      setMessages((prev) => prev.map((msg) => (ids.includes(msg._id) ? { ...msg, readAt: new Date().toISOString() } : msg)));
     };
 
     const handleTyping = (data: any) => {
-      if (data.conversationId === conversationId) {
-        setTypingIndicator(data.isTyping);
-      }
+      if (data.conversationId !== conversationId) return;
+      // Never show our own typing back to us.
+      setTypingIndicator(data.isTyping && data.userId !== user?.id);
     };
 
     websocket.on('new_message', handleNewMessage);
@@ -260,14 +290,30 @@ export function useConversationWebSocket(conversationId: string) {
       websocket.off('new_message', handleNewMessage);
       websocket.off('message_read', handleMessageRead);
       websocket.off('typing', handleTyping);
+      websocket.leaveRoom(`conversation:${conversationId}`);
     };
-  }, [conversationId]);
+  }, [conversationId, user?.id]);
 
-  return {
-    messages,
-    typingIndicator,
-    setMessages,
-  };
+  /** Send through REST, then reflect it immediately without waiting for the echo. */
+  const sendMessage = useCallback(
+    async (content: string, media?: { type: string; url: string }[]) => {
+      if (!token || !conversationId || !content.trim()) return;
+      const sent: any = await api.sendMessage(token, conversationId, content, media);
+      setMessages((prev) => (prev.some((m) => m._id === sent._id) ? prev : [...prev, sent]));
+      return sent;
+    },
+    [token, conversationId],
+  );
+
+  const markAsRead = useCallback(
+    async (messageIds: string[] = []) => {
+      if (!token || !conversationId) return;
+      await api.markMessagesAsRead(token, conversationId, messageIds);
+    },
+    [token, conversationId],
+  );
+
+  return { messages, setMessages, typingIndicator, isLoading, error, sendMessage, markAsRead };
 }
 
 // Hook for real-time notifications

@@ -5,7 +5,7 @@ import {
   Heart, MessageCircle, Share2, Clock, ArrowRight, RefreshCw,
   Filter, ChevronDown, X, CheckCircle, AlertCircle
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, asList } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Recommendation {
@@ -97,7 +97,7 @@ export function AIRecommendations() {
     setLoading(true);
     try {
       const data = await api.getAIRecommendations(token, selectedType);
-      setRecommendations(data as Recommendation[]);
+      setRecommendations(asList<Recommendation>(data));
     } catch (error) {
       console.error('Failed to load recommendations:', error);
     } finally {

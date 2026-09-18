@@ -5,6 +5,8 @@ import { ArrowLeft, Upload, X, Loader2, Users, Lock, Globe, EyeOff } from "lucid
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "../lib/api";
+import InlineNotice from "@/components/InlineNotice";
+import { useNotice } from "@/hooks/useNotice";
 
 const groupCategories = [
   { id: "education", label: "Education" },
@@ -19,6 +21,7 @@ const groupCategories = [
 ];
 
 export default function CreateGroup() {
+  const { notice, notify, clear } = useNotice();
   const { user, token, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   
@@ -59,11 +62,13 @@ export default function CreateGroup() {
     if (!token) return;
 
     if (!formData.name.trim()) {
-      alert("Please enter a group name");
+      notify("Please give your group a name.", "warning");
+      return;
       return;
     }
     if (!formData.description.trim()) {
-      alert("Please enter a description");
+      notify("Please describe what the group is about.", "warning");
+      return;
       return;
     }
 
@@ -76,7 +81,7 @@ export default function CreateGroup() {
       navigate("/groups");
     } catch (err) {
       console.error("Failed to create group:", err);
-      alert("Failed to create group. Please try again.");
+      notify(err?.message ?? "We could not create the group. Please try again.", "error");
     } finally {
       setLoading(false);
     }
@@ -100,6 +105,9 @@ export default function CreateGroup() {
   return (
     <Layout>
       <div className="min-h-screen pt-20 pb-20">
+        <div className="max-w-3xl mx-auto px-4 pt-4">
+          <InlineNotice notice={notice} onDismiss={clear} />
+        </div>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

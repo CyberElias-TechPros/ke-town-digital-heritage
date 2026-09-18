@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, MapPin, Users, Plus, Clock, Video, Search, Filter } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { api, asList } from "@/lib/api";
 import { Link, useNavigate } from "react-router-dom";
 
 interface Event {
@@ -82,7 +82,7 @@ export default function Events() {
     if (!token) return;
     try {
       const data = await api.getEvents(token) as { events: Event[] };
-      setMyRsvps(data.events.map(e => e._id));
+      setMyRsvps(asList<any>(data, 'events').map(e => e._id));
     } catch (err) {
       console.error("Failed to load RSVPs:", err);
     }

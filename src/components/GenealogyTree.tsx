@@ -6,7 +6,7 @@ import {
   Heart, Star, Award, BookOpen, Camera, Share2, ZoomIn, ZoomOut,
   CheckCircle
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, asList } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface FamilyMember {
@@ -107,7 +107,7 @@ export function GenealogyTree() {
     setLoading(true);
     try {
       const data = await api.getFamilyTrees(token);
-      setFamilyTrees(data as FamilyTree[]);
+      setFamilyTrees(asList<FamilyTree>(data));
       
       // Select first tree by default
       if (Array.isArray(data) && data.length > 0) {

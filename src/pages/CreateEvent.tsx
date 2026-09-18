@@ -5,6 +5,8 @@ import { ArrowLeft, Upload, X, Loader2, MapPin, Calendar, Clock } from "lucide-r
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "../lib/api";
+import InlineNotice from "@/components/InlineNotice";
+import { useNotice } from "@/hooks/useNotice";
 
 const eventTypes = [
   { id: "community", label: "Community Gathering" },
@@ -21,6 +23,7 @@ const eventTypes = [
 ];
 
 export default function CreateEvent() {
+  const { notice, notify, clear } = useNotice();
   const { user, token, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   
@@ -69,15 +72,18 @@ export default function CreateEvent() {
     if (!token) return;
 
     if (!formData.name.trim()) {
-      alert("Please enter an event name");
+      notify("Please give your event a name.", "warning");
+      return;
       return;
     }
     if (!formData.description.trim()) {
-      alert("Please enter a description");
+      notify("Please add a short description.", "warning");
+      return;
       return;
     }
     if (!formData.startDate || !formData.startTime) {
-      alert("Please enter the start date and time");
+      notify("Please pick a start date and time.", "warning");
+      return;
       return;
     }
 
@@ -98,7 +104,7 @@ export default function CreateEvent() {
       navigate("/events");
     } catch (err) {
       console.error("Failed to create event:", err);
-      alert("Failed to create event. Please try again.");
+      notify(err?.message ?? "We could not create the event. Please try again.", "error");
     } finally {
       setLoading(false);
     }
@@ -109,6 +115,9 @@ export default function CreateEvent() {
   return (
     <Layout>
       <div className="min-h-screen pt-20 pb-20">
+        <div className="max-w-3xl mx-auto px-4 pt-4">
+          <InlineNotice notice={notice} onDismiss={clear} />
+        </div>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

@@ -1,525 +1,396 @@
-import { io, Socket } from 'socket.io-client';
+/**
+ * Realtime client for the KE Town Cloudflare Worker.
+ *
+ * Workers cannot host a Socket.IO server, so this speaks the plain-JSON
+ * WebSocket protocol exposed by the `RealtimeHub` Durable Object at
+ * `/api/realtime`. It stays on the same origin as the app, so it needs no
+ * extra host configuration in development or production.
+ *
+ * Durability rule: **writes go through REST, delivery comes over the socket.**
+ * Sending a message POSTs to `/api/conversations/:id/messages` (which persists
+ * it in D1 and then publishes to the hub) — so nothing is lost if the socket
+ * drops mid-flight.
+ */
+import { api } from './api';
+
+export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'reconnecting';
 
 export interface WebSocketEvents {
-  // Connection events
   connect: () => void;
   disconnect: () => void;
   error: (error: Error) => void;
-  
-  // Message events
-  new_message: (message: any) => void;
-  message_read: (data: { messageId: string; userId: string }) => void;
-  typing: (data: { userId: string; conversationId: string; isTyping: boolean }) => void;
-  
-  // Notification events
-  notification: (notification: any) => void;
+
+  new_message: (message: WebSocketMessage) => void;
+  message_read: (data: { conversationId: string; messageIds: string[]; readBy: string }) => void;
+  typing: (data: { conversationId: string; userId: string; isTyping: boolean }) => void;
+
+  notification: (notification: unknown) => void;
   notification_read: (notificationId: string) => void;
-  
-  // Social events
-  post_update: (post: any) => void;
-  new_reaction: (data: { postId: string; reaction: any; userId: string }) => void;
-  comment_added: (comment: any) => void;
-  follow_update: (data: { followerId: string; followingId: string; type: 'follow' | 'unfollow' }) => void;
-  
-  // Marketplace events
-  product_update: (product: any) => void;
-  order_status_update: (order: any) => void;
-  new_order: (order: any) => void;
-  
-  // Event events
-  event_update: (event: any) => void;
-  new_rsvp: (data: { eventId: string; userId: string }) => void;
-  
-  // Admin events
-  user_online: (data: { userId: string; status: 'online' | 'away' | 'offline' }) => void;
-  system_alert: (alert: any) => void;
+
+  post_update: (post: unknown) => void;
+  new_reaction: (data: { postId: string; userId: string; reactionType: string }) => void;
+  comment_added: (comment: unknown) => void;
+  follow_update: (data: { followerId: string; followingId: string; type: string }) => void;
+
+  product_update: (product: unknown) => void;
+  order_status_update: (order: unknown) => void;
+  new_order: (order: unknown) => void;
+
+  event_update: (event: unknown) => void;
+  new_rsvp: (data: { eventId: string; userId: string; status: string }) => void;
+  group_update: (data: { groupId: string; userId: string; status: string }) => void;
+  conversation_created: (data: { conversationId: string }) => void;
+
+  user_online: (data: { userId: string; status: string }) => void;
+  user_offline: (data: { userId: string; at: string }) => void;
+  online_users: (userIds: string[]) => void;
+  system_alert: (alert: unknown) => void;
 }
 
 export interface WebSocketMessage {
   _id: string;
-  sender: {
-    _id: string;
-    fullName: string;
-    avatar: string;
-  };
+  id?: string;
+  conversationId: string;
+  sender: { _id: string; fullName: string; avatar?: string };
+  senderId?: string;
   content: string;
   media?: { type: string; url: string }[];
-  conversationId: string;
-  createdAt: string;
+  readBy?: string[];
   readAt?: string;
+  createdAt: string;
 }
 
 export interface TypingIndicator {
+  conversationId: string;
   userId: string;
   isTyping: boolean;
-  typingUsers: string[];
+  typingUsers?: string[];
 }
-
-class WebSocketService {
-  private socket: Socket | null = null;
-  private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
-  private reconnectDelay = 1000;
-  private listeners: Map<string, Function[]> = new Map();
-
-  constructor() {
-    this.initializeSocket();
-  }
-
-  private initializeSocket() {
-    const token = localStorage.getItem('keKingdom_token');
-    if (!token) return;
-
-    this.socket = io(process.env.REACT_APP_WS_URL || 'ws://localhost:3001', {
-      auth: { token },
-      transports: ['websocket', 'polling'],
-      upgrade: true,
-      rememberUpgrade: true,
-      timeout: 20000,
-      forceNew: true,
-    });
-
-    this.setupEventListeners();
-  }
-
-  private setupEventListeners() {
-    if (!this.socket) return;
-
-    // Connection events
-    this.socket.on('connect', () => {
-      console.log('WebSocket connected');
-      this.reconnectAttempts = 0;
-      this.reconnectDelay = 1000;
-      this.emit('connect');
-    });
-
-    this.socket.on('disconnect', (reason) => {
-      console.log('WebSocket disconnected:', reason);
-      this.emit('disconnect');
-      this.handleReconnect();
-    });
-
-    this.socket.on('connect_error', (error) => {
-      console.error('WebSocket connection error:', error);
-      this.emit('error', error);
-      this.handleReconnect();
-    });
-
-    // Message events
-    this.socket.on('new_message', (message) => {
-      this.emit('new_message', message);
-    });
-
-    this.socket.on('message_read', (data) => {
-      this.emit('message_read', data);
-    });
-
-    this.socket.on('typing', (data) => {
-      this.emit('typing', data);
-    });
-
-    // Notification events
-    this.socket.on('notification', (notification) => {
-      this.emit('notification', notification);
-      this.showBrowserNotification(notification);
-    });
-
-    this.socket.on('notification_read', (notificationId) => {
-      this.emit('notification_read', notificationId);
-    });
-
-    // Social events
-    this.socket.on('post_update', (post) => {
-      this.emit('post_update', post);
-    });
-
-    this.socket.on('new_reaction', (data) => {
-      this.emit('new_reaction', data);
-    });
-
-    this.socket.on('comment_added', (comment) => {
-      this.emit('comment_added', comment);
-    });
-
-    this.socket.on('follow_update', (data) => {
-      this.emit('follow_update', data);
-    });
-
-    // Marketplace events
-    this.socket.on('product_update', (product) => {
-      this.emit('product_update', product);
-    });
-
-    this.socket.on('order_status_update', (order) => {
-      this.emit('order_status_update', order);
-    });
-
-    this.socket.on('new_order', (order) => {
-      this.emit('new_order', order);
-    });
-
-    // Event updates
-    this.socket.on('event_update', (event) => {
-      this.emit('event_update', event);
-    });
-
-    this.socket.on('new_rsvp', (data) => {
-      this.emit('new_rsvp', data);
-    });
-
-    // Admin events
-    this.socket.on('user_online', (data) => {
-      this.emit('user_online', data);
-    });
-
-    this.socket.on('system_alert', (alert) => {
-      this.emit('system_alert', alert);
-    });
-  }
-
-  private handleReconnect() {
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      setTimeout(() => {
-        this.reconnectAttempts++;
-        this.reconnectDelay *= 2; // Exponential backoff
-        console.log(`Reconnection attempt ${this.reconnectAttempts}`);
-        this.initializeSocket();
-      }, this.reconnectDelay);
-    }
-  }
-
-  private showBrowserNotification(notification: any) {
-    if (!('Notification' in window)) return;
-
-    if (Notification.permission === 'granted') {
-      new Notification(notification.title, {
-        body: notification.body,
-        icon: '/favicon.ico',
-        tag: notification.id,
-        data: notification,
-      });
-    }
-  }
-
-  // Public API methods
-  public connect(): void {
-    this.initializeSocket();
-  }
-
-  public disconnect(): void {
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-    }
-  }
-
-  public emit(event: keyof WebSocketEvents, data?: any): void {
-    const eventListeners = this.listeners.get(event);
-    if (eventListeners) {
-      eventListeners.forEach(listener => {
-        if (data !== undefined) {
-          listener(data);
-        } else {
-          listener();
-        }
-      });
-    }
-  }
-
-  public on<K extends keyof WebSocketEvents>(event: K, listener: WebSocketEvents[K]): void {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, []);
-    }
-    this.listeners.get(event)!.push(listener);
-  }
-
-  public off<K extends keyof WebSocketEvents>(event: K, listener?: WebSocketEvents[K]): void {
-    if (!this.listeners.has(event)) return;
-
-    if (listener) {
-      const eventListeners = this.listeners.get(event)!;
-      const index = eventListeners.indexOf(listener);
-      if (index > -1) {
-        eventListeners.splice(index, 1);
-      }
-    } else {
-      this.listeners.delete(event);
-    }
-  }
-
-  // Send methods
-  public sendMessage(data: { conversationId: string; content: string; media?: any[] }): void {
-    if (this.socket && this.socket.connected) {
-      this.socket.emit('send_message', data);
-    }
-  }
-
-  public markAsRead(data: { messageId: string; conversationId: string }): void {
-    if (this.socket && this.socket.connected) {
-      this.socket.emit('mark_as_read', data);
-    }
-  }
-
-  public sendTyping(data: { conversationId: string; isTyping: boolean }): void {
-    if (this.socket && this.socket.connected) {
-      this.socket.emit('typing', data);
-    }
-  }
-
-  public markNotificationRead(notificationId: string): void {
-    if (this.socket && this.socket.connected) {
-      this.socket.emit('mark_notification_read', notificationId);
-    }
-  }
-
-  public joinRoom(room: string): void {
-    if (this.socket && this.socket.connected) {
-      this.socket.emit('join_room', room);
-    }
-  }
-
-  public leaveRoom(room: string): void {
-    if (this.socket && this.socket.connected) {
-      this.socket.emit('leave_room', room);
-    }
-  }
-
-  public getConnectionStatus(): boolean {
-    return this.socket?.connected || false;
-  }
-
-  public requestNotificationPermission(): void {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-  }
-}
-
-// Singleton instance
-export const websocket = new WebSocketService();
-export default websocket;
 
 export interface OnlineUser {
   userId: string;
-  user: {
-    id: string;
-    fullName: string;
-    avatar?: string;
-    isOnline: boolean;
-  };
+  user?: { id: string; fullName: string; avatar?: string; isOnline: boolean };
+  isOnline?: boolean;
 }
 
-export class WebSocketClient {
-  private socket: Socket | null = null;
-  private token: string | null = null;
-  private user: any = null;
+type Listener = (payload: never) => void;
+
+const realtimeUrl = (): string => {
+  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${proto}//${window.location.host}/api/realtime`;
+};
+
+class RealtimeService {
+  private socket: WebSocket | null = null;
+  private listeners = new Map<string, Listener[]>();
+  private rooms = new Set<string>();
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
-  private reconnectDelay = 1000;
+  private maxReconnectAttempts = 8;
+  private heartbeat: ReturnType<typeof setInterval> | null = null;
+  private identity: { userId: string; token: string } | null = null;
+  private intentionallyClosed = false;
 
-  constructor() {
-    this.setupEventListeners();
-  }
-
-  private setupEventListeners() {
-    // Handle page visibility changes
-    if (typeof document !== 'undefined') {
-      document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-          this.disconnect();
-        } else if (this.token && this.user) {
-          this.connect(this.token, this.user);
-        }
-      });
+  /** Opens (or re-opens) the socket. Safe to call repeatedly. */
+  connect(token?: string | null, userId?: string | null): void {
+    const resolvedToken = token ?? localStorage.getItem('keKingdom_token');
+    let resolvedUser = userId ?? null;
+    if (!resolvedUser) {
+      try {
+        resolvedUser = JSON.parse(localStorage.getItem('keKingdom_user') ?? 'null')?.id ?? null;
+      } catch {
+        resolvedUser = null;
+      }
+    }
+    if (!resolvedToken || !resolvedUser) return;
+    if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
+      return;
     }
 
-    // Handle page unload
-    if (typeof window !== 'undefined') {
-      window.addEventListener('beforeunload', () => {
-        this.disconnect();
-      });
+    this.identity = { userId: resolvedUser, token: resolvedToken };
+    this.intentionallyClosed = false;
+
+    const url = new URL(realtimeUrl());
+    url.searchParams.set('token', resolvedToken);
+    url.searchParams.set('userId', resolvedUser);
+
+    try {
+      this.socket = new WebSocket(url.toString());
+    } catch {
+      this.scheduleReconnect();
+      return;
+    }
+
+    this.socket.onopen = () => {
+      this.reconnectAttempts = 0;
+      this.send({ type: 'auth', userId: resolvedUser });
+      for (const room of this.rooms) this.send({ type: 'subscribe', room });
+      this.emit('connect');
+      this.heartbeat = setInterval(() => this.send({ type: 'ping' }), 25_000);
+    };
+
+    this.socket.onmessage = (event) => {
+      let frame: { type?: string; event?: string; payload?: unknown };
+      try {
+        frame = JSON.parse(typeof event.data === 'string' ? event.data : '');
+      } catch {
+        return;
+      }
+      if (frame.type !== 'event' || !frame.event) return;
+      this.emit(frame.event as keyof WebSocketEvents, frame.payload);
+      if (frame.event === 'notification') this.showBrowserNotification(frame.payload);
+    };
+
+    this.socket.onclose = () => {
+      this.stopHeartbeat();
+      this.socket = null;
+      this.emit('disconnect');
+      if (!this.intentionallyClosed) this.scheduleReconnect();
+    };
+
+    this.socket.onerror = () => {
+      this.emit('error', new Error('Realtime connection failed'));
+    };
+  }
+
+  disconnect(): void {
+    this.intentionallyClosed = true;
+    this.stopHeartbeat();
+    this.socket?.close();
+    this.socket = null;
+    this.identity = null;
+  }
+
+  private stopHeartbeat() {
+    if (this.heartbeat) clearInterval(this.heartbeat);
+    this.heartbeat = null;
+  }
+
+  private scheduleReconnect() {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) return;
+    const delay = Math.min(15_000, 500 * 2 ** this.reconnectAttempts);
+    this.reconnectAttempts += 1;
+    setTimeout(() => {
+      if (!this.intentionallyClosed && this.identity) {
+        this.emit('error', new Error('reconnecting'));
+        this.connect(this.identity.token, this.identity.userId);
+      }
+    }, delay);
+  }
+
+  private send(payload: Record<string, unknown>) {
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify(payload));
     }
   }
 
-  connect(token: string, user: any): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (this.socket?.connected) {
+  private showBrowserNotification(payload: unknown) {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+    const n = (payload ?? {}) as { title?: string; message?: string; id?: string; _id?: string };
+    try {
+      new Notification(n.title || 'KE Town', {
+        body: n.message ?? '',
+        icon: '/favicon.ico',
+        tag: n._id ?? n.id,
+      });
+    } catch {
+      /* some browsers require a service worker registration */
+    }
+  }
+
+  /* ----------------------------- public API ----------------------------- */
+
+  on<K extends keyof WebSocketEvents>(event: K, listener: WebSocketEvents[K]): void {
+    const list = this.listeners.get(event) ?? [];
+    list.push(listener as Listener);
+    this.listeners.set(event, list);
+  }
+
+  off<K extends keyof WebSocketEvents>(event: K, listener?: WebSocketEvents[K]): void {
+    if (!listener) {
+      this.listeners.delete(event);
+      return;
+    }
+    const list = this.listeners.get(event) ?? [];
+    const index = list.indexOf(listener as Listener);
+    if (index > -1) list.splice(index, 1);
+  }
+
+  /** Internal fan-out; also lets UI code broadcast locally. */
+  emit<K extends keyof WebSocketEvents>(event: K, payload?: unknown): void {
+    const list = this.listeners.get(event);
+    if (!list) return;
+    for (const listener of [...list]) {
+      try {
+        (listener as (p: unknown) => void)(payload);
+      } catch (err) {
+        console.error(`[realtime] listener for "${event}" threw`, err);
+      }
+    }
+  }
+
+  joinRoom(room: string): void {
+    this.rooms.add(room);
+    this.send({ type: 'subscribe', room });
+  }
+
+  leaveRoom(room: string): void {
+    this.rooms.delete(room);
+    this.send({ type: 'unsubscribe', room });
+  }
+
+  /** REST-backed: persists first, then the hub fans the event out. */
+  async sendMessage(data: { conversationId: string; content: string; media?: { type: string; url: string }[] }): Promise<void> {
+    const token = localStorage.getItem('keKingdom_token');
+    if (!token) throw new Error('Not authenticated');
+    await api.sendMessage(token, data.conversationId, data.content, data.media);
+  }
+
+  async markAsRead(data: { conversationId: string; messageId?: string }): Promise<void> {
+    const token = localStorage.getItem('keKingdom_token');
+    if (!token) return;
+    await api.markMessagesAsRead(token, data.conversationId, data.messageId ? [data.messageId] : []);
+  }
+
+  async sendTyping(data: { conversationId: string; isTyping: boolean }): Promise<void> {
+    const token = localStorage.getItem('keKingdom_token');
+    if (!token) return;
+    await api.typingIndicator(token, data.conversationId, data.isTyping);
+  }
+
+  markNotificationRead(notificationId: string): void {
+    this.emit('notification_read', notificationId);
+  }
+
+  requestNotificationPermission(): void {
+    if ('Notification' in window && Notification.permission === 'default') {
+      void Notification.requestPermission();
+    }
+  }
+
+  getConnectionStatus(): ConnectionStatus {
+    if (!this.socket) return 'disconnected';
+    if (this.socket.readyState === WebSocket.OPEN) return 'connected';
+    if (this.socket.readyState === WebSocket.CONNECTING) return 'connecting';
+    return 'reconnecting';
+  }
+
+  isConnected(): boolean {
+    return this.socket?.readyState === WebSocket.OPEN;
+  }
+}
+
+/** Singleton shared by the whole app. */
+export const websocket = new RealtimeService();
+export default websocket;
+
+/**
+ * Thin adapter kept for pages that were written against the old Socket.IO
+ * client. Same method names, now backed by the REST + Durable Object path.
+ */
+export class WebSocketClient {
+  private token: string | null = null;
+  private userId: string | null = null;
+
+  connect(token: string, user: { id: string }): Promise<void> {
+    this.token = token;
+    this.userId = user.id;
+    websocket.connect(token, user.id);
+    return new Promise((resolve) => {
+      if (websocket.isConnected()) {
         resolve();
         return;
       }
-
-      this.token = token;
-      this.user = user;
-
-      const serverUrl = import.meta.env.VITE_WS_URL || 
-        (import.meta.env.MODE === 'production' 
-          ? 'wss://ke-town-digital-heritage-production.up.railway.app'
-          : 'ws://localhost:5000');
-
-      this.socket = io(serverUrl, {
-        auth: {
-          token,
-          userId: user.id
-        },
-        transports: ['websocket', 'polling'],
-        timeout: 10000,
-        reconnection: true,
-        reconnectionAttempts: this.maxReconnectAttempts,
-        reconnectionDelay: this.reconnectDelay
-      });
-
-      this.socket.on('connect', () => {
-        console.log('WebSocket connected');
-        this.reconnectAttempts = 0;
-        
-        // Authenticate with the server
-        this.socket?.emit('authenticate', { token, userId: user.id });
-      });
-
-      this.socket.on('authenticated', () => {
-        console.log('WebSocket authenticated');
+      const done = () => {
+        websocket.off('connect', done);
         resolve();
-      });
-
-      this.socket.on('authenticationError', (error) => {
-        console.error('WebSocket authentication failed:', error);
-        reject(new Error(error.message));
-      });
-
-      this.socket.on('disconnect', (reason) => {
-        console.log('WebSocket disconnected:', reason);
-        if (reason === 'io server disconnect') {
-          // Server initiated disconnect, don't reconnect
-          this.disconnect();
-        }
-      });
-
-      this.socket.on('reconnect', (attemptNumber) => {
-        console.log(`WebSocket reconnected after ${attemptNumber} attempts`);
-        this.socket?.emit('authenticate', { token, userId: user.id });
-      });
-
-      this.socket.on('reconnect_error', (error) => {
-        console.error('WebSocket reconnection error:', error);
-        this.reconnectAttempts++;
-        
-        if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-          this.disconnect();
-        }
-      });
-
-      this.socket.on('connect_error', (error) => {
-        console.error('WebSocket connection error:', error);
-        reject(error);
-      });
+      };
+      websocket.on('connect', done);
+      // Never leave the caller hanging if the socket cannot be established.
+      setTimeout(done, 3000);
     });
   }
 
-  disconnect() {
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-    }
+  disconnect(): void {
+    websocket.disconnect();
     this.token = null;
-    this.user = null;
+    this.userId = null;
   }
 
-  // Conversation methods
-  joinConversation(conversationId: string) {
-    this.socket?.emit('joinConversation', conversationId);
+  joinConversation(conversationId: string): void {
+    websocket.joinRoom(`conversation:${conversationId}`);
   }
 
-  leaveConversation(conversationId: string) {
-    this.socket?.emit('leaveConversation', conversationId);
+  leaveConversation(conversationId: string): void {
+    websocket.leaveRoom(`conversation:${conversationId}`);
   }
 
-  sendMessage(conversationId: string, content: string, media?: { type: string; url: string }[]) {
-    this.socket?.emit('sendMessage', {
-      conversationId,
-      content,
-      media
-    });
+  sendMessage(conversationId: string, content: string, media?: { type: string; url: string }[]): void {
+    void websocket.sendMessage({ conversationId, content, media });
   }
 
-  markAsRead(conversationId: string, messageIds: string[]) {
-    this.socket?.emit('markAsRead', { conversationId, messageIds });
+  markAsRead(conversationId: string, messageIds: string[]): void {
+    if (!this.token) return;
+    void api.markMessagesAsRead(this.token, conversationId, messageIds);
   }
 
-  // Typing indicators
-  sendTyping(conversationId: string, isTyping: boolean) {
-    this.socket?.emit('typing', { conversationId, isTyping });
+  sendTyping(conversationId: string, isTyping: boolean): void {
+    void websocket.sendTyping({ conversationId, isTyping });
   }
 
-  // User status
-  updateStatus(status: string) {
-    this.socket?.emit('updateStatus', { status });
+  updateStatus(): void {
+    /* presence is derived from the live socket, no explicit call needed */
   }
 
-  // Event listeners
-  onNewMessage(callback: (message: WebSocketMessage) => void) {
-    this.socket?.on('newMessage', callback);
+  onNewMessage(cb: (message: WebSocketMessage) => void): void {
+    websocket.on('new_message', cb);
   }
 
-  onUserTyping(callback: (typing: TypingIndicator) => void) {
-    this.socket?.on('userTyping', callback);
+  onUserTyping(cb: (typing: TypingIndicator) => void): void {
+    websocket.on('typing', cb);
   }
 
-  onMessagesRead(callback: (data: { conversationId: string; messageIds: string[]; readBy: string }) => void) {
-    this.socket?.on('messagesRead', callback);
+  onMessagesRead(cb: (data: { conversationId: string; messageIds: string[]; readBy: string }) => void): void {
+    websocket.on('message_read', cb);
   }
 
-  onUserOnline(callback: (user: OnlineUser) => void) {
-    this.socket?.on('userOnline', callback);
+  onUserOnline(cb: (user: OnlineUser) => void): void {
+    websocket.on('user_online', cb);
   }
 
-  onUserOffline(callback: (data: { userId: string; lastSeen: string }) => void) {
-    this.socket?.on('userOffline', callback);
+  onUserOffline(cb: (data: { userId: string; at: string }) => void): void {
+    websocket.on('user_offline', cb);
   }
 
-  onOnlineUsers(callback: (users: OnlineUser[]) => void) {
-    this.socket?.on('onlineUsers', callback);
+  onOnlineUsers(cb: (users: OnlineUser[]) => void): void {
+    websocket.on('online_users', (ids: string[]) => cb(ids.map((userId) => ({ userId, isOnline: true }))));
   }
 
-  onUserStatusChanged(callback: (data: { userId: string; status: string; lastSeen: string }) => void) {
-    this.socket?.on('userStatusChanged', callback);
+  onError(cb: (error: { message: string }) => void): void {
+    websocket.on('error', cb);
   }
 
-  onNewMessageNotification(callback: (data: { conversationId: string; message: WebSocketMessage & { conversation: any } }) => void) {
-    this.socket?.on('newMessageNotification', callback);
-  }
-
-  onJoinedConversation(callback: (data: { conversationId: string }) => void) {
-    this.socket?.on('joinedConversation', callback);
-  }
-
-  onLeftConversation(callback: (data: { conversationId: string }) => void) {
-    this.socket?.on('leftConversation', callback);
-  }
-
-  onError(callback: (error: { message: string }) => void) {
-    this.socket?.on('error', callback);
-  }
-
-  // Utility methods
   isConnected(): boolean {
-    return this.socket?.connected || false;
+    return websocket.isConnected();
   }
 
-  getConnectionStatus(): 'connected' | 'connecting' | 'disconnected' {
-    if (!this.socket) return 'disconnected';
-    if (this.socket.connected) return 'connected';
-    return 'connecting';
+  getConnectionStatus(): ConnectionStatus {
+    return websocket.getConnectionStatus();
+  }
+
+  get identity() {
+    return { token: this.token, userId: this.userId };
   }
 }
 
-// Create singleton instance
 export const websocketClient = new WebSocketClient();
 
-// Hook for React components
+/** Hook for components that only need connection state. */
 export function useWebSocket() {
   return {
     client: websocketClient,
-    isConnected: websocketClient.isConnected(),
-    connectionStatus: websocketClient.getConnectionStatus()
+    service: websocket,
+    isConnected: websocket.isConnected(),
+    connectionStatus: websocket.getConnectionStatus(),
   };
 }

@@ -5,7 +5,7 @@ import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
 import AnimatedCard from "@/components/AnimatedCard";
 import SEO from "@/components/PageSEO";
-import { api } from "@/lib/api";
+import { api, asList } from "@/lib/api";
 
 const diasporaLocations = [
   { city: "Port Harcourt", country: "Nigeria", members: "Largest concentration" },
@@ -67,7 +67,7 @@ const Diaspora = () => {
   const fetchProjects = async () => {
     try {
       const data = await api.getProjects();
-      setProjects(data as Project[]);
+      setProjects(asList<Project>(data));
     } catch (error) {
       console.error("Failed to fetch projects:", error);
     } finally {

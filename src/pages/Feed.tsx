@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { api } from '../lib/api';
+import { api, asList } from '../lib/api';
 import { formatDistanceToNow } from 'date-fns';
-import { Image, Smile } from 'lucide-react';
+import { Image, Smile, Loader2 } from 'lucide-react';
 
 interface Post {
   _id: string;
@@ -50,7 +50,7 @@ export default function Feed() {
   const loadFeed = async () => {
     try {
       const data = await api.getFeed(token!);
-      setPosts(data as Post[]);
+      setPosts(asList<Post>(data));
     } catch (err) {
       console.error('Failed to load feed:', err);
     } finally {
@@ -90,7 +90,7 @@ export default function Feed() {
     setUploadError('');
     try {
       const uploaded = await api.uploadMultipleFiles(token, files);
-      const urls = (uploaded as { urls: string[] }).urls;
+      const urls = uploaded.urls;
       const post = await api.createPost(token, {
         content: newPost || 'Shared a photo',
         media: urls,
