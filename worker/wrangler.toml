@@ -7,19 +7,19 @@ compatibility_flags = ["nodejs_compat"]
 # The Worker serves BOTH the built SPA (dist) and the JSON API
 # under /api. One deployment = one origin = zero CORS problems.
 # ---------------------------------------------------------------
-[assets]
-directory = "../dist"
-binding = "ASSETS"
-not_found_handling = "single-page-application"
-run_worker_first = true
+#[assets]
+ # directory = "../dist"
+ # binding = "ASSETS"
+ # not_found_handling = "single-page-application"
+ # run_worker_first = true
 
 # ---------------------------------------------------------------
 # Primary relational store — SQLite at the edge
 # ---------------------------------------------------------------
 [[d1_databases]]
 binding = "DB"
-database_name = "KE_DB"
-database_id = "REPLACE_WITH_REAL_D1_ID"
+database_name = "ke-town-db"
+database_id = "f97dd8e6-097b-442a-9912-c3d56844369b"
 migrations_dir = "migrations"
 
 # ---------------------------------------------------------------
@@ -34,7 +34,7 @@ bucket_name = "ke-town-media"
 # ---------------------------------------------------------------
 [[kv_namespaces]]
 binding = "CACHE"
-id = "REPLACE_WITH_REAL_KV_ID"
+id = "ea75ea70d62c473693e1d79cacdc7961"
 
 # ---------------------------------------------------------------
 # Cross-isolate realtime fan-out for chat + notifications
@@ -45,7 +45,7 @@ class_name = "RealtimeHub"
 
 [[migrations]]
 tag = "v1"
-new_classes = ["RealtimeHub"]
+new_sqlite_classes = ["RealtimeHub"]
 
 # ---------------------------------------------------------------
 # Cron: nightly engagement digests + cleanup
