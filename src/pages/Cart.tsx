@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { ShoppingCart, Trash2, Plus, Minus, CreditCard, ArrowRight, ShoppingBag } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { api, asList } from "@/lib/api";
 import { Link, useNavigate } from "react-router-dom";
 
 interface CartItem {
@@ -54,7 +54,7 @@ export default function Cart() {
     if (!token) return;
     try {
       const data = await api.getCart(token) as CartItem[];
-      setCartItems(data);
+      setCartItems(asList<CartItem>(data));
     } catch (err) {
       console.error("Failed to load cart:", err);
     } finally {

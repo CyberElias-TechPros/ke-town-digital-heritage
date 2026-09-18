@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { GrainOverlay } from "@/components/cinema/GrainOverlay";
+import { ScrollRail } from "@/components/cinema/ScrollRail";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index.tsx";
 import History from "./pages/History.tsx";
@@ -52,16 +55,58 @@ import keicon from "./assets/keicon.png";
 
 const queryClient = new QueryClient();
 
-const LoadingScreen = () => (
-  <div className="min-h-screen bg-primary flex flex-col items-center justify-center">
-    <img 
-      src={keicon} 
-      alt="KE Kingdom" 
-      className="w-20 h-20 rounded-full mb-6 animate-pulse"
-    />
-    <div className="w-8 h-8 border-2 border-secondary border-t-transparent rounded-full animate-spin" />
-  </div>
-);
+/**
+ * Opening curtain. Two panels part horizontally and the wordmark fades up,
+ * so the very first frame already reads as a designed moment rather than a
+ * spinner. Reduced-motion users get an immediate crossfade.
+ */
+const LoadingScreen = () => {
+  const reduce =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+  return (
+    <div className="fixed inset-0 z-[100] overflow-hidden bg-ke-deep">
+      {!reduce && (
+        <>
+          <motion.div
+            className="absolute inset-y-0 left-0 w-1/2 bg-ke-deep"
+            initial={{ x: 0 }}
+            animate={{ x: "-100%" }}
+            transition={{ duration: 0.9, delay: 0.75, ease: [0.76, 0, 0.24, 1] }}
+          />
+          <motion.div
+            className="absolute inset-y-0 right-0 w-1/2 bg-ke-deep"
+            initial={{ x: 0 }}
+            animate={{ x: "100%" }}
+            transition={{ duration: 0.9, delay: 0.75, ease: [0.76, 0, 0.24, 1] }}
+          />
+        </>
+      )}
+      <div className="ke-aurora relative flex h-full flex-col items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="relative z-10 flex flex-col items-center"
+        >
+          <img src={keicon} alt="KE Kingdom" className="mb-6 h-20 w-20 rounded-full" />
+          <p className="ke-eyebrow mb-3 text-secondary">Ke Kingdom</p>
+          <h1 className="ke-display text-3xl text-white">Digital Heritage</h1>
+          <div className="mt-7 h-px w-40 overflow-hidden bg-white/15">
+            <motion.div
+              className="h-px origin-left"
+              style={{ background: "var(--gradient-gold)" }}
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+            />
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+};
 
 // ScrollToTop component - scrolls to top of page on route change
 const ScrollToTop = () => {
@@ -93,6 +138,8 @@ const App = () => {
           <Toaster />
           <Sonner />
           <ScrollToTop />
+          <ScrollRail />
+          <GrainOverlay />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Index />} />

@@ -8,10 +8,12 @@ import {
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { api, asList } from "@/lib/api";
 
 const Profile = () => {
   const { user: currentUser, token, isAuthenticated, isLoading: authLoading, updateUser } = useAuth();
+  /** Local alias so the rest of the file (and the JSX below) can read `user`. */
+  const user = currentUser;
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   
@@ -95,7 +97,7 @@ const Profile = () => {
       const profile = await api.getShopProfile(token);
       setShopData(profile);
       const products = await api.getMyProducts(token);
-      setMyProducts(products as any[]);
+      setMyProducts(asList(products));
       setShopForm({
         shopName: profile.shopName || "",
         shopDescription: profile.shopDescription || "",
@@ -111,8 +113,8 @@ const Profile = () => {
     try {
       const orders = await api.getMyOrders(token);
       const sales = await api.getMySales(token);
-      setMyOrders(orders as any[]);
-      setMySales(sales as any[]);
+      setMyOrders(asList(orders));
+      setMySales(asList(sales));
     } catch (err) {
       console.error(err);
     }

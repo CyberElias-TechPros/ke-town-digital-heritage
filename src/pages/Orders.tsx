@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Package, MapPin, Clock, Loader2, Check, Truck } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "../lib/api";
+import { api, asList } from "../lib/api";
 import { formatDistanceToNow } from "date-fns";
 
 interface Order {
@@ -44,7 +44,7 @@ export default function Orders() {
     setLoading(true);
     try {
       const data = await api.getOrders(token);
-      setOrders(data as Order[]);
+      setOrders(asList<Order>(data));
     } catch (err) {
       console.error("Failed to load orders:", err);
     } finally {

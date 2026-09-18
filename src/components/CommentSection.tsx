@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { MessageCircle, Send, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { api, asList } from "@/lib/api";
 
 interface Comment {
   _id: string;
@@ -35,7 +35,7 @@ export default function CommentSection({ targetType, targetId, onCommentCountCha
     setLoading(true);
     try {
       const data: Comment[] = await api.getComments(targetType, targetId);
-      setComments(data);
+      setComments(asList<Comment>(data));
       onCommentCountChange?.(data.length);
     } catch (error) {
       console.error('Failed to load comments:', error);

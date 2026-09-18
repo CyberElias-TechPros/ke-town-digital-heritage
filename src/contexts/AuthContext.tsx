@@ -3,6 +3,8 @@ import { api, User } from '../lib/api';
 
 interface ExtendedUser extends User {
   username?: string;
+  /** Set by the Worker on /auth/me — drives the "Member since" panel. */
+  createdAt?: string;
   accountStatus?: 'active' | 'suspended' | 'deactivated';
   emailVerified?: boolean;
   canManageUsers?: boolean;

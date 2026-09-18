@@ -5,7 +5,7 @@ import {
   X, AlertCircle, CheckCircle, Clock, Globe, Volume2,
   Music, BookOpen, Sparkles, Hammer, Utensils, Heart, Tag
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, asList } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Recording {
@@ -115,7 +115,7 @@ export function CulturalRecording() {
   const loadRecordings = async () => {
     try {
       const data = await api.getElderStories();
-      setRecordings(data as Recording[]);
+      setRecordings(asList<Recording>(data));
     } catch (error) {
       console.error('Failed to load recordings:', error);
     }

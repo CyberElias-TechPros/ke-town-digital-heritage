@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Search as SearchIcon, X, Loader2, User, MessageCircle, Store, Calendar, Hash } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "../lib/api";
+import { api, asList } from "../lib/api";
 import { AdvancedSearch } from "@/components/AdvancedSearch";
 
 interface SearchResult {
@@ -64,7 +64,7 @@ export default function Search() {
     setLoading(true);
     try {
       const data = await api.search(q, activeFilter === "all" ? undefined : activeFilter);
-      setResults(data as SearchResult[]);
+      setResults(asList<SearchResult>(data));
     } catch (err) {
       console.error("Search failed:", err);
       setSearchError('Search failed. Please try again.');

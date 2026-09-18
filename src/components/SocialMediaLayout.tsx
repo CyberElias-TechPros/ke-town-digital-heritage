@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { 
   Home, Compass, Bell, MessageCircle, Users, Calendar, ShoppingBag, 
-  Search, Settings, LogOut, Plus, Image, Video, Bookmark, Shield, ShoppingCart, Star, X, Globe, CalendarDays
+  Search, Settings, LogOut, Plus, Image, Video, Bookmark, Shield, ShoppingCart, Star, X, Globe, CalendarDays, Loader2
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
@@ -245,23 +245,62 @@ interface CreatePostModalProps {
 const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
   const { user, token } = useAuth();
   const queryClient = useQueryClient();
+  const [content, setContent] = useState("");
+  const [visibility, setVisibility] = useState<"community" | "public" | "private">("community");
+  const [media, setMedia] = useState<{ type: string; url: string }[]>([]);
+  const [posting, setPosting] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [toast, setToast] = useState<{ text: string; type: "info" | "error" } | null>(null);
+  const fileInput = useRef<HTMLInputElement | null>(null);
 
   const showToast = (text: string, type: "info" | "error" = "info") => {
     setToast({ text, type });
     setTimeout(() => setToast(null), 3000);
   };
 
+  // Reset between openings so a cancelled draft never leaks into the next post.
+  useEffect(() => {
+    if (!isOpen) {
+      setContent("");
+      setMedia([]);
+      setVisibility("community");
+      setPosting(false);
+      setUploading(false);
+    }
+  }, [isOpen]);
+
+  const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (!files.length || !token) return;
+    setUploading(true);
+    try {
+      const uploaded = await api.uploadMultipleFiles(token, files);
+      const list = uploaded.files.map((f) => ({
+        type: (f.mimeType ?? f.type ?? "image").startsWith("video") ? "video" : "image",
+        url: f.url,
+      }));
+      setMedia((prev) => [...prev, ...list].slice(0, 8));
+      showToast("Media attached");
+    } catch (err: any) {
+      showToast(err?.message ?? "Upload failed. Please try again.", "error");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handlePost = async () => {
-    if (!content.trim() || !token) return;
+    if ((!content.trim() && media.length === 0) || !token) return;
     setPosting(true);
     try {
-      await api.createPost(token, { content, visibility: "community" });
+      await api.createPost(token, { content, visibility, media });
       setContent("");
+      setMedia([]);
       onClose();
-      queryClient.invalidateQueries({ queryKey: ['/posts'] });
-    } catch (err) {
-      console.error("Failed to post:", err);
+      queryClient.invalidateQueries({ queryKey: ["/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/posts/feed"] });
+    } catch (err: any) {
+      showToast(err?.message ?? "Could not publish your post.", "error");
     } finally {
       setPosting(false);
     }
@@ -303,10 +342,14 @@ const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
               )}
               <div className="flex-1">
                 <p className="font-medium text-sm">{user?.fullName}</p>
-                <select className="text-xs text-gray-500 mt-1 bg-transparent">
-                  <option>Community</option>
-                  <option>Public</option>
-                  <option>Friends</option>
+                <select
+                  value={visibility}
+                  onChange={(e) => setVisibility(e.target.value as typeof visibility)}
+                  className="text-xs text-gray-500 mt-1 bg-transparent dark:bg-gray-900"
+                >
+                  <option value="community">Community</option>
+                  <option value="public">Public</option>
+                  <option value="private">Only me</option>
                 </select>
               </div>
             </div>
@@ -319,30 +362,61 @@ const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
               rows={5}
             />
             
+            {media.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 mt-4">
+                {media.map((m, i) => (
+                  <div key={`${m.url}-${i}`} className="relative rounded-lg overflow-hidden">
+                    <img src={m.url} alt="" className="w-full h-24 object-cover" />
+                    <button
+                      onClick={() => setMedia((prev) => prev.filter((_, idx) => idx !== i))}
+                      className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full"
+                      aria-label="Remove media"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <input
+              ref={fileInput}
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              className="hidden"
+              onChange={handleFiles}
+            />
+
             <div className="flex items-center gap-2 mt-4">
-              <button className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors">
-                <Image className="w-5 h-5" />
+              <button
+                type="button"
+                onClick={() => fileInput.current?.click()}
+                disabled={uploading}
+                className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50"
+                title={uploading ? "Uploading…" : "Add photos or video"}
+              >
+                {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Image className="w-5 h-5" />}
               </button>
-              <button className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors">
-                <Video className="w-5 h-5" />
-              </button>
-              <button className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors">
-                <Globe className="w-5 h-5" />
-              </button>
-              <button className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors">
-                <Calendar className="w-5 h-5" />
-              </button>
+              <span className="text-xs text-gray-500">
+                {uploading ? "Uploading…" : media.length ? `${media.length} attached` : "Add up to 8 photos"}
+              </span>
             </div>
           </div>
           
           <div className="p-4 border-t border-gray-200 dark:border-gray-800">
             <button
               onClick={handlePost}
-              disabled={!content.trim() || posting}
+              disabled={(!content.trim() && media.length === 0) || posting || uploading}
               className="w-full py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
               {posting ? "Posting..." : "Post"}
             </button>
+            {toast && (
+              <p className={`mt-2 text-xs ${toast.type === "error" ? "text-red-500" : "text-primary"}`}>
+                {toast.text}
+              </p>
+            )}
           </div>
         </motion.div>
       </motion.div>

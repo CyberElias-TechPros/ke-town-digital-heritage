@@ -5,8 +5,17 @@ import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
 import SEO from "@/components/PageSEO";
 import envImg from "@/assets/environment-mangrove.jpg";
-import { api } from "@/lib/api";
+import { api, asList } from "@/lib/api";
 import AnimatedCard from "@/components/AnimatedCard";
+
+/** Reports arrive with a structured place; tolerate the legacy plain string too. */
+const placeName = (
+  location: string | { name?: string; latitude?: number | null; longitude?: number | null } | undefined,
+): string => {
+  if (!location) return "";
+  if (typeof location === "string") return location;
+  return location.name ?? "";
+};
 
 const impactStats = [
   { label: "Fish Species at Risk", value: "270+", icon: Fish },
@@ -26,7 +35,8 @@ interface EnvironmentReport {
   title: string;
   description: string;
   year?: string;
-  location: string;
+  /** The Worker stores a place object; older records were a plain string. */
+  location: string | { name?: string; latitude?: number | null; longitude?: number | null };
   impact?: string;
   status: string;
   sources?: string[];
@@ -57,7 +67,7 @@ const Environment = () => {
   const fetchReports = async () => {
     try {
       const data = await api.getEnvironmentReports();
-      setReports(data as EnvironmentReport[]);
+      setReports(asList<EnvironmentReport>(data));
     } catch (error) {
       console.error("Failed to fetch environment reports:", error);
     } finally {
@@ -176,7 +186,7 @@ const Environment = () => {
                       {report.year && <span className="text-xs font-ui text-muted-foreground">{report.year}</span>}
                     </div>
                     <h3 className="font-display text-lg font-semibold text-foreground mb-2">{report.title}</h3>
-                    <p className="text-sm text-muted-foreground font-ui mb-2">{report.location}</p>
+                    <p className="text-sm text-muted-foreground font-ui mb-2">{placeName(report.location)}</p>
                     <p className="text-sm text-muted-foreground font-body leading-relaxed">{report.description}</p>
                     {report.impact && (
                       <p className="text-sm text-destructive font-body mt-2">

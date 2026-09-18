@@ -24,14 +24,29 @@ export interface User {
   verified?: boolean;
 }
 
-const API_SERVERS = import.meta.env.VITE_API_SERVERS || 
-  (import.meta.env.MODE === 'production' 
-    ? 'https://ke-town-digital-heritage-production.up.railway.app,https://kesrv.freegameplay.site'
-    : 'https://ke-town-digital-heritage-production.up.railway.app,https://kesrv.freegameplay.site');
+/**
+ * API origin resolution.
+ *
+ * The Cloudflare Worker serves the SPA *and* the JSON API from one origin, so
+ * the default is the current origin (an empty string). In local development the
+ * Vite dev server proxies /api to `wrangler dev`, which is also same-origin from
+ * the browser's point of view — so no CORS is involved in either environment.
+ *
+ * VITE_API_SERVERS can still list extra origins (comma separated); they are
+ * used as automatic failover targets if the primary origin is unreachable.
+ */
+const CONFIGURED_SERVERS = (import.meta.env.VITE_API_SERVERS as string | undefined)
+  ?.split(',')
+  .map((s) => s.trim())
+  .filter(Boolean) ?? [];
 
-console.log('API Servers:', API_SERVERS);
+/** '' means "same origin" — resolved against window.location at call time. */
+const API_ORIGINS: string[] = ['', ...CONFIGURED_SERVERS];
+const API_SERVERS = API_ORIGINS.join(',');
 
-const API_BASE = API_SERVERS.split(',')[0] + '/api';
+/** Absolute base used for the few direct `fetch` calls (uploads). */
+export const resolveApiBase = (): string => (API_ORIGINS[0] || '') + '/api';
+const API_BASE = resolveApiBase();
 
 let workingServer: string | null = null;
 let serverHealthStatus: Map<string, boolean> = new Map();
@@ -71,12 +86,41 @@ async function clearServerCache() {
   workingServer = null;
 }
 
+export interface UploadedFile {
+  _id: string;
+  id?: string;
+  url: string;
+  key?: string;
+  filename?: string;
+  mimeType?: string;
+  size?: number;
+  type?: string;
+}
+
 interface RequestOptions {
   method?: string;
   body?: unknown;
   headers?: Record<string, string>;
   token?: string | null;
   timeout?: number;
+}
+
+/**
+ * Normalises the Worker's collection envelopes into a plain array.
+ *
+ * List endpoints answer with a single descriptive wrapper — `{ news: [...] }`,
+ * `{ stories: [...] }`, `{ events: [...] }` — which keeps the JSON readable but
+ * crashes any page that calls `.map()` on the response directly. Pass an
+ * explicit `key` when an endpoint returns several arrays and you want one of
+ * them; otherwise the first array-valued property wins.
+ */
+export function asList<T = any>(data: unknown, key?: string): T[] {
+  if (Array.isArray(data)) return data as T[];
+  if (!data || typeof data !== "object") return [];
+  const record = data as Record<string, unknown>;
+  if (key && Array.isArray(record[key])) return record[key] as T[];
+  const found = Object.values(record).find((v) => Array.isArray(v));
+  return (found as T[]) ?? [];
 }
 
 class ApiClient {
@@ -86,7 +130,7 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
-  private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
+  private async request<T = any>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const servers = API_SERVERS.split(',').map(s => s.trim());
     let lastError: Error | null = null;
     const timeout = options.timeout || 10000;
@@ -95,13 +139,18 @@ class ApiClient {
       const server = servers[i];
       const { method = 'GET', body, headers = {}, token } = options;
 
+      // AbortSignal.timeout() only exists in newer engines (Chrome 103+,
+      // Safari 16.4+). Fall back to a manual controller so a slow network on
+      // an older device degrades to a proper error instead of a crash.
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeout);
       const config: RequestInit = {
         method,
         headers: {
           'Content-Type': 'application/json',
           ...headers,
         },
-        signal: AbortSignal.timeout(timeout),
+        signal: controller.signal,
       };
 
       if (token) {
@@ -117,29 +166,27 @@ class ApiClient {
 
       try {
         const url = `${server}/api${endpoint}`;
-        console.log(`Trying ${url}...`);
         const response = await fetch(url, config);
-        console.log(`Response from ${server}:`, response.status);
+        if (import.meta.env.DEV) console.debug(`[api] ${method} ${url} → ${response.status}`);
 
         if (response.ok) {
           workingServer = server;
           serverHealthStatus.set(server, true);
-          console.log(`Success using ${server}`);
           return response.json();
         }
 
         const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
         const errMsg = errorData.error || `HTTP ${response.status}`;
-        console.error(`${server} returned ${response.status}: ${errMsg}`);
         throw new Error(errMsg);
       } catch (err: unknown) {
         const error = err as Error;
-        console.error(`Server ${server} failed:`, error.message);
         lastError = error;
         serverHealthStatus.set(server, false);
-        if (i < servers.length - 1) {
-          console.warn(`Trying next server...`);
+        if (import.meta.env.DEV) {
+          console.warn(`[api] ${method} ${endpoint} on ${server || 'same-origin'} failed:`, error.message);
         }
+      } finally {
+        clearTimeout(timer);
       }
     }
 
@@ -409,15 +456,20 @@ class ApiClient {
 
   
   // Upload
-  async uploadFile(token: string, file: File) {
+  /**
+   * Uploads one file to R2. Returns the stored file descriptor, flattened so
+   * callers can read `result.url` directly.
+   */
+  async uploadFile(
+    token: string,
+    file: File,
+  ): Promise<UploadedFile & { message?: string; file?: UploadedFile }> {
     const formData = new FormData();
     formData.append('file', file);
 
     const response = await fetch(`${this.baseUrl}/upload/single`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
       body: formData,
     });
 
@@ -426,18 +478,25 @@ class ApiClient {
       throw new Error(error.error || 'Upload failed');
     }
 
-    return response.json();
+    const data = await response.json();
+    return { ...(data.file ?? data), ...data };
   }
 
-  async uploadMultipleFiles(token: string, files: File[]) {
+  /**
+   * Uploads several files in one request. The Worker answers with
+   * `{ message, files: [...] }`; this normalises it to always expose both the
+   * descriptor list and a bare `urls` array, whichever a caller wants.
+   */
+  async uploadMultipleFiles(
+    token: string,
+    files: File[],
+  ): Promise<{ files: UploadedFile[]; urls: string[]; count: number; message?: string }> {
     const formData = new FormData();
-    files.forEach(file => formData.append('files', file));
+    files.forEach((file) => formData.append('files', file));
 
     const response = await fetch(`${this.baseUrl}/upload/multiple`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
       body: formData,
     });
 
@@ -446,7 +505,14 @@ class ApiClient {
       throw new Error(error.error || 'Upload failed');
     }
 
-    return response.json();
+    const data = await response.json();
+    const list: UploadedFile[] = Array.isArray(data) ? data : data.files ?? data.uploaded ?? [];
+    return {
+      files: list,
+      urls: list.map((f) => f.url),
+      count: list.length,
+      message: data.message,
+    };
   }
 
   // Donations
@@ -692,10 +758,35 @@ class ApiClient {
   }
 
   
-  async createPost(token: string, data: { content: string; media?: unknown; location?: unknown; feeling?: string; privacy?: string; visibility?: string }) {
+  /**
+   * Creates a post. Accepts both the current shape (`media`, `visibility`) and
+   * the older one still used by a couple of pages (`imageUrl`, `isPublic`),
+   * normalising to what the Worker persists.
+   */
+  async createPost(
+    token: string,
+    data: {
+      content: string;
+      media?: ({ type?: string; url: string } | string)[];
+      imageUrl?: string;
+      imageUrls?: string[];
+      location?: string;
+      feeling?: string;
+      privacy?: string;
+      visibility?: string;
+      isPublic?: boolean;
+    },
+  ) {
+    const media: { type: string; url: string }[] = (data.media ?? []).map((m) =>
+      typeof m === 'string' ? { type: 'image', url: m } : { type: m.type ?? 'image', url: m.url },
+    );
+    for (const url of [data.imageUrl, ...(data.imageUrls ?? [])]) {
+      if (url && !media.some((m) => m.url === url)) media.push({ type: 'image', url });
+    }
+    const visibility = data.visibility ?? data.privacy ?? (data.isPublic === false ? 'private' : 'community');
     return this.request('/posts', {
       method: 'POST',
-      body: data,
+      body: { content: data.content, media, location: data.location, feeling: data.feeling, visibility },
       token,
     });
   }
@@ -1028,8 +1119,9 @@ class ApiClient {
   }
 
   // Elder Stories API methods
-  async getElderStories() {
-    return this.request('/elder-stories');
+  async getElderStories(category?: string) {
+    const query = category ? `?category=${encodeURIComponent(category)}` : '';
+    return this.request(`/elder-stories${query}`);
   }
 
   async getElderStory(id: string) {
@@ -1336,6 +1428,324 @@ class ApiClient {
       method: 'DELETE',
       token,
     });
+  }
+
+  // ------------------------------------------------------------------
+  // Cart
+  // ------------------------------------------------------------------
+  async addToCart(token: string, productId: string, quantity = 1) {
+    return this.request('/cart/add', {
+      method: 'POST',
+      body: { productId, quantity },
+      token,
+    });
+  }
+
+  async removeFromCart(token: string, productId: string) {
+    return this.request(`/cart/${productId}`, { method: 'DELETE', token });
+  }
+
+  async clearCart(token: string) {
+    return this.request('/cart', { method: 'DELETE', token });
+  }
+
+  async getCartSummary(token: string) {
+    return this.request('/cart/summary', { token });
+  }
+
+  // ------------------------------------------------------------------
+  // Orders
+  // ------------------------------------------------------------------
+  async createOrder(
+    token: string,
+    data: {
+      items?: { product: string; quantity: number }[];
+      addressId?: string;
+      shippingAddress?: any;
+      paymentMethod?: string;
+      deliveryMethod?: string;
+      note?: string;
+    },
+  ) {
+    return this.request('/orders/checkout', { method: 'POST', body: data, token });
+  }
+
+  async getMyOrders(token: string) {
+    return this.request('/orders', { token });
+  }
+
+  async getMySales(token: string) {
+    return this.request('/orders/seller', { token });
+  }
+
+  async getOrderStats(token: string) {
+    return this.request('/orders/stats', { token });
+  }
+
+  async updateOrderStatus(token: string, orderId: string, status: string) {
+    return this.request(`/orders/${orderId}/status`, { method: 'PUT', body: { status }, token });
+  }
+
+  async addOrderTracking(token: string, orderId: string, tracking: string) {
+    return this.request(`/orders/${orderId}/tracking`, { method: 'PUT', body: { tracking }, token });
+  }
+
+  // ------------------------------------------------------------------
+  // Marketplace
+  // ------------------------------------------------------------------
+  async getProducts(category?: string, search?: string, sort?: string) {
+    const params = new URLSearchParams();
+    if (category && category !== 'all') params.append('category', category);
+    if (search) params.append('search', search);
+    if (sort) params.append('sort', sort);
+    const query = params.toString();
+    return this.request(`/marketplace${query ? `?${query}` : ''}`);
+  }
+
+  async createListing(token: string, data: Record<string, unknown>) {
+    return this.request('/marketplace', { method: 'POST', body: data, token });
+  }
+
+  async unlikeProduct(token: string, id: string) {
+    return this.request(`/marketplace/${id}/like`, { method: 'DELETE', token });
+  }
+
+  async getProductReviews(productId: string) {
+    return this.request(`/reviews/product/${productId}`);
+  }
+
+  async createReview(
+    token: string,
+    data: { targetType: string; targetId: string; rating: number; title?: string; body?: string },
+  ) {
+    return this.request('/reviews', { method: 'POST', body: data, token });
+  }
+
+  // ------------------------------------------------------------------
+  // Shop / seller onboarding
+  // ------------------------------------------------------------------
+  async becomeSeller(token: string, shopName: string, shopDescription: string) {
+    return this.request('/shop', { method: 'POST', body: { shopName, shopDescription }, token });
+  }
+
+  async getShopProfile(token: string) {
+    return this.request('/shop/me', { token });
+  }
+
+  async getShopByHandle(handle: string) {
+    return this.request(`/shop/${handle}`);
+  }
+
+  // ------------------------------------------------------------------
+  // Groups
+  // ------------------------------------------------------------------
+  async getGroups(category?: string, search?: string) {
+    const params = new URLSearchParams();
+    if (category && category !== 'all') params.append('category', category);
+    if (search) params.append('search', search);
+    const query = params.toString();
+    return this.request(`/groups${query ? `?${query}` : ''}`);
+  }
+
+  async getGroup(id: string, token?: string) {
+    return this.request(`/groups/${id}`, { token });
+  }
+
+  async getMyGroups(token: string) {
+    return this.request('/groups/my', { token });
+  }
+
+  async createGroup(
+    token: string,
+    data: { name: string; description: string; privacy?: string; category?: string; joinMethod?: string; coverImage?: string },
+  ) {
+    return this.request('/groups', { method: 'POST', body: data, token });
+  }
+
+  async updateGroup(token: string, id: string, data: Record<string, unknown>) {
+    return this.request(`/groups/${id}`, { method: 'PUT', body: data, token });
+  }
+
+  async deleteGroup(token: string, id: string) {
+    return this.request(`/groups/${id}`, { method: 'DELETE', token });
+  }
+
+  async joinGroup(token: string, groupId: string) {
+    return this.request(`/groups/${groupId}/join`, { method: 'POST', token });
+  }
+
+  async leaveGroup(token: string, groupId: string) {
+    return this.request(`/groups/${groupId}/leave`, { method: 'POST', token });
+  }
+
+  async getGroupMembers(groupId: string, token?: string) {
+    return this.request(`/groups/${groupId}/members`, { token });
+  }
+
+  async getGroupPosts(groupId: string, token?: string) {
+    return this.request(`/groups/${groupId}/posts`, { token });
+  }
+
+  async getGroupJoinRequests(token: string, groupId: string) {
+    return this.request(`/groups/${groupId}/requests`, { token });
+  }
+
+  async respondToJoinRequest(token: string, groupId: string, userId: string, decision: 'approve' | 'reject') {
+    return this.request(`/groups/${groupId}/requests/${userId}/${decision}`, { method: 'POST', token });
+  }
+
+  // ------------------------------------------------------------------
+  // Events / RSVP
+  // ------------------------------------------------------------------
+  async rsvpEvent(token: string, eventId: string, status: string = 'going') {
+    return this.request(`/events/${eventId}/rsvp`, { method: 'POST', body: { status }, token });
+  }
+
+  async cancelRsvp(token: string, eventId: string) {
+    return this.request(`/events/${eventId}/rsvp`, { method: 'DELETE', token });
+  }
+
+  async getEventAttendees(eventId: string) {
+    return this.request(`/events/${eventId}/attendees`);
+  }
+
+  // ------------------------------------------------------------------
+  // Saved posts
+  // ------------------------------------------------------------------
+  async getSavedPosts(token: string) {
+    return this.request('/posts/saved', { token });
+  }
+
+  async savePost(token: string, postId: string) {
+    return this.request(`/posts/${postId}/save`, { method: 'POST', token });
+  }
+
+  async unsavePost(token: string, postId: string) {
+    return this.request(`/posts/${postId}/save`, { method: 'DELETE', token });
+  }
+
+  // ------------------------------------------------------------------
+  // Notifications
+  // ------------------------------------------------------------------
+  async getNotifications(token: string) {
+    return this.request('/notifications', { token });
+  }
+
+  async markNotificationRead(token: string, notificationId: string) {
+    return this.request(`/notifications/${notificationId}/read`, { method: 'POST', token });
+  }
+
+  async markAllNotificationsRead(token: string) {
+    return this.request('/notifications/read-all', { method: 'POST', token });
+  }
+
+  async deleteNotification(token: string, notificationId: string) {
+    return this.request(`/notifications/${notificationId}`, { method: 'DELETE', token });
+  }
+
+  async getNotificationPreferences(token: string) {
+    return this.request('/notifications/preferences', { token });
+  }
+
+  async updateNotificationPreferences(token: string, preferences: Record<string, boolean>) {
+    return this.request('/notifications/preferences', { method: 'PUT', body: preferences, token });
+  }
+
+  // ------------------------------------------------------------------
+  // Profiles
+  // ------------------------------------------------------------------
+  async getUserProfile(username: string) {
+    return this.request(`/auth/users/by-username/${encodeURIComponent(username)}`);
+  }
+
+  async getUserById(userId: string) {
+    return this.request(`/users/${userId}`);
+  }
+
+  async blockUser(token: string, userId: string) {
+    return this.request(`/users/${userId}/block`, { method: 'POST', token });
+  }
+
+  async unblockUser(token: string, userId: string) {
+    return this.request(`/users/${userId}/unblock`, { method: 'POST', token });
+  }
+
+  // ------------------------------------------------------------------
+  // Civic engagement
+  // ------------------------------------------------------------------
+  async getPolls() {
+    return this.request('/polls');
+  }
+
+  async voteInPoll(token: string, pollId: string, optionKey: string | string[]) {
+    return this.request(`/polls/${pollId}/vote`, { method: 'POST', body: { optionKey }, token });
+  }
+
+  async getPetitions() {
+    return this.request('/petitions');
+  }
+
+  async createPetition(token: string, data: Record<string, unknown>) {
+    return this.request('/petitions', { method: 'POST', body: data, token });
+  }
+
+  async signPetition(token: string, petitionId: string, comment?: string) {
+    return this.request(`/petitions/${petitionId}/sign`, { method: 'POST', body: { comment }, token });
+  }
+
+  async getCampaigns() {
+    return this.request('/campaigns');
+  }
+
+  async fileReport(
+    token: string,
+    data: { targetType: string; targetId: string; reason: string; details?: string },
+  ) {
+    return this.request('/reports', { method: 'POST', body: data, token });
+  }
+
+  async getModerationQueue(token: string, status = 'pending') {
+    return this.request(`/reports?status=${status}`, { token });
+  }
+
+  async resolveReport(token: string, reportId: string, resolution: string) {
+    return this.request(`/reports/${reportId}/resolve`, { method: 'PUT', body: { resolution }, token });
+  }
+
+  // ------------------------------------------------------------------
+  // Skills, jobs, volunteering
+  // ------------------------------------------------------------------
+  async applyToJob(token: string, jobId: string, data: { coverLetter?: string; resumeUrl?: string }) {
+    return this.request(`/jobs/${jobId}/apply`, { method: 'POST', body: data, token });
+  }
+
+  async getJobApplications(token: string, jobId: string) {
+    return this.request(`/jobs/${jobId}/applications`, { token });
+  }
+
+  async respondToMentorship(token: string, requestId: string, status: 'accepted' | 'declined') {
+    return this.request(`/mentorship/requests/${requestId}`, { method: 'PUT', body: { status }, token });
+  }
+
+  async getVolunteerOpportunities(category?: string) {
+    const query = category && category !== 'all' ? `?category=${category}` : '';
+    return this.request(`/volunteer${query}`);
+  }
+
+  async applyToVolunteer(token: string, opportunityId: string, motivation?: string) {
+    return this.request(`/volunteer/${opportunityId}/apply`, { method: 'POST', body: { motivation }, token });
+  }
+
+  // ------------------------------------------------------------------
+  // Phrasebook & wallet extras
+  // ------------------------------------------------------------------
+  async getPhrases(category?: string) {
+    const query = category && category !== 'all' ? `?category=${category}` : '';
+    return this.request(`/phrases${query}`);
+  }
+
+  async getWithdrawals(token: string) {
+    return this.request('/payments/withdrawals', { token });
   }
 }
 

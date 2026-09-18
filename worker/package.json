@@ -1,0 +1,28 @@
+{
+  "name": "ke-town-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KE Town Digital Heritage — Cloudflare Workers API (D1 + R2 + KV + Durable Objects)",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 8787 --ip 0.0.0.0",
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create KE_DB",
+    "db:migrate:local": "wrangler d1 migrations apply KE_DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply KE_DB --remote",
+    "db:seed:local": "node scripts/seed.mjs --local",
+    "db:seed:remote": "node scripts/seed.mjs --remote",
+    "r2:create": "wrangler r2 bucket create ke-town-media",
+    "kv:create": "wrangler kv namespace create CACHE",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "node tests/e2e.mjs"
+  },
+  "dependencies": {
+    "hono": "^4.6.14"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250109.0",
+    "typescript": "^5.8.3",
+    "wrangler": "^3.99.0"
+  }
+}

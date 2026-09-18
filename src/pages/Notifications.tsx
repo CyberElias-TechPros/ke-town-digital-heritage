@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Bell, Heart, MessageCircle, UserPlus, ShoppingBag, Calendar, Check, Trash2, RefreshCw } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { api, asList } from "@/lib/api";
 
 interface Notification {
   _id: string;
@@ -36,7 +36,7 @@ export default function Notifications() {
     if (!token) return;
     try {
       const data = await api.getNotifications(token) as Notification[];
-      setNotifications(data);
+      setNotifications(asList(data));
     } catch (err) {
       console.error("Failed to load notifications:", err);
     } finally {

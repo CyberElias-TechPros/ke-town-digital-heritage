@@ -33,3 +33,7 @@ server/uploads/
 *.njsproj
 *.sln
 *.sw?
+
+# Cloudflare local dev secrets
+worker/.dev.vars
+worker/.wrangler/

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Users, Search, Plus, Settings, UserPlus, MessageCircle, Calendar, Image, Lock, Globe } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { api, asList } from "@/lib/api";
 import { Link, useNavigate } from "react-router-dom";
 
 interface Group {
@@ -34,7 +34,7 @@ const groupCategories = [
 export default function Groups() {
   const { user, token, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [groups, setGroups] = useState<Group[]>(myGroups as Group[]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -57,7 +57,7 @@ export default function Groups() {
     try {
       const category = selectedCategory === "all" ? undefined : selectedCategory;
       const data = await api.getGroups(category, searchQuery || undefined) as { groups: Group[] };
-      setGroups(data.groups || []);
+      setGroups(asList<Group>(data, 'groups'));
     } catch (err) {
       console.error("Failed to load groups:", err);
     } finally {
@@ -69,7 +69,7 @@ export default function Groups() {
     if (!token) return;
     try {
       const data = await api.getMyGroups(token) as Group[];
-      setMyGroups(data);
+      setMyGroups(asList<Group>(data));
     } catch (err) {
       console.error("Failed to load my groups:", err);
     }

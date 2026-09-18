@@ -7,7 +7,7 @@ interface MapLocation {
   lat: number;
   lng: number;
   description?: string;
-  type?: "Kingdom" | "landmark" | "waterway" | "festival";
+  type?: "Kingdom" | "town" | "landmark" | "waterway" | "festival";
 }
 
 interface InteractiveMapProps {
@@ -89,6 +89,8 @@ const InteractiveMap = ({
         return "bg-secondary text-secondary-foreground";
       case "landmark":
         return "bg-accent text-accent-foreground";
+      case "town":
+        return "bg-primary text-primary-foreground";
       case "waterway":
         return "bg-ke-water text-white";
       case "festival":

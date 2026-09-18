@@ -5,6 +5,8 @@ import { ArrowLeft, Heart, Share2, MapPin, Calendar, Clock, Users, Globe, Link a
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "../lib/api";
+import InlineNotice from "@/components/InlineNotice";
+import { useNotice } from "@/hooks/useNotice";
 import { formatDistanceToNow, format } from "date-fns";
 
 interface EventData {
@@ -27,6 +29,7 @@ interface EventData {
 }
 
 export default function EventDetail() {
+  const { notice, notify, clear } = useNotice();
   const { id } = useParams<{ id: string }>();
   const { user, token, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -77,14 +80,14 @@ export default function EventDetail() {
         setRsvpStatus(status);
       }
       loadEvent(id);
-    } catch (err) {
-      console.error("Failed to RSVP:", err);
+    } catch (err: any) {
+      notify(err?.message ?? "We could not update your RSVP. Please try again.", "error");
     } finally {
       setRsvping(false);
     }
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     if (navigator.share) {
       navigator.share({
         title: event?.name,
@@ -92,8 +95,8 @@ export default function EventDetail() {
         url: window.location.href,
       });
     } else {
-      navigator.clipboard.writeText(window.location.href);
-      alert("Link copied to clipboard!");
+      await navigator.clipboard.writeText(window.location.href).catch(() => undefined);
+      notify("Event link copied to your clipboard.", "success");
     }
   };
 
@@ -149,6 +152,9 @@ export default function EventDetail() {
   return (
     <Layout>
       <div className="min-h-screen pt-20 pb-20">
+        <div className="max-w-5xl mx-auto px-4 pt-3">
+          <InlineNotice notice={notice} onDismiss={clear} />
+        </div>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           {/* Header */}
           <div className="sticky top-20 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between">
