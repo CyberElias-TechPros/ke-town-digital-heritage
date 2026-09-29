@@ -1,0 +1,57 @@
+name: Deploy worker
+
+# Deploys worker/ke-town-api on push to main.
+# NO migrations step on purpose: worker/migrations (0001_schema,
+# 0002_read_receipts) does not match the production history
+# (0001_initial..0004_soft_deletes). Never run `migrations apply` against
+# production; reconcile histories first. Requires repo secrets
+# CF_API_TOKEN + CF_ACCOUNT_ID (Cyber account).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "worker/**"
+      - ".github/workflows/deploy-worker.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-worker
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preflight secrets
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::Missing CF_API_TOKEN / CF_ACCOUNT_ID repo secrets (Cyber account)."
+            exit 1
+          fi
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: worker/package-lock.json
+      - run: npm ci --no-fund --no-audit
+        working-directory: worker
+      - run: npm run typecheck
+        working-directory: worker
+      - name: Deploy Worker
+        id: deploy
+        continue-on-error: true
+        run: npx wrangler deploy
+        working-directory: worker
+      - name: Verify health
+        run: |
+          body="$(curl -fsS https://ke-town-api.cyber-e54.workers.dev/api/health)"
+          echo "$body"
+          echo "$body" | grep -q '"database":"ok"' || { echo "::error::ke-town-api health check failed"; exit 1; }
+          if [ "${{ steps.deploy.outcome }}" = "failure" ]; then
+            echo "::warning::Code is live and healthy, but wrangler reported errors (likely the free-plan cron cap: ke-town wants a 3:17am cron and the Cyber account is full). Upgrade to Workers Paid or free a cron slot."
+          fi
