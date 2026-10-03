@@ -10,7 +10,7 @@ const authenticate = async (req, res, next) => {
       return res.status(401).json({ error: 'Access denied. No token provided.' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'keKingdom-secret-key-2024');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.userId).select('-password');
     
     if (!user) {
@@ -76,7 +76,7 @@ const optionalAuth = async (req, res, next) => {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     
     if (token) {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'keKingdom-secret-key-2024');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await User.findById(decoded.userId).select('-password');
       
       if (user && user.accountStatus === 'active') {

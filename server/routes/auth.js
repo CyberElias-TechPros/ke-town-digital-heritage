@@ -5,7 +5,7 @@ const User = require('../models/User');
 const AuditLog = require('../models/AuditLog');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'keKingdom-secret-key-2024';
+const JWT_SECRET = process.env.JWT_SECRET;
 const tokenExpiry = '7d';
 
 // Generate JWT token

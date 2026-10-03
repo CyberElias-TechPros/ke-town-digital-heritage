@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
 const User = require('./models/User');
 
-const ATLAS_URI = 'mongodb://cybereliastk_db_user:3bBKj4DtLRh7DNd8@ac-okkbkq6-shard-00-00.rz1xdmd.mongodb.net:27017,ac-okkbkq6-shard-00-01.rz1xdmd.mongodb.net:27017,ac-okkbkq6-shard-00-02.rz1xdmd.mongodb.net:27017/keKingdom?ssl=true&replicaSet=atlas-ljgzbm-shard-0&authSource=admin&appName=CEA';
 const LOCAL_URI = 'mongodb://localhost:27017/keKingdom';
+
+const ATLAS_URI = process.env.MONGO_URI || LOCAL_URI;
 
 async function makeAdmin() {
   const email = 'ellis@techpros.com.ng';

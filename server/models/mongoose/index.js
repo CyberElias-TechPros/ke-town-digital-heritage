@@ -39,9 +39,7 @@ const connectDB = async () => {
   };
 
   const connectionOptions = [
-    { name: 'Atlas SRV', uri: 'mongodb+srv://cybereliastk_db_user:3bBKj4DtLRh7DNd8@cea.rz1xdmd.mongodb.net/keKingdom?retryWrites=true&w=majority' },
-    { name: 'Atlas Sharded', uri: 'mongodb://cybereliastk_db_user:3bBKj4DtLRh7DNd8@ac-okkbkq6-shard-00-00.rz1xdmd.mongodb.net:27017,ac-okkbkq6-shard-00-01.rz1xdmd.mongodb.net:27017,ac-okkbkq6-shard-00-02.rz1xdmd.mongodb.net:27017/keKingdom?ssl=true&replicaSet=atlas-ljgzbm-shard-0&authSource=admin&appName=CEA' },
-    { name: 'Localhost', uri: 'mongodb://localhost:27017/keKingdom' },
+    { name: 'Localhost', uri: process.env.MONGO_URI || 'mongodb://localhost:27017/keKingdom' },
   ];
 
   let connected = false;

@@ -49,7 +49,7 @@ MYSQL_DATABASE=ke_kingdom_db
 ```bash
 # MongoDB Atlas (Production)
 DB_TYPE=mongo
-MONGODB_URI=mongodb+srv://cybereliastk_db_user:3bBKj4DtLRh7DNd8@cea.rz1xdmd.mongodb.net/keKingdom?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<atlas-user>:<atlas-password>@cluster0.example.mongodb.net/keKingdom?retryWrites=true&w=majority
 
 # MySQL (Production)
 DB_TYPE=mysql

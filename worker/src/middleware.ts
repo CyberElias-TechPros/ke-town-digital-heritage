@@ -8,10 +8,13 @@ import { loadUser } from './lib/users';
 import { forbidden, tooMany, unauthorized } from './lib/http';
 import type { AuthUser, Env, AppEnv } from './types';
 
-export const jwtSecret = (env: Env): string =>
-  env.JWT_SECRET && env.JWT_SECRET.length >= 16
-    ? env.JWT_SECRET
-    : 'ke-town-dev-secret-change-me-in-production';
+export const jwtSecret = (env: Env): string => {
+  const s = env.JWT_SECRET;
+  if (!s || s.length < 16) {
+    throw new Error('JWT_SECRET is not set or too short. Configure it with `wrangler secret put JWT_SECRET`.');
+  }
+  return s;
+};
 
 export async function attachUser(c: Context<AppEnv>, next: Next): Promise<void> {
   const env = c.env;

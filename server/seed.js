@@ -6,8 +6,8 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-const MONGO_URI = process.env.MONGO_URI || 
-  'mongodb+srv://cybereliastk_db_user:3bBKj4DtLRh7DNd8@cea.rz1xdmd.mongodb.net/keKingdom?retryWrites=true&w=majority';
+const MONGO_URI = process.env.MONGO_URI ||
+  'mongodb://localhost:27017/keKingdom';
 
 const User = require('./models/User');
 const Event = require('./models/Event');

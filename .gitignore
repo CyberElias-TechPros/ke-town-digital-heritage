@@ -37,3 +37,6 @@ server/uploads/
 # Cloudflare local dev secrets
 worker/.dev.vars
 worker/.wrangler/
+
+# Server secrets (never commit)
+server/.env
