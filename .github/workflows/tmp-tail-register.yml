@@ -11,7 +11,11 @@ jobs:
         run: |
           npx -y wrangler@latest tail ke-town-api --format pretty > /tmp/tail.log 2>&1 &
           TAILPID=$!
-          sleep 10
+          for i in $(seq 1 24); do
+            if grep -q "Connected to" /tmp/tail.log; then break; fi
+            sleep 5
+          done
+          grep -q "Connected to" /tmp/tail.log || { echo "::error::tail never connected"; cat /tmp/tail.log; exit 1; }
           curl -s -X POST https://ke-town-api.cyber-e54.workers.dev/auth/register -H "Content-Type: application/json" --data '{"fullName":"Tail Probe","email":"tailprobe@example.com","password":"Testpass123!"}' | head -c 300
           echo
           sleep 20
