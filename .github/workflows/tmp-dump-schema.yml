@@ -11,3 +11,4 @@ jobs:
         run: |
           npx -y wrangler@latest d1 execute ke-town-db --remote --command "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
           npx -y wrangler@latest d1 execute ke-town-db --remote --command "SELECT * FROM d1_migrations ORDER BY id;"
+          npx -y wrangler@latest d1 execute ke-town-db --remote --command "SELECT (SELECT count(*) FROM users) AS users, (SELECT count(*) FROM posts) AS posts, (SELECT count(*) FROM products) AS products, (SELECT count(*) FROM news) AS news, (SELECT count(*) FROM events) AS events, (SELECT count(*) FROM donations) AS donations, (SELECT count(*) FROM polls) AS polls;"
