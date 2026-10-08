@@ -1,0 +1,72 @@
+name: tmp-mig-aff1
+on: workflow_dispatch
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+    steps:
+      - name: Clone target repo
+        run: git clone --depth 1 https://x-access-token:${{ secrets.MIGRATION_PAT }}@github.com/CyberElias-TechPros/affiliate-hub-frontend.git target
+      - name: Ensure R2 bucket
+        run: |
+          npx -y wrangler@latest r2 bucket list --json | grep -q affiliate-hub-assets \
+            || npx -y wrangler@latest r2 bucket create affiliate-hub-assets
+      - name: Ensure KV namespace
+        run: |
+          if npx -y wrangler@latest kv namespace list --json | grep -q affiliate-hub; then
+            echo "KV exists"
+          else
+            npx -y wrangler@latest kv namespace create affiliate-hub-cache --json | tee /tmp/kv.json
+          fi
+      - name: Ensure queue
+        run: |
+          npx -y wrangler@latest queues list --json | grep -q affiliate-hub-payouts \
+            || npx -y wrangler@latest queues create affiliate-hub-payouts
+      - name: Fill real IDs into api/wrangler.toml and push back
+        run: |
+          KVID=$(npx -y wrangler@latest kv namespace list --json | grep -B5 affiliate-hub | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1)
+          echo "KVID=$KVID"; test -n "$KVID"
+          sed -i 's/REPLACE_WITH_D1_DATABASE_ID/c089dd9b-c09f-406f-a32b-b7a711e059bd/' target/api/wrangler.toml
+          sed -i "s/REPLACE_WITH_KV_NAMESPACE_ID/$KVID/" target/api/wrangler.toml
+          grep -q REPLACE_WITH target/api/wrangler.toml && { echo "::error::placeholders remain"; exit 1; } || true
+          git -C target config user.name "CyberElias-TechPros"
+          git -C target config user.email "info@techpros.com.ng"
+          git -C target add api/wrangler.toml
+          git -C target commit -m "chore: fill provisioned Cloudflare D1/KV IDs" || echo "nothing to commit"
+          git -C target push https://x-access-token:${{ secrets.MIGRATION_PAT }}@github.com/CyberElias-TechPros/affiliate-hub-frontend.git HEAD:main
+      - name: Show applied migrations
+        working-directory: target/api
+        run: npx -y wrangler@latest d1 migrations list affiliate-hub-db --remote
+      - name: Apply outstanding migrations
+        working-directory: target/api
+        run: npx -y wrangler@latest d1 migrations apply affiliate-hub-db --remote
+      - name: Ensure worker secrets (only if absent)
+        run: |
+          for pair in "ACCESS_TOKEN_SECRET:TMP_AFF_ACCESS" "REFRESH_TOKEN_SECRET:TMP_AFF_REFRESH" "VISITOR_HASH_SALT:TMP_AFF_SALT" "FIELD_ENCRYPTION_KEY:TMP_AFF_FIELDKEY"; do
+            NAME="${pair%%:*}"; VAR="${pair##*:}"; VAL="${!VAR}"
+            HAVE=$(curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/affiliate-hub-api/secrets" | grep -c "$NAME" || true)
+            echo "$NAME present=$HAVE"
+            if [ "$HAVE" = "0" ]; then
+              curl -s -X PUT "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/affiliate-hub-api/secrets" \
+                -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" \
+                --data "$(jq -n --arg n "$NAME" --arg t "$VAL" '{name:$n,text:$t,type:"secret_text"}')"
+            fi
+          done
+        env:
+          TMP_AFF_ACCESS: ${{ secrets.TMP_AFF_ACCESS }}
+          TMP_AFF_REFRESH: ${{ secrets.TMP_AFF_REFRESH }}
+          TMP_AFF_SALT: ${{ secrets.TMP_AFF_SALT }}
+          TMP_AFF_FIELDKEY: ${{ secrets.TMP_AFF_FIELDKEY }}
+      - name: Install deps and deploy worker
+        working-directory: target/api
+        run: |
+          npm ci --no-fund --no-audit
+          npx -y wrangler@latest deploy
+      - name: Verify health
+        run: |
+          body="$(curl -fsS https://affiliate-hub.cyber-e54.workers.dev/health)"
+          echo "$body"; echo "$body" | grep -q '"status":"ok"'
+          echo "--- /api/v1/health (informational) ---"
+          curl -s https://affiliate-hub.cyber-e54.workers.dev/api/v1/health || true
