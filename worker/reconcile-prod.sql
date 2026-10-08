@@ -3,17 +3,13 @@
 -- the worker code expects (0001_schema generation).
 --
 -- APPLY WITH: wrangler d1 execute ke-town-db --remote --file=reconcile-prod.sql
--- DO NOT place in migrations/ : `migrations apply` ordering (0001 indexes
--- reference not-yet-added columns) and fresh databases (ALTERs assume the
--- old tables exist) both break under the journal. This file is idempotent
--- (IF NOT EXISTS creates) except the ALTERs, which succeed exactly once
--- against the old generation.
+-- DO NOT place in migrations/ : see header notes in repo if curious.
+-- This file is idempotent for CREATEs (IF NOT EXISTS); the ALTERs succeed
+-- exactly once against the old generation (plus messages.read_at).
 --   * creates tables missing in prod (exact definitions)
---   * adds columns missing on shared tables (NULLABLE-adjusted so the
---     migration succeeds on tables that already hold rows)
+--   * adds columns missing on shared tables (NULLABLE-adjusted)
 --   * legacy-only tables (gallery, genealogy_trees, mentorship, payments,
---     reactions) are intentionally left untouched, as are column types
---     (SQLite type affinity tolerates TEXT/INTEGER overlap at runtime).
+--     reactions) are intentionally left untouched, as are column types.
 
 -- ---------- new table: activities ----------
 CREATE TABLE IF NOT EXISTS activities (
@@ -58,39 +54,12 @@ CREATE TABLE IF NOT EXISTS analytics_events (
   created_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- ---------- new table: audit_logs ----------
-CREATE TABLE IF NOT EXISTS audit_logs (
-  id          TEXT PRIMARY KEY,
-  user_id     TEXT,
-  action      TEXT NOT NULL,
-  resource    TEXT,
-  resource_id TEXT,
-  details     TEXT DEFAULT '{}',
-  ip          TEXT,
-  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
 -- ---------- new table: blocks ----------
 CREATE TABLE IF NOT EXISTS blocks (
   blocker_id   TEXT NOT NULL,
   blocked_id   TEXT NOT NULL,
   created_at   TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (blocker_id, blocked_id)
-);
-
--- ---------- new table: campaigns ----------
-CREATE TABLE IF NOT EXISTS campaigns (
-  id          TEXT PRIMARY KEY,
-  title       TEXT NOT NULL,
-  description TEXT DEFAULT '',
-  cover_image TEXT DEFAULT '',
-  goal_amount REAL NOT NULL DEFAULT 0,
-  raised_amount REAL NOT NULL DEFAULT 0,
-  currency    TEXT DEFAULT 'NGN',
-  category    TEXT DEFAULT 'community',
-  deadline    TEXT,
-  status      TEXT NOT NULL DEFAULT 'active',
-  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- ---------- new table: cart_items ----------
@@ -101,19 +70,6 @@ CREATE TABLE IF NOT EXISTS cart_items (
   quantity   INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE (user_id, product_id)
-);
-
--- ---------- new table: comments ----------
-CREATE TABLE IF NOT EXISTS comments (
-  id          TEXT PRIMARY KEY,
-  author_id   TEXT NOT NULL,
-  content     TEXT NOT NULL,
-  target_type TEXT NOT NULL DEFAULT 'post',
-  target_id   TEXT NOT NULL,
-  parent_id   TEXT,
-  like_count  INTEGER NOT NULL DEFAULT 0,
-  status      TEXT NOT NULL DEFAULT 'active',
-  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- ---------- new table: contact_messages ----------
@@ -130,99 +86,6 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   created_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- ---------- new table: conversations ----------
-CREATE TABLE IF NOT EXISTS conversations (
-  id            TEXT PRIMARY KEY,
-  participants  TEXT NOT NULL DEFAULT '[]',
-  type          TEXT NOT NULL DEFAULT 'direct',
-  group_id      TEXT,
-  title         TEXT DEFAULT '',
-  last_message  TEXT DEFAULT '',
-  last_message_at TEXT,
-  unread        TEXT DEFAULT '{}',
-  archived      TEXT DEFAULT '[]',
-  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
--- ---------- new table: directory_members ----------
-CREATE TABLE IF NOT EXISTS directory_members (
-  id          TEXT PRIMARY KEY,
-  full_name   TEXT NOT NULL,
-  email       TEXT DEFAULT '',
-  phone       TEXT DEFAULT '',
-  profession  TEXT DEFAULT '',
-  category    TEXT DEFAULT 'general',
-  country     TEXT DEFAULT '',
-  city        TEXT DEFAULT '',
-  bio         TEXT DEFAULT '',
-  avatar      TEXT DEFAULT '',
-  website     TEXT DEFAULT '',
-  linkedin    TEXT DEFAULT '',
-  willing_to_mentor INTEGER NOT NULL DEFAULT 0,
-  approved    INTEGER NOT NULL DEFAULT 0,
-  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
--- ---------- new table: donations ----------
-CREATE TABLE IF NOT EXISTS donations (
-  id          TEXT PRIMARY KEY,
-  reference   TEXT NOT NULL UNIQUE,
-  donor_name  TEXT DEFAULT '',
-  donor_email TEXT DEFAULT '',
-  user_id     TEXT,
-  amount      REAL NOT NULL DEFAULT 0,
-  currency    TEXT DEFAULT 'NGN',
-  campaign_id TEXT,
-  project_id  TEXT,
-  message     TEXT DEFAULT '',
-  anonymous   INTEGER NOT NULL DEFAULT 0,
-  status      TEXT NOT NULL DEFAULT 'pending',
-  channel     TEXT DEFAULT 'paystack',
-  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
--- ---------- new table: elder_stories ----------
-CREATE TABLE IF NOT EXISTS elder_stories (
-  id          TEXT PRIMARY KEY,
-  title       TEXT NOT NULL,
-  elder_name  TEXT NOT NULL DEFAULT '',
-  elder_avatar TEXT DEFAULT '',
-  age         INTEGER,
-  community   TEXT DEFAULT '',
-  excerpt     TEXT DEFAULT '',
-  content     TEXT DEFAULT '',
-  audio_url   TEXT DEFAULT '',
-  cover_image TEXT DEFAULT '',
-  category    TEXT DEFAULT 'memoir',
-  language    TEXT DEFAULT 'English',
-  tags        TEXT DEFAULT '[]',
-  author_id   TEXT,
-  views       INTEGER NOT NULL DEFAULT 0,
-  featured    INTEGER NOT NULL DEFAULT 0,
-  status      TEXT NOT NULL DEFAULT 'published',
-  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
--- ---------- new table: environment_reports ----------
-CREATE TABLE IF NOT EXISTS environment_reports (
-  id          TEXT PRIMARY KEY,
-  title       TEXT NOT NULL,
-  description TEXT DEFAULT '',
-  category    TEXT DEFAULT 'waste',
-  severity    TEXT DEFAULT 'medium',
-  location_name TEXT DEFAULT '',
-  latitude    REAL,
-  longitude   REAL,
-  images      TEXT DEFAULT '[]',
-  reporter_id TEXT,
-  reporter_name TEXT DEFAULT 'Anonymous',
-  status      TEXT NOT NULL DEFAULT 'open',
-  upvotes     INTEGER NOT NULL DEFAULT 0,
-  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
 -- ---------- new table: event_rsvps ----------
 CREATE TABLE IF NOT EXISTS event_rsvps (
   event_id   TEXT NOT NULL,
@@ -230,35 +93,6 @@ CREATE TABLE IF NOT EXISTS event_rsvps (
   status     TEXT NOT NULL DEFAULT 'going',
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (event_id, user_id)
-);
-
--- ---------- new table: events ----------
-CREATE TABLE IF NOT EXISTS events (
-  id            TEXT PRIMARY KEY,
-  title         TEXT NOT NULL,
-  description   TEXT DEFAULT '',
-  cover_image   TEXT DEFAULT '',
-  category      TEXT DEFAULT 'community',
-  event_type    TEXT DEFAULT 'in_person',
-  location_name TEXT DEFAULT '',
-  address       TEXT DEFAULT '',
-  latitude      REAL,
-  longitude     REAL,
-  online_link   TEXT DEFAULT '',
-  start_date    TEXT NOT NULL,
-  end_date      TEXT,
-  timezone      TEXT DEFAULT 'Africa/Lagos',
-  organizer_id  TEXT NOT NULL,
-  group_id      TEXT,
-  capacity      INTEGER DEFAULT 0,
-  price         REAL NOT NULL DEFAULT 0,
-  currency      TEXT DEFAULT 'NGN',
-  tags          TEXT DEFAULT '[]',
-  rsvp_count    INTEGER NOT NULL DEFAULT 0,
-  view_count    INTEGER NOT NULL DEFAULT 0,
-  status        TEXT NOT NULL DEFAULT 'approved',
-  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- ---------- new table: family_members ----------
@@ -354,25 +188,6 @@ CREATE TABLE IF NOT EXISTS group_members (
   PRIMARY KEY (group_id, user_id)
 );
 
--- ---------- new table: groups ----------
-CREATE TABLE IF NOT EXISTS groups (
-  id            TEXT PRIMARY KEY,
-  name          TEXT NOT NULL,
-  slug          TEXT,
-  description   TEXT DEFAULT '',
-  cover_image   TEXT DEFAULT '',
-  avatar        TEXT DEFAULT '',
-  privacy       TEXT NOT NULL DEFAULT 'public',
-  category      TEXT DEFAULT 'general',
-  join_method   TEXT DEFAULT 'open',
-  creator_id    TEXT NOT NULL,
-  member_count  INTEGER NOT NULL DEFAULT 1,
-  post_count    INTEGER NOT NULL DEFAULT 0,
-  status        TEXT NOT NULL DEFAULT 'active',
-  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
 -- ---------- new table: job_applications ----------
 CREATE TABLE IF NOT EXISTS job_applications (
   id          TEXT PRIMARY KEY,
@@ -383,31 +198,6 @@ CREATE TABLE IF NOT EXISTS job_applications (
   status      TEXT NOT NULL DEFAULT 'pending',
   created_at  TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE (job_id, user_id)
-);
-
--- ---------- new table: jobs ----------
-CREATE TABLE IF NOT EXISTS jobs (
-  id            TEXT PRIMARY KEY,
-  title         TEXT NOT NULL,
-  company       TEXT DEFAULT '',
-  description   TEXT DEFAULT '',
-  requirements  TEXT DEFAULT '[]',
-  responsibilities TEXT DEFAULT '[]',
-  category      TEXT DEFAULT 'technology',
-  job_type      TEXT DEFAULT 'full_time',
-  location_name TEXT DEFAULT '',
-  remote        INTEGER NOT NULL DEFAULT 0,
-  salary_min    REAL,
-  salary_max    REAL,
-  currency      TEXT DEFAULT 'NGN',
-  poster_id     TEXT,
-  contact_email TEXT DEFAULT '',
-  deadline      TEXT,
-  views         INTEGER NOT NULL DEFAULT 0,
-  applications  INTEGER NOT NULL DEFAULT 0,
-  status        TEXT NOT NULL DEFAULT 'open',
-  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- ---------- new table: media ----------
@@ -451,83 +241,6 @@ CREATE TABLE IF NOT EXISTS mentorship_requests (
   updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- ---------- new table: messages ----------
-CREATE TABLE IF NOT EXISTS messages (
-  id              TEXT PRIMARY KEY,
-  conversation_id TEXT NOT NULL,
-  sender_id       TEXT NOT NULL,
-  content         TEXT NOT NULL DEFAULT '',
-  media           TEXT NOT NULL DEFAULT '[]',
-  read_by         TEXT NOT NULL DEFAULT '[]',
-  deleted_for     TEXT NOT NULL DEFAULT '[]',
-  reply_to        TEXT,
-  created_at      TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
--- ---------- new table: news ----------
-CREATE TABLE IF NOT EXISTS news (
-  id          TEXT PRIMARY KEY,
-  title       TEXT NOT NULL,
-  slug        TEXT,
-  excerpt     TEXT DEFAULT '',
-  content     TEXT DEFAULT '',
-  cover_image TEXT DEFAULT '',
-  category    TEXT DEFAULT 'community',
-  tags        TEXT DEFAULT '[]',
-  author_id   TEXT,
-  author_name TEXT DEFAULT 'KE Town Editorial',
-  views       INTEGER NOT NULL DEFAULT 0,
-  featured    INTEGER NOT NULL DEFAULT 0,
-  status      TEXT NOT NULL DEFAULT 'published',
-  published_at TEXT NOT NULL DEFAULT (datetime('now')),
-  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
--- ---------- new table: newsletter_subscribers ----------
-CREATE TABLE IF NOT EXISTS newsletter_subscribers (
-  id          TEXT PRIMARY KEY,
-  email       TEXT NOT NULL UNIQUE COLLATE NOCASE,
-  interests   TEXT DEFAULT '[]',
-  status      TEXT NOT NULL DEFAULT 'subscribed',
-  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
--- ---------- new table: notifications ----------
-CREATE TABLE IF NOT EXISTS notifications (
-  id          TEXT PRIMARY KEY,
-  user_id     TEXT NOT NULL,
-  from_id     TEXT,
-  type        TEXT NOT NULL DEFAULT 'system',
-  title       TEXT DEFAULT '',
-  message     TEXT NOT NULL DEFAULT '',
-  link        TEXT,
-  data        TEXT DEFAULT '{}',
-  read        INTEGER NOT NULL DEFAULT 0,
-  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
--- ---------- new table: oral_histories ----------
-CREATE TABLE IF NOT EXISTS oral_histories (
-  id          TEXT PRIMARY KEY,
-  title       TEXT NOT NULL,
-  narrator    TEXT DEFAULT '',
-  narrator_id TEXT,
-  category    TEXT DEFAULT 'heritage',
-  language    TEXT DEFAULT 'Kalabari',
-  transcript  TEXT DEFAULT '',
-  audio_url   TEXT DEFAULT '',
-  video_url   TEXT DEFAULT '',
-  cover_image TEXT DEFAULT '',
-  duration    INTEGER DEFAULT 0,
-  location_name TEXT DEFAULT '',
-  recorded_at TEXT,
-  tags        TEXT DEFAULT '[]',
-  approved    INTEGER NOT NULL DEFAULT 1,
-  views       INTEGER NOT NULL DEFAULT 0,
-  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
 -- ---------- new table: order_items ----------
 CREATE TABLE IF NOT EXISTS order_items (
   id          TEXT PRIMARY KEY,
@@ -539,29 +252,6 @@ CREATE TABLE IF NOT EXISTS order_items (
   unit_price  REAL NOT NULL DEFAULT 0,
   quantity    INTEGER NOT NULL DEFAULT 1,
   total       REAL NOT NULL DEFAULT 0
-);
-
--- ---------- new table: orders ----------
-CREATE TABLE IF NOT EXISTS orders (
-  id               TEXT PRIMARY KEY,
-  reference        TEXT NOT NULL UNIQUE,
-  buyer_id         TEXT NOT NULL,
-  seller_id        TEXT,
-  items            TEXT NOT NULL DEFAULT '[]',
-  subtotal         REAL NOT NULL DEFAULT 0,
-  shipping_fee     REAL NOT NULL DEFAULT 0,
-  service_fee      REAL NOT NULL DEFAULT 0,
-  total            REAL NOT NULL DEFAULT 0,
-  currency         TEXT DEFAULT 'NGN',
-  payment_method   TEXT DEFAULT 'transfer',
-  payment_status   TEXT NOT NULL DEFAULT 'pending',
-  order_status     TEXT NOT NULL DEFAULT 'pending',
-  delivery_method  TEXT DEFAULT 'pickup',
-  shipping_address TEXT DEFAULT '{}',
-  tracking         TEXT DEFAULT '',
-  note             TEXT DEFAULT '',
-  created_at       TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- ---------- new table: password_resets ----------
@@ -599,20 +289,6 @@ CREATE TABLE IF NOT EXISTS petition_signatures (
   PRIMARY KEY (petition_id, user_id)
 );
 
--- ---------- new table: petitions ----------
-CREATE TABLE IF NOT EXISTS petitions (
-  id          TEXT PRIMARY KEY,
-  title       TEXT NOT NULL,
-  description TEXT DEFAULT '',
-  target      TEXT DEFAULT '',
-  author_id   TEXT,
-  cover_image TEXT DEFAULT '',
-  goal        INTEGER NOT NULL DEFAULT 100,
-  signature_count INTEGER NOT NULL DEFAULT 0,
-  status      TEXT NOT NULL DEFAULT 'open',
-  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
 -- ---------- new table: phrases ----------
 CREATE TABLE IF NOT EXISTS phrases (
   id          TEXT PRIMARY KEY,
@@ -633,20 +309,6 @@ CREATE TABLE IF NOT EXISTS poll_votes (
   PRIMARY KEY (poll_id, user_id, option_key)
 );
 
--- ---------- new table: polls ----------
-CREATE TABLE IF NOT EXISTS polls (
-  id          TEXT PRIMARY KEY,
-  question    TEXT NOT NULL,
-  options     TEXT NOT NULL DEFAULT '[]',
-  author_id   TEXT,
-  category    TEXT DEFAULT 'community',
-  multiple    INTEGER NOT NULL DEFAULT 0,
-  closes_at   TEXT,
-  total_votes INTEGER NOT NULL DEFAULT 0,
-  status      TEXT NOT NULL DEFAULT 'open',
-  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
 -- ---------- new table: post_reactions ----------
 CREATE TABLE IF NOT EXISTS post_reactions (
   id            TEXT PRIMARY KEY,
@@ -657,66 +319,12 @@ CREATE TABLE IF NOT EXISTS post_reactions (
   UNIQUE (post_id, user_id)
 );
 
--- ---------- new table: posts ----------
-CREATE TABLE IF NOT EXISTS posts (
-  id            TEXT PRIMARY KEY,
-  author_id     TEXT NOT NULL,
-  content       TEXT NOT NULL DEFAULT '',
-  media         TEXT NOT NULL DEFAULT '[]',
-  location      TEXT,
-  feeling       TEXT DEFAULT '',
-  privacy       TEXT NOT NULL DEFAULT 'community',
-  visibility    TEXT NOT NULL DEFAULT 'community',
-  group_id      TEXT,
-  is_pinned     INTEGER NOT NULL DEFAULT 0,
-  view_count    INTEGER NOT NULL DEFAULT 0,
-  comment_count INTEGER NOT NULL DEFAULT 0,
-  like_count    INTEGER NOT NULL DEFAULT 0,
-  share_count   INTEGER NOT NULL DEFAULT 0,
-  status        TEXT NOT NULL DEFAULT 'active',
-  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
 -- ---------- new table: product_likes ----------
 CREATE TABLE IF NOT EXISTS product_likes (
   product_id TEXT NOT NULL,
   user_id    TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (product_id, user_id)
-);
-
--- ---------- new table: products ----------
-CREATE TABLE IF NOT EXISTS products (
-  id            TEXT PRIMARY KEY,
-  seller_id     TEXT NOT NULL,
-  shop_id       TEXT,
-  title         TEXT NOT NULL,
-  name          TEXT NOT NULL,
-  description   TEXT DEFAULT '',
-  category      TEXT DEFAULT 'crafts',
-  subcategory   TEXT DEFAULT '',
-  condition     TEXT DEFAULT 'new',
-  price         REAL NOT NULL DEFAULT 0,
-  currency      TEXT DEFAULT 'NGN',
-  is_negotiable INTEGER NOT NULL DEFAULT 0,
-  images        TEXT NOT NULL DEFAULT '[]',
-  video         TEXT DEFAULT '',
-  brand         TEXT DEFAULT '',
-  model         TEXT DEFAULT '',
-  artisan_name  TEXT DEFAULT '',
-  location_name TEXT DEFAULT '',
-  location      TEXT DEFAULT '{}',
-  contact       TEXT DEFAULT '',
-  tags          TEXT NOT NULL DEFAULT '[]',
-  stock         INTEGER NOT NULL DEFAULT 1,
-  quantity      INTEGER NOT NULL DEFAULT 1,
-  views         INTEGER NOT NULL DEFAULT 0,
-  likes         INTEGER NOT NULL DEFAULT 0,
-  is_featured   INTEGER NOT NULL DEFAULT 0,
-  status        TEXT NOT NULL DEFAULT 'active',
-  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- ---------- new table: project_updates ----------
@@ -728,24 +336,6 @@ CREATE TABLE IF NOT EXISTS project_updates (
   created_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- ---------- new table: projects ----------
-CREATE TABLE IF NOT EXISTS projects (
-  id          TEXT PRIMARY KEY,
-  title       TEXT NOT NULL,
-  description TEXT DEFAULT '',
-  category    TEXT DEFAULT 'infrastructure',
-  cover_image TEXT DEFAULT '',
-  goal_amount REAL NOT NULL DEFAULT 0,
-  raised_amount REAL NOT NULL DEFAULT 0,
-  currency    TEXT DEFAULT 'NGN',
-  target_date TEXT,
-  status      TEXT NOT NULL DEFAULT 'active',
-  progress    INTEGER NOT NULL DEFAULT 0,
-  supporters  INTEGER NOT NULL DEFAULT 0,
-  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
 -- ---------- new table: recommendation_events ----------
 CREATE TABLE IF NOT EXISTS recommendation_events (
   id                 TEXT PRIMARY KEY,
@@ -755,35 +345,6 @@ CREATE TABLE IF NOT EXISTS recommendation_events (
   action             TEXT NOT NULL DEFAULT 'impression',
   feedback           TEXT,
   created_at         TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
--- ---------- new table: reports ----------
-CREATE TABLE IF NOT EXISTS reports (
-  id          TEXT PRIMARY KEY,
-  reporter_id TEXT NOT NULL,
-  target_type TEXT NOT NULL,
-  target_id   TEXT NOT NULL,
-  reason      TEXT NOT NULL DEFAULT 'other',
-  details     TEXT DEFAULT '',
-  status      TEXT NOT NULL DEFAULT 'pending',
-  resolved_by TEXT,
-  resolution  TEXT DEFAULT '',
-  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-  resolved_at TEXT
-);
-
--- ---------- new table: reviews ----------
-CREATE TABLE IF NOT EXISTS reviews (
-  id          TEXT PRIMARY KEY,
-  author_id   TEXT NOT NULL,
-  target_type TEXT NOT NULL DEFAULT 'product',
-  target_id   TEXT NOT NULL,
-  rating      INTEGER NOT NULL DEFAULT 5,
-  title       TEXT DEFAULT '',
-  body        TEXT DEFAULT '',
-  status      TEXT NOT NULL DEFAULT 'approved',
-  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-  UNIQUE (author_id, target_type, target_id)
 );
 
 -- ---------- new table: saved_posts ----------
@@ -813,19 +374,6 @@ CREATE TABLE IF NOT EXISTS shops (
   updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- ---------- new table: stories ----------
-CREATE TABLE IF NOT EXISTS stories (
-  id          TEXT PRIMARY KEY,
-  title       TEXT NOT NULL,
-  body        TEXT DEFAULT '',
-  era         TEXT DEFAULT '',
-  category    TEXT DEFAULT 'history',
-  cover_image TEXT DEFAULT '',
-  author_id   TEXT,
-  views       INTEGER NOT NULL DEFAULT 0,
-  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
 -- ---------- new table: transactions ----------
 CREATE TABLE IF NOT EXISTS transactions (
   id          TEXT PRIMARY KEY,
@@ -842,48 +390,6 @@ CREATE TABLE IF NOT EXISTS transactions (
   created_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- ---------- new table: users ----------
-CREATE TABLE IF NOT EXISTS users (
-  id                    TEXT PRIMARY KEY,
-  full_name             TEXT NOT NULL,
-  email                 TEXT NOT NULL UNIQUE COLLATE NOCASE,
-  username              TEXT UNIQUE COLLATE NOCASE,
-  password_hash         TEXT NOT NULL,
-  role                  TEXT NOT NULL DEFAULT 'user',
-  account_status        TEXT NOT NULL DEFAULT 'active',
-  email_verified        INTEGER NOT NULL DEFAULT 0,
-  email_verify_token    TEXT,
-  avatar                TEXT DEFAULT '',
-  cover_image           TEXT DEFAULT '',
-  bio                   TEXT DEFAULT '',
-  location              TEXT DEFAULT '',
-  phone                 TEXT DEFAULT '',
-  language              TEXT DEFAULT 'en',
-  timezone              TEXT DEFAULT 'Africa/Lagos',
-  profile_visibility    TEXT NOT NULL DEFAULT 'public',
-  allow_messages        INTEGER NOT NULL DEFAULT 1,
-  show_online_status    INTEGER NOT NULL DEFAULT 1,
-  verified              INTEGER NOT NULL DEFAULT 0,
-  is_seller             INTEGER NOT NULL DEFAULT 0,
-  shop_name             TEXT DEFAULT '',
-  shop_description      TEXT DEFAULT '',
-  shop_banner           TEXT DEFAULT '',
-  shop_verified         INTEGER NOT NULL DEFAULT 0,
-  seller_rating         REAL NOT NULL DEFAULT 0,
-  total_sales           INTEGER NOT NULL DEFAULT 0,
-  balance               REAL NOT NULL DEFAULT 0,
-  pending_balance       REAL NOT NULL DEFAULT 0,
-  status_text           TEXT DEFAULT 'online',
-  last_seen             TEXT,
-  last_login            TEXT,
-  login_attempts        INTEGER NOT NULL DEFAULT 0,
-  locked_until          TEXT,
-  interests             TEXT DEFAULT '[]',
-  skills                TEXT DEFAULT '[]',
-  created_at            TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at            TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
 -- ---------- new table: volunteer_applications ----------
 CREATE TABLE IF NOT EXISTS volunteer_applications (
   id          TEXT PRIMARY KEY,
@@ -893,22 +399,6 @@ CREATE TABLE IF NOT EXISTS volunteer_applications (
   status      TEXT NOT NULL DEFAULT 'pending',
   created_at  TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE (opportunity_id, user_id)
-);
-
--- ---------- new table: volunteer_opportunities ----------
-CREATE TABLE IF NOT EXISTS volunteer_opportunities (
-  id          TEXT PRIMARY KEY,
-  title       TEXT NOT NULL,
-  description TEXT DEFAULT '',
-  organization TEXT DEFAULT '',
-  category    TEXT DEFAULT 'community',
-  location_name TEXT DEFAULT '',
-  commitment  TEXT DEFAULT 'flexible',
-  spots       INTEGER DEFAULT 0,
-  filled      INTEGER NOT NULL DEFAULT 0,
-  start_date  TEXT,
-  status      TEXT NOT NULL DEFAULT 'open',
-  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- ---------- new table: war_canoe_houses ----------
@@ -941,4 +431,256 @@ CREATE TABLE IF NOT EXISTS withdrawals (
   created_at  TEXT NOT NULL DEFAULT (datetime('now')),
   processed_at TEXT
 );
+
+-- ---------- reconcile: audit_logs ----------
+ALTER TABLE audit_logs ADD COLUMN user_id TEXT;
+ALTER TABLE audit_logs ADD COLUMN ip TEXT;
+
+-- ---------- reconcile: campaigns ----------
+ALTER TABLE campaigns ADD COLUMN cover_image TEXT DEFAULT '';
+ALTER TABLE campaigns ADD COLUMN goal_amount REAL NOT NULL DEFAULT 0;
+ALTER TABLE campaigns ADD COLUMN raised_amount REAL NOT NULL DEFAULT 0;
+ALTER TABLE campaigns ADD COLUMN currency TEXT DEFAULT 'NGN';
+ALTER TABLE campaigns ADD COLUMN category TEXT DEFAULT 'community';
+ALTER TABLE campaigns ADD COLUMN deadline TEXT;
+ALTER TABLE campaigns ADD COLUMN status TEXT NOT NULL DEFAULT 'active';
+
+-- ---------- reconcile: comments ----------
+ALTER TABLE comments ADD COLUMN author_id TEXT;
+ALTER TABLE comments ADD COLUMN parent_id TEXT;
+ALTER TABLE comments ADD COLUMN like_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE comments ADD COLUMN status TEXT NOT NULL DEFAULT 'active';
+
+-- ---------- reconcile: conversations ----------
+ALTER TABLE conversations ADD COLUMN type TEXT NOT NULL DEFAULT 'direct';
+ALTER TABLE conversations ADD COLUMN group_id TEXT;
+ALTER TABLE conversations ADD COLUMN title TEXT DEFAULT '';
+ALTER TABLE conversations ADD COLUMN unread TEXT DEFAULT '{}';
+ALTER TABLE conversations ADD COLUMN archived TEXT DEFAULT '[]';
+
+-- ---------- reconcile: directory_members ----------
+ALTER TABLE directory_members ADD COLUMN profession TEXT DEFAULT '';
+ALTER TABLE directory_members ADD COLUMN category TEXT DEFAULT 'general';
+ALTER TABLE directory_members ADD COLUMN country TEXT DEFAULT '';
+ALTER TABLE directory_members ADD COLUMN city TEXT DEFAULT '';
+ALTER TABLE directory_members ADD COLUMN bio TEXT DEFAULT '';
+ALTER TABLE directory_members ADD COLUMN avatar TEXT DEFAULT '';
+ALTER TABLE directory_members ADD COLUMN website TEXT DEFAULT '';
+ALTER TABLE directory_members ADD COLUMN linkedin TEXT DEFAULT '';
+ALTER TABLE directory_members ADD COLUMN willing_to_mentor INTEGER NOT NULL DEFAULT 0;
+
+-- ---------- reconcile: donations ----------
+ALTER TABLE donations ADD COLUMN user_id TEXT;
+ALTER TABLE donations ADD COLUMN currency TEXT DEFAULT 'NGN';
+ALTER TABLE donations ADD COLUMN campaign_id TEXT;
+ALTER TABLE donations ADD COLUMN message TEXT DEFAULT '';
+ALTER TABLE donations ADD COLUMN anonymous INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE donations ADD COLUMN channel TEXT DEFAULT 'paystack';
+
+-- ---------- reconcile: elder_stories ----------
+ALTER TABLE elder_stories ADD COLUMN elder_name TEXT NOT NULL DEFAULT '';
+ALTER TABLE elder_stories ADD COLUMN elder_avatar TEXT DEFAULT '';
+ALTER TABLE elder_stories ADD COLUMN age INTEGER;
+ALTER TABLE elder_stories ADD COLUMN community TEXT DEFAULT '';
+ALTER TABLE elder_stories ADD COLUMN excerpt TEXT DEFAULT '';
+ALTER TABLE elder_stories ADD COLUMN cover_image TEXT DEFAULT '';
+ALTER TABLE elder_stories ADD COLUMN category TEXT DEFAULT 'memoir';
+ALTER TABLE elder_stories ADD COLUMN language TEXT DEFAULT 'English';
+ALTER TABLE elder_stories ADD COLUMN tags TEXT DEFAULT '[]';
+ALTER TABLE elder_stories ADD COLUMN author_id TEXT;
+ALTER TABLE elder_stories ADD COLUMN views INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE elder_stories ADD COLUMN featured INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE elder_stories ADD COLUMN status TEXT NOT NULL DEFAULT 'published';
+ALTER TABLE elder_stories ADD COLUMN updated_at TEXT;
+
+-- ---------- reconcile: environment_reports ----------
+ALTER TABLE environment_reports ADD COLUMN severity TEXT DEFAULT 'medium';
+ALTER TABLE environment_reports ADD COLUMN location_name TEXT DEFAULT '';
+ALTER TABLE environment_reports ADD COLUMN latitude REAL;
+ALTER TABLE environment_reports ADD COLUMN longitude REAL;
+ALTER TABLE environment_reports ADD COLUMN images TEXT DEFAULT '[]';
+ALTER TABLE environment_reports ADD COLUMN reporter_id TEXT;
+ALTER TABLE environment_reports ADD COLUMN reporter_name TEXT DEFAULT 'Anonymous';
+ALTER TABLE environment_reports ADD COLUMN status TEXT NOT NULL DEFAULT 'open';
+ALTER TABLE environment_reports ADD COLUMN upvotes INTEGER NOT NULL DEFAULT 0;
+
+-- ---------- reconcile: events ----------
+ALTER TABLE events ADD COLUMN event_type TEXT DEFAULT 'in_person';
+ALTER TABLE events ADD COLUMN location_name TEXT DEFAULT '';
+ALTER TABLE events ADD COLUMN address TEXT DEFAULT '';
+ALTER TABLE events ADD COLUMN latitude REAL;
+ALTER TABLE events ADD COLUMN longitude REAL;
+ALTER TABLE events ADD COLUMN online_link TEXT DEFAULT '';
+ALTER TABLE events ADD COLUMN start_date TEXT;
+ALTER TABLE events ADD COLUMN timezone TEXT DEFAULT 'Africa/Lagos';
+ALTER TABLE events ADD COLUMN organizer_id TEXT;
+ALTER TABLE events ADD COLUMN group_id TEXT;
+ALTER TABLE events ADD COLUMN capacity INTEGER DEFAULT 0;
+ALTER TABLE events ADD COLUMN price REAL NOT NULL DEFAULT 0;
+ALTER TABLE events ADD COLUMN currency TEXT DEFAULT 'NGN';
+ALTER TABLE events ADD COLUMN tags TEXT DEFAULT '[]';
+ALTER TABLE events ADD COLUMN rsvp_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE events ADD COLUMN view_count INTEGER NOT NULL DEFAULT 0;
+
+-- ---------- reconcile: groups ----------
+ALTER TABLE groups ADD COLUMN slug TEXT;
+ALTER TABLE groups ADD COLUMN avatar TEXT DEFAULT '';
+ALTER TABLE groups ADD COLUMN creator_id TEXT;
+ALTER TABLE groups ADD COLUMN post_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE groups ADD COLUMN status TEXT NOT NULL DEFAULT 'active';
+
+-- ---------- reconcile: jobs ----------
+ALTER TABLE jobs ADD COLUMN requirements TEXT DEFAULT '[]';
+ALTER TABLE jobs ADD COLUMN responsibilities TEXT DEFAULT '[]';
+ALTER TABLE jobs ADD COLUMN job_type TEXT DEFAULT 'full_time';
+ALTER TABLE jobs ADD COLUMN location_name TEXT DEFAULT '';
+ALTER TABLE jobs ADD COLUMN remote INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE jobs ADD COLUMN salary_min REAL;
+ALTER TABLE jobs ADD COLUMN salary_max REAL;
+ALTER TABLE jobs ADD COLUMN currency TEXT DEFAULT 'NGN';
+ALTER TABLE jobs ADD COLUMN poster_id TEXT;
+ALTER TABLE jobs ADD COLUMN contact_email TEXT DEFAULT '';
+ALTER TABLE jobs ADD COLUMN deadline TEXT;
+ALTER TABLE jobs ADD COLUMN views INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE jobs ADD COLUMN applications INTEGER NOT NULL DEFAULT 0;
+
+-- ---------- reconcile: messages ----------
+ALTER TABLE messages ADD COLUMN media TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE messages ADD COLUMN read_by TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE messages ADD COLUMN deleted_for TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE messages ADD COLUMN reply_to TEXT;
+
+-- ---------- reconcile: news ----------
+ALTER TABLE news ADD COLUMN slug TEXT;
+ALTER TABLE news ADD COLUMN excerpt TEXT DEFAULT '';
+ALTER TABLE news ADD COLUMN cover_image TEXT DEFAULT '';
+ALTER TABLE news ADD COLUMN tags TEXT DEFAULT '[]';
+ALTER TABLE news ADD COLUMN author_id TEXT;
+ALTER TABLE news ADD COLUMN author_name TEXT DEFAULT 'KE Town Editorial';
+ALTER TABLE news ADD COLUMN views INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE news ADD COLUMN featured INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE news ADD COLUMN published_at TEXT;
+
+-- ---------- reconcile: newsletter_subscribers ----------
+ALTER TABLE newsletter_subscribers ADD COLUMN interests TEXT DEFAULT '[]';
+ALTER TABLE newsletter_subscribers ADD COLUMN status TEXT NOT NULL DEFAULT 'subscribed';
+ALTER TABLE newsletter_subscribers ADD COLUMN created_at TEXT;
+
+-- ---------- reconcile: notifications ----------
+ALTER TABLE notifications ADD COLUMN from_id TEXT;
+ALTER TABLE notifications ADD COLUMN title TEXT DEFAULT '';
+ALTER TABLE notifications ADD COLUMN data TEXT DEFAULT '{}';
+
+-- ---------- reconcile: oral_histories ----------
+ALTER TABLE oral_histories ADD COLUMN narrator TEXT DEFAULT '';
+ALTER TABLE oral_histories ADD COLUMN narrator_id TEXT;
+ALTER TABLE oral_histories ADD COLUMN transcript TEXT DEFAULT '';
+ALTER TABLE oral_histories ADD COLUMN video_url TEXT DEFAULT '';
+ALTER TABLE oral_histories ADD COLUMN cover_image TEXT DEFAULT '';
+ALTER TABLE oral_histories ADD COLUMN duration INTEGER DEFAULT 0;
+ALTER TABLE oral_histories ADD COLUMN location_name TEXT DEFAULT '';
+ALTER TABLE oral_histories ADD COLUMN recorded_at TEXT;
+ALTER TABLE oral_histories ADD COLUMN tags TEXT DEFAULT '[]';
+ALTER TABLE oral_histories ADD COLUMN approved INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE oral_histories ADD COLUMN views INTEGER NOT NULL DEFAULT 0;
+
+-- ---------- reconcile: orders ----------
+ALTER TABLE orders ADD COLUMN reference TEXT;
+ALTER TABLE orders ADD COLUMN buyer_id TEXT;
+ALTER TABLE orders ADD COLUMN seller_id TEXT;
+ALTER TABLE orders ADD COLUMN service_fee REAL NOT NULL DEFAULT 0;
+ALTER TABLE orders ADD COLUMN currency TEXT DEFAULT 'NGN';
+ALTER TABLE orders ADD COLUMN payment_method TEXT DEFAULT 'transfer';
+ALTER TABLE orders ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'pending';
+ALTER TABLE orders ADD COLUMN order_status TEXT NOT NULL DEFAULT 'pending';
+ALTER TABLE orders ADD COLUMN tracking TEXT DEFAULT '';
+ALTER TABLE orders ADD COLUMN note TEXT DEFAULT '';
+
+-- ---------- reconcile: petitions ----------
+ALTER TABLE petitions ADD COLUMN target TEXT DEFAULT '';
+ALTER TABLE petitions ADD COLUMN author_id TEXT;
+ALTER TABLE petitions ADD COLUMN cover_image TEXT DEFAULT '';
+ALTER TABLE petitions ADD COLUMN goal INTEGER NOT NULL DEFAULT 100;
+ALTER TABLE petitions ADD COLUMN signature_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE petitions ADD COLUMN status TEXT NOT NULL DEFAULT 'open';
+
+-- ---------- reconcile: polls ----------
+ALTER TABLE polls ADD COLUMN author_id TEXT;
+ALTER TABLE polls ADD COLUMN category TEXT DEFAULT 'community';
+ALTER TABLE polls ADD COLUMN multiple INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE polls ADD COLUMN closes_at TEXT;
+ALTER TABLE polls ADD COLUMN total_votes INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE polls ADD COLUMN status TEXT NOT NULL DEFAULT 'open';
+
+-- ---------- reconcile: posts ----------
+ALTER TABLE posts ADD COLUMN author_id TEXT;
+ALTER TABLE posts ADD COLUMN group_id TEXT;
+ALTER TABLE posts ADD COLUMN like_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE posts ADD COLUMN status TEXT NOT NULL DEFAULT 'active';
+
+-- ---------- reconcile: products ----------
+ALTER TABLE products ADD COLUMN seller_id TEXT;
+ALTER TABLE products ADD COLUMN shop_id TEXT;
+ALTER TABLE products ADD COLUMN name TEXT;
+ALTER TABLE products ADD COLUMN subcategory TEXT DEFAULT '';
+ALTER TABLE products ADD COLUMN currency TEXT DEFAULT 'NGN';
+ALTER TABLE products ADD COLUMN is_negotiable INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE products ADD COLUMN artisan_name TEXT DEFAULT '';
+ALTER TABLE products ADD COLUMN location_name TEXT DEFAULT '';
+ALTER TABLE products ADD COLUMN stock INTEGER NOT NULL DEFAULT 1;
+
+-- ---------- reconcile: projects ----------
+ALTER TABLE projects ADD COLUMN category TEXT DEFAULT 'infrastructure';
+ALTER TABLE projects ADD COLUMN cover_image TEXT DEFAULT '';
+ALTER TABLE projects ADD COLUMN goal_amount REAL NOT NULL DEFAULT 0;
+ALTER TABLE projects ADD COLUMN raised_amount REAL NOT NULL DEFAULT 0;
+ALTER TABLE projects ADD COLUMN currency TEXT DEFAULT 'NGN';
+ALTER TABLE projects ADD COLUMN target_date TEXT;
+ALTER TABLE projects ADD COLUMN progress INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE projects ADD COLUMN supporters INTEGER NOT NULL DEFAULT 0;
+
+-- ---------- reconcile: reports ----------
+ALTER TABLE reports ADD COLUMN details TEXT DEFAULT '';
+ALTER TABLE reports ADD COLUMN resolved_by TEXT;
+ALTER TABLE reports ADD COLUMN resolution TEXT DEFAULT '';
+ALTER TABLE reports ADD COLUMN resolved_at TEXT;
+
+-- ---------- reconcile: reviews ----------
+ALTER TABLE reviews ADD COLUMN author_id TEXT;
+ALTER TABLE reviews ADD COLUMN target_type TEXT NOT NULL DEFAULT 'product';
+ALTER TABLE reviews ADD COLUMN target_id TEXT;
+ALTER TABLE reviews ADD COLUMN title TEXT DEFAULT '';
+ALTER TABLE reviews ADD COLUMN body TEXT DEFAULT '';
+ALTER TABLE reviews ADD COLUMN status TEXT NOT NULL DEFAULT 'approved';
+
+-- ---------- reconcile: stories ----------
+ALTER TABLE stories ADD COLUMN body TEXT DEFAULT '';
+ALTER TABLE stories ADD COLUMN era TEXT DEFAULT '';
+ALTER TABLE stories ADD COLUMN category TEXT DEFAULT 'history';
+ALTER TABLE stories ADD COLUMN cover_image TEXT DEFAULT '';
+ALTER TABLE stories ADD COLUMN author_id TEXT;
+ALTER TABLE stories ADD COLUMN views INTEGER NOT NULL DEFAULT 0;
+
+-- ---------- reconcile: users ----------
+ALTER TABLE users ADD COLUMN password_hash TEXT;
+ALTER TABLE users ADD COLUMN email_verify_token TEXT;
+ALTER TABLE users ADD COLUMN cover_image TEXT DEFAULT '';
+ALTER TABLE users ADD COLUMN phone TEXT DEFAULT '';
+ALTER TABLE users ADD COLUMN balance REAL NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN pending_balance REAL NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN status_text TEXT DEFAULT 'online';
+ALTER TABLE users ADD COLUMN last_seen TEXT;
+ALTER TABLE users ADD COLUMN locked_until TEXT;
+ALTER TABLE users ADD COLUMN interests TEXT DEFAULT '[]';
+ALTER TABLE users ADD COLUMN skills TEXT DEFAULT '[]';
+
+-- ---------- reconcile: volunteer_opportunities ----------
+ALTER TABLE volunteer_opportunities ADD COLUMN organization TEXT DEFAULT '';
+ALTER TABLE volunteer_opportunities ADD COLUMN category TEXT DEFAULT 'community';
+ALTER TABLE volunteer_opportunities ADD COLUMN location_name TEXT DEFAULT '';
+ALTER TABLE volunteer_opportunities ADD COLUMN commitment TEXT DEFAULT 'flexible';
+ALTER TABLE volunteer_opportunities ADD COLUMN spots INTEGER DEFAULT 0;
+ALTER TABLE volunteer_opportunities ADD COLUMN filled INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE volunteer_opportunities ADD COLUMN start_date TEXT;
+ALTER TABLE volunteer_opportunities ADD COLUMN status TEXT NOT NULL DEFAULT 'open';
 
