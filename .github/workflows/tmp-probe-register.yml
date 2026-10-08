@@ -1,0 +1,13 @@
+name: tmp-probe-register
+on: workflow_dispatch
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+    steps:
+      - name: Replay register INSERT (then roll back)
+        run: |
+          npx -y wrangler@latest d1 execute ke-town-db --remote --command "INSERT INTO users (id, full_name, email, username, password_hash, role, account_status, email_verify_token, created_at, updated_at) VALUES ('probe_x', 'Probe', 'probe_x@example.com', 'probex', 'h', 'user', 'active', 't', datetime('now'), datetime('now'));"
+          npx -y wrangler@latest d1 execute ke-town-db --remote --command "DELETE FROM users WHERE id='probe_x'; SELECT count(*) AS gone FROM users WHERE id='probe_x';"
