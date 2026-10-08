@@ -15,10 +15,11 @@ jobs:
             || npx -y wrangler@latest r2 bucket create affiliate-hub-assets
       - name: Ensure KV namespace
         run: |
-          if npx -y wrangler@latest kv namespace list | grep -q affiliate-hub; then
-            echo "KV exists"
+          IDS=$(curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces" | jq -r '.result[] | select(.title | contains("affiliate-hub")) | .id')
+          if [ -z "$IDS" ]; then
+            npx -y wrangler@latest kv namespace create affiliate-hub-cache
           else
-            npx -y wrangler@latest kv namespace create affiliate-hub-cache | tee /tmp/kv.json
+            echo "KV exists: $IDS"
           fi
       - name: Ensure queue
         run: |
@@ -26,7 +27,7 @@ jobs:
             || npx -y wrangler@latest queues create affiliate-hub-payouts
       - name: Fill real IDs into api/wrangler.toml and push back
         run: |
-          KVID=$(npx -y wrangler@latest kv namespace list | grep -B5 affiliate-hub | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1)
+          KVID=$(curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces" | jq -r '.result[] | select(.title | contains("affiliate-hub")) | .id' | head -1)
           echo "KVID=$KVID"; test -n "$KVID"
           sed -i 's/REPLACE_WITH_D1_DATABASE_ID/c089dd9b-c09f-406f-a32b-b7a711e059bd/' target/api/wrangler.toml
           sed -i "s/REPLACE_WITH_KV_NAMESPACE_ID/$KVID/" target/api/wrangler.toml
