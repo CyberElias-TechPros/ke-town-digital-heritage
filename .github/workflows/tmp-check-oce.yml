@@ -1,0 +1,13 @@
+name: tmp-check-oce
+on: workflow_dispatch
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.TMP_UNI_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ba3a0c06ca86c6e61d2c6b0350abb80b
+    steps:
+      - name: List Pain-account D1s + oce tables (read-only)
+        run: |
+          npx -y wrangler@latest d1 list
+          npx -y wrangler@latest d1 execute ocean-stride-db --remote --command "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
