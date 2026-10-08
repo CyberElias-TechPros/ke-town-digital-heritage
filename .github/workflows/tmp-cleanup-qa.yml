@@ -10,7 +10,6 @@ jobs:
       - name: Delete QA test user
         run: |
           U="usr_0mv035wxy1a4p000g163k1p46"
-          npx -y wrangler@latest d1 execute ke-town-db --remote --command "DELETE FROM sessions WHERE user_id='$U';"
           npx -y wrangler@latest d1 execute ke-town-db --remote --command "DELETE FROM audit_logs WHERE user_id='$U';"
           npx -y wrangler@latest d1 execute ke-town-db --remote --command "DELETE FROM users WHERE id='$U';"
           npx -y wrangler@latest d1 execute ke-town-db --remote --command "SELECT count(*) AS remaining FROM users WHERE id='$U';"
