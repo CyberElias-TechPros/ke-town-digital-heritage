@@ -11,22 +11,22 @@ jobs:
         run: git clone --depth 1 https://x-access-token:${{ secrets.MIGRATION_PAT }}@github.com/CyberElias-TechPros/affiliate-hub-frontend.git target
       - name: Ensure R2 bucket
         run: |
-          npx -y wrangler@latest r2 bucket list --json | grep -q affiliate-hub-assets \
+          npx -y wrangler@latest r2 bucket list | grep -q affiliate-hub-assets \
             || npx -y wrangler@latest r2 bucket create affiliate-hub-assets
       - name: Ensure KV namespace
         run: |
-          if npx -y wrangler@latest kv namespace list --json | grep -q affiliate-hub; then
+          if npx -y wrangler@latest kv namespace list | grep -q affiliate-hub; then
             echo "KV exists"
           else
-            npx -y wrangler@latest kv namespace create affiliate-hub-cache --json | tee /tmp/kv.json
+            npx -y wrangler@latest kv namespace create affiliate-hub-cache | tee /tmp/kv.json
           fi
       - name: Ensure queue
         run: |
-          npx -y wrangler@latest queues list --json | grep -q affiliate-hub-payouts \
+          npx -y wrangler@latest queues list | grep -q affiliate-hub-payouts \
             || npx -y wrangler@latest queues create affiliate-hub-payouts
       - name: Fill real IDs into api/wrangler.toml and push back
         run: |
-          KVID=$(npx -y wrangler@latest kv namespace list --json | grep -B5 affiliate-hub | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1)
+          KVID=$(npx -y wrangler@latest kv namespace list | grep -B5 affiliate-hub | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1)
           echo "KVID=$KVID"; test -n "$KVID"
           sed -i 's/REPLACE_WITH_D1_DATABASE_ID/c089dd9b-c09f-406f-a32b-b7a711e059bd/' target/api/wrangler.toml
           sed -i "s/REPLACE_WITH_KV_NAMESPACE_ID/$KVID/" target/api/wrangler.toml

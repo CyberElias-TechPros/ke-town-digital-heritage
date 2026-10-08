@@ -9,6 +9,15 @@ jobs:
     steps:
       - name: Clone target repo
         run: git clone --depth 1 https://x-access-token:${{ secrets.MIGRATION_PAT }}@github.com/CyberElias-TechPros/cosmic-invader-frontiers.git target
+      - name: Point config at live database and push back
+        run: |
+          sed -i 's/database_id = "local-dev-database"/database_id = "dee53d02-48f3-48a8-835a-0ecacbf98808"/' target/backend/wrangler.toml
+          grep -q local-dev-database target/backend/wrangler.toml && { echo "::error::placeholder remains"; exit 1; } || true
+          git -C target config user.name "CyberElias-TechPros"
+          git -C target config user.email "info@techpros.com.ng"
+          git -C target add backend/wrangler.toml
+          git -C target commit -m "chore: point D1 at live cosmic-invader-frontiers database"
+          git -C target push https://x-access-token:${{ secrets.MIGRATION_PAT }}@github.com/CyberElias-TechPros/cosmic-invader-frontiers.git HEAD:main
       - name: Show applied migrations
         working-directory: target/backend
         run: npx -y wrangler@latest d1 migrations list cosmic-invader-frontiers --remote
