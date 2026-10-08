@@ -12,3 +12,4 @@ jobs:
           npx -y wrangler@latest d1 execute affiliate-hub-db --remote --command "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
           npx -y wrangler@latest d1 execute affiliate-hub-db --remote --command "SELECT sql FROM sqlite_master WHERE type='table' AND name NOT LIKE 'd1_%' AND name NOT LIKE '_cf_%' AND name NOT LIKE 'sqlite_%';"
           npx -y wrangler@latest d1 execute affiliate-hub-db --remote --command "SELECT * FROM d1_migrations ORDER BY id;"
+          npx -y wrangler@latest d1 execute affiliate-hub-db --remote --command "SELECT (SELECT count(*) FROM users) AS users, (SELECT count(*) FROM transactions) AS transactions, (SELECT count(*) FROM withdrawals) AS withdrawals, (SELECT count(*) FROM affiliate_links) AS links, (SELECT count(*) FROM products) AS products;"
