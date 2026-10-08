@@ -1,0 +1,13 @@
+name: tmp-reconcile
+on: workflow_dispatch
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply one-shot reconcile to ke-town-db
+        working-directory: worker
+        run: npx -y wrangler@latest d1 execute ke-town-db --remote --file=reconcile-prod.sql
