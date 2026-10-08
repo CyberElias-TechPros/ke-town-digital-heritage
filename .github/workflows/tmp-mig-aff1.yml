@@ -9,6 +9,14 @@ jobs:
     steps:
       - name: Clone target repo
         run: git clone --depth 1 https://x-access-token:${{ secrets.MIGRATION_PAT }}@github.com/CyberElias-TechPros/affiliate-hub-frontend.git target
+      - name: Provision fresh database (live DB holds another schema generation + test rows only; it is left untouched)
+        run: |
+          DBID=$(curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database" | jq -r '.result[] | select(.name=="affiliate-hub-db-v2") | .uuid' | head -1)
+          if [ -z "$DBID" ]; then
+            npx -y wrangler@latest d1 create affiliate-hub-db-v2
+            DBID=$(curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database" | jq -r '.result[] | select(.name=="affiliate-hub-db-v2") | .uuid' | head -1)
+          fi
+          echo "DBID=$DBID"; test -n "$DBID"; echo "DBID=$DBID" >> $GITHUB_ENV
       - name: Ensure R2 bucket
         run: |
           npx -y wrangler@latest r2 bucket list | grep -q affiliate-hub-assets \
@@ -29,20 +37,21 @@ jobs:
         run: |
           KVID=$(curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces" | jq -r '.result[] | select(.title | contains("affiliate-hub")) | .id' | head -1)
           echo "KVID=$KVID"; test -n "$KVID"
-          sed -i 's/REPLACE_WITH_D1_DATABASE_ID/c089dd9b-c09f-406f-a32b-b7a711e059bd/' target/api/wrangler.toml
+          sed -i 's/database_name = "affiliate-hub-db"/database_name = "affiliate-hub-db-v2"/' target/api/wrangler.toml
+          sed -i "s/database_id = \"[^\"]*\"/database_id = \"$DBID\"/" target/api/wrangler.toml
           sed -i "s/REPLACE_WITH_KV_NAMESPACE_ID/$KVID/" target/api/wrangler.toml
           grep -q REPLACE_WITH target/api/wrangler.toml && { echo "::error::placeholders remain"; exit 1; } || true
           git -C target config user.name "CyberElias-TechPros"
           git -C target config user.email "info@techpros.com.ng"
           git -C target add api/wrangler.toml
-          git -C target commit -m "chore: fill provisioned Cloudflare D1/KV IDs" || echo "nothing to commit"
+          git -C target commit -m "chore: point affiliate-hub worker at fresh v2 database" || echo "already filled, continuing"
           git -C target push https://x-access-token:${{ secrets.MIGRATION_PAT }}@github.com/CyberElias-TechPros/affiliate-hub-frontend.git HEAD:main
       - name: Show applied migrations
         working-directory: target/api
-        run: npx -y wrangler@latest d1 migrations list affiliate-hub-db --remote
+        run: npx -y wrangler@latest d1 migrations list affiliate-hub-db-v2 --remote
       - name: Apply outstanding migrations
         working-directory: target/api
-        run: npx -y wrangler@latest d1 migrations apply affiliate-hub-db --remote
+        run: npx -y wrangler@latest d1 migrations apply affiliate-hub-db-v2 --remote
       - name: Ensure worker secrets (only if absent)
         run: |
           for pair in "ACCESS_TOKEN_SECRET:TMP_AFF_ACCESS" "REFRESH_TOKEN_SECRET:TMP_AFF_REFRESH" "VISITOR_HASH_SALT:TMP_AFF_SALT" "FIELD_ENCRYPTION_KEY:TMP_AFF_FIELDKEY"; do
