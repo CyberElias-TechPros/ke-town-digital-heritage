@@ -7,6 +7,13 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
     steps:
-      - name: Check for orphan test user (read-only)
+      - name: List worker secrets (names only)
         run: |
-          npx -y wrangler@latest d1 execute ke-town-db --remote --command "SELECT id, email, created_at FROM users WHERE email LIKE 'qafixketown%';"
+          curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/ke-town-api/secrets" | jq -r '.result[].name'
+      - name: Check follows/blocks tables (read-only)
+        run: |
+          npx -y wrangler@latest d1 execute ke-town-db --remote --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('follows','blocks','audit_logs');"
+      - name: Replay audit INSERT (then roll back)
+        run: |
+          npx -y wrangler@latest d1 execute ke-town-db --remote --command "INSERT INTO audit_logs (id, user_id, action, resource, resource_id, details, created_at) VALUES ('probe_a','probe_u','register','user','probe_u','{}',datetime('now'));"
+          npx -y wrangler@latest d1 execute ke-town-db --remote --command "DELETE FROM audit_logs WHERE id='probe_a'; SELECT count(*) AS gone FROM audit_logs WHERE id='probe_a';"
